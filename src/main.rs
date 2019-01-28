@@ -6,10 +6,11 @@ extern crate serde_derive;
 
 use std::error::Error;
 use std::io;
+// use std::collections::vec::Vector;
 
 
 #[derive(Debug, Deserialize)]
-struct Point3d {
+pub struct Point3d {
   x: f64,
   y: f64,
   z: f64,
@@ -17,21 +18,34 @@ struct Point3d {
 
 impl Point3d {
   fn printme(&self)  {
-    println!("POINT({}, {}, {})", self.x, self.y, self.z);
+    println!("POINT({:.3}, {:.3}, {:.3})", self.x, self.y, self.z);
   }
 }
 
-fn read_xyz_file() -> Result<Vec<Point3d>, Box<Error>> {
-  let mut rdr = csv::ReaderBuilder::new()
-    .delimiter(b' ')
-    .from_reader(io::stdin());
-  let mut vpts: Vec<Point3d> = Vec::new();
-  for result in rdr.deserialize() {
-    let record: Point3d = result?;
-    vpts.push(record);
-  }
-  Ok(vpts)
+pub struct Triangulation {
+  pts:   Vec<Point3d>,
+  stars: Vec<u32>,
 }
+
+impl Triangulation {
+  //-- new
+  pub fn new() -> Triangulation {
+    Triangulation {
+      pts:   Vec::new(),
+      stars: Vec::new(),
+    }
+  }
+  //-- insertpt
+  pub fn insertpt(&mut self, p: Point3d) {
+    self.pts.push(p);
+  }
+  //-- number_pts
+  pub fn number_pts(self) -> usize {
+    self.pts.len()
+  }
+}
+
+//--------------------------------------------------
 
 fn main() {
   let re = read_xyz_file();
@@ -46,11 +60,32 @@ fn main() {
   // println!("{:?}", vec);
   dosmth(&vec);
 
-  for p in vec.iter() {
-    p.printme();
-  }
+  // for p in vec.iter() {
+  //   p.printme();
+  // }
 
+  let mut tr = Triangulation::new();
+  for p in vec.into_iter() {
+    tr.insertpt(p);
+  }  
+
+  println!("{}", tr.number_pts());
 }
+
+
+fn read_xyz_file() -> Result<Vec<Point3d>, Box<Error>> {
+  let mut rdr = csv::ReaderBuilder::new()
+    .delimiter(b' ')
+    .from_reader(io::stdin());
+  let mut vpts: Vec<Point3d> = Vec::new();
+  for result in rdr.deserialize() {
+    let record: Point3d = result?;
+    vpts.push(record);
+  }
+  Ok(vpts)
+}
+
+
 
 fn dosmth(vpts: &Vec<Point3d>) {
   println!("===TOTAL: {} points", vpts.len());
