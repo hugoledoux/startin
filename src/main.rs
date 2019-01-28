@@ -15,6 +15,12 @@ struct Point3d {
   z: f64,
 }
 
+impl Point3d {
+  fn printme(&self)  {
+    println!("POINT({}, {}, {})", self.x, self.y, self.z);
+  }
+}
+
 fn read_xyz_file() -> Result<Vec<Point3d>, Box<Error>> {
   let mut rdr = csv::ReaderBuilder::new()
     .delimiter(b' ')
@@ -29,16 +35,26 @@ fn read_xyz_file() -> Result<Vec<Point3d>, Box<Error>> {
 
 fn main() {
   let re = read_xyz_file();
-  let re = match re {
+  let vec = match re {
     Ok(vec) => vec,
     Err(error) => {
       panic!("Problem with the file {:?}", error)
     },
   };
 
-  println!("===TOTAL: {} points", re.len());
-  println!("{:?}", re);
+  // println!("===TOTAL: {} points", re.len());
+  // println!("{:?}", vec);
+  dosmth(&vec);
 
+  for p in vec.iter() {
+    p.printme();
+  }
+
+}
+
+fn dosmth(vpts: &Vec<Point3d>) {
+  println!("===TOTAL: {} points", vpts.len());
+  // println!("{:#?}", vpts);
 }
 
 
