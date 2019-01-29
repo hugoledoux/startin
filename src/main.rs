@@ -11,37 +11,62 @@ use std::io;
 
 #[derive(Debug, Deserialize)]
 pub struct Point3d {
-  x: f64,
-  y: f64,
-  z: f64,
+  pub x: f64,
+  pub y: f64,
+  pub z: f64,
 }
 
 impl Point3d {
   fn printme(&self)  {
     println!("POINT({:.3}, {:.3}, {:.3})", self.x, self.y, self.z);
   }
+  fn distance_squared(&self, p: Point3d) -> f64 {
+      (p.x - self.x) * (p.x - self.x) 
+    + (p.y - self.y) * (p.y - self.y) 
+    + (p.z - self.z) * (p.z - self.z)
+  }
 }
 
 pub struct Triangulation {
-  pts:   Vec<Point3d>,
-  stars: Vec<u32>,
+  pts:    Vec<Point3d>,
+  stars:  Vec<u32>,
+  tol:    f32,
 }
 
 impl Triangulation {
   //-- new
   pub fn new() -> Triangulation {
+    //-- add point at infinity
+    let mut v: Vec<Point3d> = Vec::new();
+    v.push(Point3d{x: -1.0, y: -1.0, z: -1.0});
     Triangulation {
-      pts:   Vec::new(),
+      pts:   v,
       stars: Vec::new(),
+      tol: 0.001,
     }
   }
+
   //-- insertpt
   pub fn insertpt(&mut self, p: Point3d) {
-    self.pts.push(p);
+    if self.pts.len() <= 2 {
+      self.pts.push(p);
+      println!("-1: inserted");
+    }
+    else if self.pts.len() == 3 {
+      println!("-2: inserted");
+      self.pts.push(p);
+      //-- here build first triangle
+    } 
+    else {
+      println!("-3:{}", self.pts.len());
+      self.pts.push(p);
+    }
+    println!("{}", self.pts.len());
   }
+  
   //-- number_pts
   pub fn number_pts(self) -> usize {
-    self.pts.len()
+    (self.pts.len() - 1)
   }
 }
 
@@ -69,7 +94,7 @@ fn main() {
     tr.insertpt(p);
   }  
 
-  println!("{}", tr.number_pts());
+  println!("Number of points in DT: {}", tr.number_pts());
 }
 
 
