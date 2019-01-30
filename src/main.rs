@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 
 extern crate csv;
 extern crate serde;
@@ -6,7 +7,6 @@ extern crate serde_derive;
 
 use std::error::Error;
 use std::io;
-// use std::collections::vec::Vector;
 
 
 #[derive(Debug, Deserialize)]
@@ -16,21 +16,21 @@ pub struct Point3d {
   pub z: f64,
 }
 
+
 impl Point3d {
-  fn printme(&self)  {
-    println!("POINT({:.3}, {:.3}, {:.3})", self.x, self.y, self.z);
+  fn printme(&self) -> String {
+    format!("POINT({:.3}, {:.3}, {:.3})", self.x, self.y, self.z)
   }
-  fn distance_squared(&self, p: Point3d) -> f64 {
+  fn square_2d_distance(&self, p: &Point3d) -> f64 {
       (p.x - self.x) * (p.x - self.x) 
     + (p.y - self.y) * (p.y - self.y) 
-    + (p.z - self.z) * (p.z - self.z)
   }
 }
 
 pub struct Triangulation {
   pts:    Vec<Point3d>,
   stars:  Vec<u32>,
-  tol:    f32,
+  tol:    f64,
 }
 
 impl Triangulation {
@@ -38,7 +38,7 @@ impl Triangulation {
   pub fn new() -> Triangulation {
     //-- add point at infinity
     let mut v: Vec<Point3d> = Vec::new();
-    v.push(Point3d{x: -1.0, y: -1.0, z: -1.0});
+    v.push(Point3d{x: 9999999.0, y: 9999999.0, z: 9999999.0});
     Triangulation {
       pts:   v,
       stars: Vec::new(),
@@ -46,22 +46,30 @@ impl Triangulation {
     }
   }
 
+  
   //-- insertpt
-  pub fn insertpt(&mut self, p: Point3d) {
-    if self.pts.len() <= 2 {
+  pub fn insertpt(&mut self, p: Point3d) -> (usize, bool) {
+    if self.pts.len() <= 3 {
+      for (i, pi) in self.pts.iter().enumerate() {
+        if pi.square_2d_distance(&p) <= (self.tol * self.tol) {
+          return (i, false);
+        }
+      }
       self.pts.push(p);
-      println!("-1: inserted");
+      println!("insert point");
+      if self.pts.len() == 4 {
+        println!("CREATE First triangle here");
+      }
+      return (self.pts.len() - 1, true);
     }
-    else if self.pts.len() == 3 {
-      println!("-2: inserted");
-      self.pts.push(p);
-      //-- here build first triangle
-    } 
     else {
-      println!("-3:{}", self.pts.len());
+      println!("WALK TO TRIANGLE");
+      println!("TEST FOR DISTANCE");
+      println!("INSERT+FLIP");
       self.pts.push(p);
     }
-    println!("{}", self.pts.len());
+    // println!("{}", self.pts.len());
+    (self.pts.len(), true)
   }
   
   //-- number_pts
@@ -83,18 +91,22 @@ fn main() {
 
   // println!("===TOTAL: {} points", re.len());
   // println!("{:?}", vec);
-  dosmth(&vec);
+  // dosmth(&vec);
 
-  // for p in vec.iter() {
-  //   p.printme();
+  // for (i, p) in vec.iter().enumerate() {
+  //   println!("#{}: {}", i, p.printme());
   // }
 
   let mut tr = Triangulation::new();
   for p in vec.into_iter() {
-    tr.insertpt(p);
+    let (i, b) = tr.insertpt(p);
+    if b == false {
+      println!("Duplicate point ({})", i);
+    }
   }  
 
   println!("Number of points in DT: {}", tr.number_pts());
+  // println!("{:?}", tr);
 }
 
 
@@ -114,7 +126,8 @@ fn read_xyz_file() -> Result<Vec<Point3d>, Box<Error>> {
 
 fn dosmth(vpts: &Vec<Point3d>) {
   println!("===TOTAL: {} points", vpts.len());
-  // println!("{:#?}", vpts);
+  // println!("{:#?}", vpts); //-- to format with \n
+  // println!("{:?}", vpts);
 }
 
 
