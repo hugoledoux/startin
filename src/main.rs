@@ -21,12 +21,15 @@ pub struct Point3d {
 
 
 impl Point3d {
-  fn printme(&self) -> String {
-    format!("POINT({:.3}, {:.3}, {:.3})", self.x, self.y, self.z)
-  }
   fn square_2d_distance(&self, p: &Point3d) -> f64 {
       (p.x - self.x) * (p.x - self.x) 
     + (p.y - self.y) * (p.y - self.y) 
+  }
+}
+
+impl fmt::Display for Point3d {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    write!(f, "POINT({:.3}, {:.3}, {:.3})", self.x, self.y, self.z)
   }
 }
 
@@ -34,6 +37,7 @@ pub struct Triangulation {
   pts:    Vec<Point3d>,
   stars:  Vec<Vec<usize>>,
   tol:    f64,
+  curtr:  usize,
 }
 
 impl Triangulation {
@@ -48,6 +52,7 @@ impl Triangulation {
       pts:   v,
       stars: s,
       tol: 0.001,
+      curtr: 0,
     }
   }
 
@@ -61,16 +66,29 @@ impl Triangulation {
       }
       self.pts.push(p);
       self.stars.push([].to_vec());
-      println!("insert point");
       if self.pts.len() == 4 {
-        println!("CREATE First triangle here");
         if orient2d(&self.pts[1], &self.pts[2], &self.pts[3]) == 1 {
           self.stars[1].push(0);
+          self.stars[1].push(2);
+          self.stars[1].push(3);
+          self.stars[2].push(0);
+          self.stars[2].push(3);
+          self.stars[2].push(1);
+          self.stars[3].push(0);
+          self.stars[3].push(1);
+          self.stars[3].push(2);
         }
         else {
-          println!("CW");
+          self.stars[1].push(0);
+          self.stars[1].push(3);
+          self.stars[1].push(2);
+          self.stars[2].push(0);
+          self.stars[2].push(1);
+          self.stars[2].push(3);
+          self.stars[3].push(0);
+          self.stars[3].push(2);
+          self.stars[3].push(1);
         }
-
       }
       return (self.pts.len() - 1, true);
     }
@@ -126,11 +144,11 @@ fn main() {
 
   let mut tr = Triangulation::new();
   for p in vec.into_iter() {
+    // println!("{}", p);
     let (i, b) = tr.insert_one_pt(p);
     if b == false {
       println!("Duplicate point ({})", i);
     }
-    // println!("{}", tr.printme());
   }  
 
   // println!("Number of points in DT: {}", tr.number_pts());
