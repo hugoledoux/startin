@@ -9,6 +9,7 @@ extern crate serde_derive;
 
 use std::error::Error;
 use std::io;
+use std::fmt;
 
 
 #[derive(Debug, Deserialize)]
@@ -89,18 +90,19 @@ impl Triangulation {
     (self.pts.len() - 1)
   }
 
-  pub fn printme(&self) -> String {
-    let mut s = String::from("=== TRIANGULATION ===\n");
-    s.push_str(&format!("#pts: {}\n", self.number_pts()));
-    for (i, p) in self.pts.iter().enumerate() {
-      s.push_str(&format!("{}: {:?}\n", i, self.stars[i]));
-      // s.push_str(&p.printme());
-      // s.push_str("\n");
-    }
-    s.push_str("===============\n");
-    s
-  }
+}
 
+
+impl fmt::Display for Triangulation {
+  fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+    fmt.write_str("=== TRIANGULATION ===\n")?;
+    fmt.write_str(&format!("#pts: {}\n", self.number_pts()))?;
+    for (i, _p) in self.pts.iter().enumerate() {
+      fmt.write_str(&format!("{}: {:?}\n", i, self.stars[i]))?;
+    }
+    fmt.write_str("===============\n")?;
+    Ok(())
+  }
 }
 
 //--------------------------------------------------
@@ -132,8 +134,7 @@ fn main() {
   }  
 
   // println!("Number of points in DT: {}", tr.number_pts());
-  println!("{}", tr.printme());
-  // println!("{:?}", tr);
+  println!("{}", tr);
 }
 
 
