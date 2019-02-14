@@ -134,27 +134,60 @@ impl Triangulation {
 
     fn walk(&self, x: &Point3d) -> Triangle {
         //-- TODO: random sample some and pick closest?
-        //-- find the first tr
+        //-- find the starting tr
         let mut tr = Triangle {
             tr0: 0,
             tr1: 0,
             tr2: 0,
         };
         let cur = self.cur;
+        println!("a: {:?}", self.stars[cur]);
         for i in self.stars[cur].iter() {
-            if orient2d(&self.pts[cur], &self.pts[*i], &x) == -1 {
+            if *i == 0 {
+                //-- if the star contains infinite tr
+                let n = self.get_next_star(&self.stars[cur], *i);
+                if orient2d(&self.pts[cur], &self.pts[n], &x) == -1 {
+                    //-- x is outside CH, return infinite tr
+                    tr.tr0 = cur;
+                    tr.tr1 = 0;
+                    tr.tr2 = n;
+                    return tr;
+                } else {
+                    tr.tr0 = cur;
+                    tr.tr1 = n;
+                    tr.tr2 = self.get_next_star(&self.stars[cur], n);
+                    break;
+                }
+            }
+            if orient2d(&self.pts[cur], &self.pts[*i], &x) != -1 {
                 tr.tr0 = cur;
-                tr.tr1 = self.get_previous_star(&self.stars[cur], *i);
                 tr.tr1 = *i;
+                tr.tr2 = self.get_next_star(&self.stars[cur], *i);
+                break;
             }
         }
-        println!("startr: {}", tr);
 
-        Triangle {
-            tr0: 22,
-            tr1: 8,
-            tr2: 9,
+        println!("start tr: {}", tr);
+        //-- we know that tr0-tr1-x is CCW
+        loop {
+            if orient2d(&self.pts[tr.tr1], &self.pts[tr.tr2], &x) != -1 {
+                if orient2d(&self.pts[tr.tr2], &self.pts[tr.tr0], &x) != -1 {
+                    return tr;
+                }
+            } else {
+                //-- walk to incident to tr1,tr2
+                // a.iter().position(|&x| x == 2), Some(1)
+                let pos = &self.stars[tr.tr1]
+                    .iter()
+                    .position(|&x| x == tr.tr2)
+                    .unwrap();
+                let prev = self.get_previous_star(&self.stars[tr.tr1], *pos);
+                tr.tr0 = tr.tr2;
+                tr.tr2 = prev;
+            }
         }
+
+        return tr;
     }
 
     fn get_next_star(&self, s: &Vec<usize>, i: usize) -> usize {
