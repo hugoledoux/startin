@@ -92,6 +92,9 @@ impl Triangulation {
             self.stars.push([].to_vec());
             if self.pts.len() == 4 {
                 if orient2d(&self.pts[1], &self.pts[2], &self.pts[3]) == 1 {
+                    self.stars[0].push(1);
+                    self.stars[0].push(2);
+                    self.stars[0].push(3);
                     self.stars[1].push(0);
                     self.stars[1].push(2);
                     self.stars[1].push(3);
@@ -102,6 +105,9 @@ impl Triangulation {
                     self.stars[3].push(1);
                     self.stars[3].push(2);
                 } else {
+                    self.stars[0].push(1);
+                    self.stars[0].push(2);
+                    self.stars[0].push(3);
                     self.stars[1].push(0);
                     self.stars[1].push(3);
                     self.stars[1].push(2);
