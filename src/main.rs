@@ -116,12 +116,39 @@ impl Triangulation {
             self.cur = self.pts.len() - 1;
             return (self.pts.len() - 1, true);
         } else {
-            println!("WALK TO TRIANGLE");
+            println!("-->WALK TO TRIANGLE");
             let tr = self.walk(&p);
-            println!("TEST FOR DISTANCE");
-            println!("INSERT+FLIP");
+
+            println!("-->TEST FOR DISTANCE");
+            if p.square_2d_distance(&self.pts[tr.tr0]) < (self.tol * self.tol) {
+                return (tr.tr0, false);
+            }
+            if p.square_2d_distance(&self.pts[tr.tr1]) < (self.tol * self.tol) {
+                return (tr.tr1, false);
+            }
+            if p.square_2d_distance(&self.pts[tr.tr2]) < (self.tol * self.tol) {
+                return (tr.tr2, false);
+            }
+
+            println!("-->INSERT");
+            println!("{}", tr);
+
             self.pts.push(p);
             self.stars.push([].to_vec());
+            let pi = self.pts.len() - 1;
+            self.stars[pi].push(tr.tr0);
+            self.stars[pi].push(tr.tr1);
+            self.stars[pi].push(tr.tr2);
+
+            let mut i = self.index_in_star(&self.stars[tr.tr0], tr.tr1);
+            self.stars[tr.tr0].insert(i + 1, pi);
+            i = self.index_in_star(&self.stars[tr.tr1], tr.tr2);
+            self.stars[tr.tr1].insert(i + 1, pi);
+            i = self.index_in_star(&self.stars[tr.tr2], tr.tr0);
+            self.stars[tr.tr2].insert(i + 1, pi);
+
+            println!("-->FLIP");
+
             self.cur = self.pts.len() - 1;
             return (self.pts.len() - 1, true);
         }
@@ -141,7 +168,7 @@ impl Triangulation {
             tr2: 0,
         };
         let cur = self.cur;
-        println!("a: {:?}", self.stars[cur]);
+        // println!("a: {:?}", self.stars[cur]);
         for i in self.stars[cur].iter() {
             if *i == 0 {
                 //-- if the star contains infinite tr
@@ -206,6 +233,10 @@ impl Triangulation {
         } else {
             (i - 1)
         }
+    }
+
+    fn index_in_star(&self, s: &Vec<usize>, i: usize) -> usize {
+        s.iter().position(|&x| x == i).unwrap()
     }
 }
 
