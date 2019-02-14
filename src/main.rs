@@ -172,7 +172,8 @@ impl Triangulation {
         loop {
             if orient2d(&self.pts[tr.tr1], &self.pts[tr.tr2], &x) != -1 {
                 if orient2d(&self.pts[tr.tr2], &self.pts[tr.tr0], &x) != -1 {
-                    return tr;
+                    println!("Found the tr!");
+                    break;
                 }
             } else {
                 //-- walk to incident to tr1,tr2
@@ -186,7 +187,6 @@ impl Triangulation {
                 tr.tr2 = prev;
             }
         }
-
         return tr;
     }
 
