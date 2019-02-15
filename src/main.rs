@@ -283,14 +283,37 @@ impl Triangulation {
         s.iter().position(|&x| x == i).unwrap()
     }
 
+    pub fn nexti(&self, len: usize, i: usize) -> usize {
+        if i == (len - 1) {
+            0
+        } else {
+            i + 1
+        }
+    }
+
     pub fn write_json(&self) -> std::io::Result<()> {
-        let mut buffer = File::create("/Users/hugo/temp/foo.txt")?;
+        // let mut buffer = File::create("/Users/hugo/temp/out.txt")?;
+        // buffer.write(b"Hugo Ledoux")?;
 
-        buffer.write(b"Hugo Ledoux")?;
+        for (i, star) in self.stars.iter().enumerate() {
+            //-- reconstruct triangles
+            for (j, value) in star.iter().enumerate() {
+                if i < *value {
+                    let k = star[self.nexti(star.len(), j)];
+                    if i < k {
+                        let tr = Triangle {
+                            tr0: i,
+                            tr1: *value,
+                            tr2: k,
+                        };
+                        if tr.is_infinite() == false {
+                            println!("{}", tr);
+                        }
+                    }
+                }
+            }
+        }
         Ok(())
-        // for v in self.pts().iter() {
-
-        // }
     }
 }
 
@@ -298,9 +321,11 @@ impl fmt::Display for Triangulation {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         fmt.write_str("=== TRIANGULATION ===\n")?;
         fmt.write_str(&format!("#pts: {}\n", self.number_vertices()))?;
-        for (i, _p) in self.pts.iter().enumerate() {
-            fmt.write_str(&format!("{}: {:?}\n", i, self.stars[i]))?;
-        }
+        // for (i, _p) in self.pts.iter().enumerate() {
+        //     fmt.write_str(&format!("{}: {:?}\n", i, self.stars[i]))?;
+
+        //     for
+        // }
         fmt.write_str("===============\n")?;
         Ok(())
     }
