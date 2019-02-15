@@ -181,17 +181,18 @@ impl Triangulation {
             println!("*v: {}", *v);
             if *v == 0 {
                 //-- if the star contains infinite tr
-                let n = self.next_vertex_star(&self.stars[cur], i);
-                if orient2d(&self.pts[cur], &self.pts[n], &x) == -1 {
+                let nv = self.next_vertex_star(&self.stars[cur], i);
+                let ni = self.next_pos_star(&self.stars[cur], i);
+                if orient2d(&self.pts[cur], &self.pts[nv], &x) == -1 {
                     //-- x is outside CH, return infinite tr
                     tr.tr0 = cur;
                     tr.tr1 = 0;
-                    tr.tr2 = n;
+                    tr.tr2 = nv;
                     return tr;
                 } else {
                     tr.tr0 = cur;
-                    tr.tr1 = n;
-                    tr.tr2 = self.next_vertex_star(&self.stars[cur], n);
+                    tr.tr1 = nv;
+                    tr.tr2 = self.next_vertex_star(&self.stars[cur], ni);
                     break;
                 }
             }
