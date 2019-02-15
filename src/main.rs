@@ -7,7 +7,7 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 
-use serde_json::json;
+// use serde_json::json;
 use std::error::Error;
 use std::fmt;
 use std::fs::File;
@@ -291,9 +291,8 @@ impl Triangulation {
         }
     }
 
-    pub fn write_obj(&self) -> std::io::Result<()> {
+    fn get_triangles(&self) -> Vec<Triangle> {
         let mut trs: Vec<Triangle> = Vec::new();
-
         for (i, star) in self.stars.iter().enumerate() {
             //-- reconstruct triangles
             for (j, value) in star.iter().enumerate() {
@@ -313,7 +312,11 @@ impl Triangulation {
                 }
             }
         }
+        trs
+    }
 
+    pub fn write_obj(&self) -> std::io::Result<()> {
+        let trs = self.get_triangles();
         let mut f = File::create("/Users/hugo/temp/out.obj")?;
         for (i, v) in self.pts.iter().enumerate() {
             if i != 0 {
