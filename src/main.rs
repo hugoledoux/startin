@@ -291,9 +291,8 @@ impl Triangulation {
         }
     }
 
-    pub fn write_json(&self) -> std::io::Result<()> {
-        // let mut buffer = File::create("/Users/hugo/temp/out.txt")?;
-        // buffer.write(b"Hugo Ledoux")?;
+    pub fn write_obj(&self) -> std::io::Result<()> {
+        let mut trs: Vec<Triangle> = Vec::new();
 
         for (i, star) in self.stars.iter().enumerate() {
             //-- reconstruct triangles
@@ -308,11 +307,23 @@ impl Triangulation {
                         };
                         if tr.is_infinite() == false {
                             println!("{}", tr);
+                            trs.push(tr);
                         }
                     }
                 }
             }
         }
+
+        let mut f = File::create("/Users/hugo/temp/out.obj")?;
+        for (i, v) in self.pts.iter().enumerate() {
+            if i != 0 {
+                write!(f, "v {} {} {}\n", v.x, v.y, v.z).unwrap();
+            }
+        }
+        for tr in trs.iter() {
+            write!(f, "f {} {} {}\n", tr.tr0, tr.tr1, tr.tr2).unwrap();
+        }
+
         Ok(())
     }
 }
@@ -361,7 +372,7 @@ fn main() {
 
     // println!("Number of points in DT: {}", tr.number_pts());
     println!("{}", tr);
-    tr.write_json().unwrap();
+    tr.write_obj().unwrap();
 }
 
 fn read_xyz_file() -> Result<Vec<Point3d>, Box<Error>> {
