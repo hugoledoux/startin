@@ -1,6 +1,6 @@
 // $ ./rustri < ../../samples2.xyz
 
-// #![allow(dead_code)]
+#![allow(dead_code)]
 
 extern crate csv;
 extern crate serde;
@@ -82,6 +82,7 @@ impl Triangulation {
 
     //-- insert_one_pt
     pub fn insert_one_pt(&mut self, p: Point3d) -> (usize, bool) {
+        println!("-->{:?}", p);
         if self.pts.len() <= 3 {
             for (i, pi) in self.pts.iter().enumerate() {
                 if pi.square_2d_distance(&p) <= (self.tol * self.tol) {
@@ -153,7 +154,7 @@ impl Triangulation {
             i = self.index_in_star(&self.stars[tr.tr2], tr.tr0);
             self.stars[tr.tr2].insert(i + 1, pi);
 
-            println!("-->FLIP");
+            // println!("-->FLIP");
 
             self.cur = self.pts.len() - 1;
             return (self.pts.len() - 1, true);
@@ -174,11 +175,13 @@ impl Triangulation {
             tr2: 0,
         };
         let cur = self.cur;
-        // println!("a: {:?}", self.stars[cur]);
-        for i in self.stars[cur].iter() {
-            if *i == 0 {
+        println!("cur: #{}: {:?}", cur, self.stars[cur]);
+        for (i, v) in self.stars[cur].iter().enumerate() {
+            println!("v: {}", v);
+            println!("*v: {}", *v);
+            if *v == 0 {
                 //-- if the star contains infinite tr
-                let n = self.get_next_star(&self.stars[cur], *i);
+                let n = self.next_vertex_star(&self.stars[cur], i);
                 if orient2d(&self.pts[cur], &self.pts[n], &x) == -1 {
                     //-- x is outside CH, return infinite tr
                     tr.tr0 = cur;
@@ -188,14 +191,16 @@ impl Triangulation {
                 } else {
                     tr.tr0 = cur;
                     tr.tr1 = n;
-                    tr.tr2 = self.get_next_star(&self.stars[cur], n);
+                    tr.tr2 = self.next_vertex_star(&self.stars[cur], n);
                     break;
                 }
             }
-            if orient2d(&self.pts[cur], &self.pts[*i], &x) != -1 {
+            if orient2d(&self.pts[cur], &self.pts[*v], &x) != -1 {
+                println!("{} {} {}", &self.pts[cur], &self.pts[*v], &x);
+                println!("{}", orient2d(&self.pts[cur], &self.pts[*v], &x));
                 tr.tr0 = cur;
-                tr.tr1 = *i;
-                tr.tr2 = self.get_next_star(&self.stars[cur], *i);
+                tr.tr1 = *v;
+                tr.tr2 = self.next_vertex_star(&self.stars[cur], i);
                 break;
             }
         }
@@ -206,6 +211,16 @@ impl Triangulation {
                 if orient2d(&self.pts[tr.tr2], &self.pts[tr.tr0], &x) != -1 {
                     println!("Found the tr!");
                     break;
+                } else {
+                    //-- walk to incident to tr1,tr2
+                    println!("here");
+                    let pos = &self.stars[tr.tr2]
+                        .iter()
+                        .position(|&x| x == tr.tr0)
+                        .unwrap();
+                    let prev = self.prev_vertex_star(&self.stars[tr.tr2], *pos);
+                    tr.tr1 = tr.tr2;
+                    tr.tr2 = prev;
                 }
             } else {
                 //-- walk to incident to tr1,tr2
@@ -214,7 +229,7 @@ impl Triangulation {
                     .iter()
                     .position(|&x| x == tr.tr2)
                     .unwrap();
-                let prev = self.get_previous_star(&self.stars[tr.tr1], *pos);
+                let prev = self.prev_vertex_star(&self.stars[tr.tr1], *pos);
                 tr.tr0 = tr.tr2;
                 tr.tr2 = prev;
             }
@@ -222,8 +237,9 @@ impl Triangulation {
         return tr;
     }
 
-    fn get_next_star(&self, s: &Vec<usize>, i: usize) -> usize {
-        //-- get next vertex in a star
+    fn next_pos_star(&self, s: &Vec<usize>, i: usize) -> usize {
+        //-- get next position/index in the star
+        //-- helper function not have a circular star
         if i == (s.len() - 1) {
             0
         } else {
@@ -231,12 +247,31 @@ impl Triangulation {
         }
     }
 
-    fn get_previous_star(&self, s: &Vec<usize>, i: usize) -> usize {
-        //-- get previous vertex in a star
+    fn next_vertex_star(&self, s: &Vec<usize>, i: usize) -> usize {
+        //-- get next vertex (its global index) in a star
+        if i == (s.len() - 1) {
+            s[0]
+        } else {
+            s[(i + 1)]
+        }
+    }
+
+    fn prev_pos_star(&self, s: &Vec<usize>, i: usize) -> usize {
+        //-- get next position/index in the star
+        //-- helper function not have a circular star
         if i == 0 {
             (s.len() - 1)
         } else {
             (i - 1)
+        }
+    }
+
+    fn prev_vertex_star(&self, s: &Vec<usize>, i: usize) -> usize {
+        //-- get prev vertex (its global index) in a star
+        if i == 0 {
+            s[(s.len() - 1)]
+        } else {
+            s[(i - 1)]
         }
     }
 
@@ -280,6 +315,8 @@ fn main() {
         let (i, b) = tr.insert_one_pt(p);
         if b == false {
             println!("Duplicate point ({})", i);
+        } else {
+            println!("{}", tr);
         }
     }
 
