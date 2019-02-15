@@ -7,9 +7,12 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 
+use serde_json::json;
 use std::error::Error;
 use std::fmt;
+use std::fs::File;
 use std::io;
+use std::io::Write;
 
 #[derive(Debug, Deserialize)]
 pub struct Point3d {
@@ -279,6 +282,16 @@ impl Triangulation {
     fn index_in_star(&self, s: &Vec<usize>, i: usize) -> usize {
         s.iter().position(|&x| x == i).unwrap()
     }
+
+    pub fn write_json(&self) -> std::io::Result<()> {
+        let mut buffer = File::create("/Users/hugo/temp/foo.txt")?;
+
+        buffer.write(b"Hugo Ledoux")?;
+        Ok(())
+        // for v in self.pts().iter() {
+
+        // }
+    }
 }
 
 impl fmt::Display for Triangulation {
@@ -323,6 +336,7 @@ fn main() {
 
     // println!("Number of points in DT: {}", tr.number_pts());
     println!("{}", tr);
+    tr.write_json().unwrap();
 }
 
 fn read_xyz_file() -> Result<Vec<Point3d>, Box<Error>> {
