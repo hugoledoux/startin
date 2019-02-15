@@ -315,9 +315,9 @@ impl Triangulation {
         trs
     }
 
-    pub fn write_obj(&self) -> std::io::Result<()> {
+    pub fn write_obj(&self, path: String) -> std::io::Result<()> {
         let trs = self.get_triangles();
-        let mut f = File::create("/Users/hugo/temp/out.obj")?;
+        let mut f = File::create(path)?;
         for (i, v) in self.pts.iter().enumerate() {
             if i != 0 {
                 write!(f, "v {} {} {}\n", v.x, v.y, v.z).unwrap();
@@ -375,7 +375,8 @@ fn main() {
 
     // println!("Number of points in DT: {}", tr.number_pts());
     println!("{}", tr);
-    tr.write_obj().unwrap();
+    tr.write_obj("/Users/hugo/temp/out.obj".to_string())
+        .unwrap();
 }
 
 fn read_xyz_file() -> Result<Vec<Point3d>, Box<Error>> {
