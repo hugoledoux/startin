@@ -34,7 +34,6 @@ impl fmt::Display for Point3d {
 }
 
 //----------------------
-
 pub struct Triangle {
     pub tr0: usize,
     pub tr1: usize,
@@ -56,6 +55,7 @@ impl fmt::Display for Triangle {
     }
 }
 
+//----------------------
 pub struct Triangulation {
     pts: Vec<Point3d>,
     stars: Vec<Vec<usize>>,
@@ -157,6 +157,12 @@ impl Triangulation {
             i = self.index_in_star(&self.stars[tr.tr2], tr.tr0);
             self.stars[tr.tr2].insert(i + 1, pi);
 
+            //-- put infinite vertex first in list
+            // self.update_star(tr.tr0);
+            // self.update_star(tr.tr1);
+            // self.update_star(tr.tr2);
+            self.update_star(pi);
+
             // println!("-->FLIP");
 
             self.cur = self.pts.len() - 1;
@@ -239,6 +245,26 @@ impl Triangulation {
             }
         }
         return tr;
+    }
+
+    fn update_star(&mut self, i: usize) {
+        println!("INFINITE {:?}", self.stars[i]);
+        let re = self.stars[i].iter().position(|&x| x == 0);
+        if re != None {
+            let posinf = re.unwrap();
+            if posinf == 0 {
+                return;
+            }
+            let mut newstar: Vec<usize> = Vec::new();
+            for j in posinf..self.stars[i].len() {
+                newstar.push(self.stars[i][j]);
+            }
+            for j in 0..posinf {
+                newstar.push(self.stars[i][j]);
+            }
+            // println!("newstar: {:?}", newstar);
+            self.stars[i] = newstar;
+        }
     }
 
     fn next_pos_star(&self, s: &Vec<usize>, i: usize) -> usize {
@@ -335,11 +361,9 @@ impl fmt::Display for Triangulation {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         fmt.write_str("=== TRIANGULATION ===\n")?;
         fmt.write_str(&format!("#pts: {}\n", self.number_vertices()))?;
-        // for (i, _p) in self.pts.iter().enumerate() {
-        //     fmt.write_str(&format!("{}: {:?}\n", i, self.stars[i]))?;
-
-        //     for
-        // }
+        for (i, _p) in self.pts.iter().enumerate() {
+            fmt.write_str(&format!("{}: {:?}\n", i, self.stars[i]))?;
+        }
         fmt.write_str("===============\n")?;
         Ok(())
     }
