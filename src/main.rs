@@ -159,12 +159,33 @@ impl Triangulation {
             self.stars[tr.tr2].insert(i + 1, pi);
 
             //-- put infinite vertex first in list
-            // self.update_star(tr.tr0);
-            // self.update_star(tr.tr1);
-            // self.update_star(tr.tr2);
-            self.update_star(pi);
+            self.star_update_infinite_first(pi);
 
             // println!("-->FLIP");
+            let mut mystack: Vec<Triangle> = Vec::new();
+            mystack.push(Triangle {
+                tr0: pi,
+                tr1: tr.tr0,
+                tr2: tr.tr1,
+            });
+            mystack.push(Triangle {
+                tr0: pi,
+                tr1: tr.tr1,
+                tr2: tr.tr2,
+            });
+            mystack.push(Triangle {
+                tr0: pi,
+                tr1: tr.tr2,
+                tr2: tr.tr0,
+            });
+
+            loop {
+                let tr = match mystack.pop() {
+                    None => break,
+                    Some(x) => x,
+                };
+                println!("STACK: {}", tr);
+            }
 
             self.cur = self.pts.len() - 1;
             return (self.pts.len() - 1, true);
@@ -242,7 +263,11 @@ impl Triangulation {
         return tr;
     }
 
-    fn update_star(&mut self, i: usize) {
+    fn flip(&mut self, tr: Triangle, opposite: usize) {
+        println!("FLIP");
+    }
+
+    fn star_update_infinite_first(&mut self, i: usize) {
         println!("INFINITE {:?}", self.stars[i]);
         let re = self.stars[i].iter().position(|&x| x == 0);
         if re != None {
@@ -304,7 +329,19 @@ impl Triangulation {
         s.iter().position(|&x| x == i).unwrap()
     }
 
-    pub fn nexti(&self, len: usize, i: usize) -> usize {
+    fn get_opposite_vertex(&self, tr: &Triangle) -> usize {
+        println!("GET OPPOSITE VERTEX");
+        return 8;
+    }
+
+    fn delete_in_star(&mut self, i: usize, value: usize) {
+        let re = self.stars[i].iter().position(|&x| x == value);
+        if re != None {
+            self.stars[i].remove(re.unwrap());
+        }
+    }
+
+    fn nexti(&self, len: usize, i: usize) -> usize {
         if i == (len - 1) {
             0
         } else {
@@ -341,7 +378,7 @@ impl Triangulation {
         let mut f = File::create(path)?;
         for (i, v) in self.pts.iter().enumerate() {
             if i != 0 {
-                write!(f, "v {} {} {}\n", v.x, v.y, v.z).unwrap();
+                write!(f, "v {} {} {}\n", v.x, v.y, 0).unwrap();
             }
         }
         for tr in trs.iter() {
