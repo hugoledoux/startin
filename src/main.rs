@@ -13,6 +13,7 @@ use std::fmt;
 use std::fs::File;
 use std::io;
 use std::io::Write;
+use std::mem;
 
 #[derive(Debug, Deserialize)]
 pub struct Point3d {
@@ -185,45 +186,39 @@ impl Triangulation {
         };
         let cur = self.cur;
         println!("cur: #{}: {:?}", cur, self.stars[cur]);
-        for (i, v) in self.stars[cur].iter().enumerate() {
-            println!("v: {}", v);
-            println!("*v: {}", *v);
-            if *v == 0 {
-                //-- if the star contains infinite tr
-                let nv = self.next_vertex_star(&self.stars[cur], i);
-                let ni = self.next_pos_star(&self.stars[cur], i);
-                if orient2d(&self.pts[cur], &self.pts[nv], &x) == -1 {
-                    //-- x is outside CH, return infinite tr
-                    tr.tr0 = cur;
-                    tr.tr1 = 0;
-                    tr.tr2 = nv;
-                    return tr;
-                } else {
-                    tr.tr0 = cur;
-                    tr.tr1 = nv;
-                    tr.tr2 = self.next_vertex_star(&self.stars[cur], ni);
-                    break;
-                }
-            }
-            if orient2d(&self.pts[cur], &self.pts[*v], &x) != -1 {
-                println!("{} {} {}", &self.pts[cur], &self.pts[*v], &x);
-                println!("{}", orient2d(&self.pts[cur], &self.pts[*v], &x));
-                tr.tr0 = cur;
-                tr.tr1 = *v;
-                tr.tr2 = self.next_vertex_star(&self.stars[cur], i);
-                break;
+        //-- 1. find a finite triangle
+        tr.tr0 = cur;
+        if self.stars[cur][0] == 0 {
+            tr.tr1 = self.stars[cur][1];
+            tr.tr2 = self.stars[cur][2];
+        } else {
+            tr.tr1 = self.stars[cur][0];
+            tr.tr2 = self.stars[cur][1];
+        }
+        //-- 2. order it such that tr0-tr1-x is CCW
+        if orient2d(&self.pts[tr.tr0], &self.pts[tr.tr1], &x) == -1 {
+            if orient2d(&self.pts[tr.tr1], &self.pts[tr.tr2], &x) != -1 {
+                mem::swap(&mut tr.tr0, &mut tr.tr1);
+                mem::swap(&mut tr.tr1, &mut tr.tr2);
+            } else {
+                mem::swap(&mut tr.tr1, &mut tr.tr2);
+                mem::swap(&mut tr.tr0, &mut tr.tr1);
             }
         }
+        //-- 3. start the walk
         println!("start tr: {}", tr);
         //-- we know that tr0-tr1-x is CCW
         loop {
+            if tr.is_infinite() == true {
+                break;
+            }
             if orient2d(&self.pts[tr.tr1], &self.pts[tr.tr2], &x) != -1 {
                 if orient2d(&self.pts[tr.tr2], &self.pts[tr.tr0], &x) != -1 {
                     println!("Found the tr!");
                     break;
                 } else {
                     //-- walk to incident to tr1,tr2
-                    println!("here");
+                    // println!("here");
                     let pos = &self.stars[tr.tr2]
                         .iter()
                         .position(|&x| x == tr.tr0)
