@@ -200,7 +200,9 @@ impl Triangulation {
                             a = orient2d(&self.pts[tr.tr0], &self.pts[tr.tr1], &self.pts[opposite]);
                         }
                         if a > 0 {
-                            self.flip(&tr, opposite);
+                            let (ret0, ret1) = self.flip(&tr, opposite);
+                            mystack.push(ret0);
+                            mystack.push(ret1);
                         }
                     } else {
                         if incircle(
@@ -210,8 +212,9 @@ impl Triangulation {
                             &self.pts[opposite],
                         ) > 0
                         {
-                            self.flip(&tr, opposite);
-                            //--add to stack
+                            let (ret0, ret1) = self.flip(&tr, opposite);
+                            mystack.push(ret0);
+                            mystack.push(ret1);
                         }
                     }
                 }
@@ -293,18 +296,32 @@ impl Triangulation {
         return tr;
     }
 
-    fn flip(&mut self, tr: &Triangle, opposite: usize) {
-        println!("FLIP");
+    fn flip(&mut self, tr: &Triangle, opposite: usize) -> (Triangle, Triangle) {
+        println!("FLIP {} {}", tr, opposite);
         //-- step 1.
         let mut pos = self.index_in_star(&self.stars[tr.tr0], tr.tr1);
         self.stars[tr.tr0].insert(pos + 1, opposite);
         //-- step 2.
-        self.stars[tr.tr1].remove(tr.tr2);
+        pos = self.index_in_star(&self.stars[tr.tr1], tr.tr2);
+        self.stars[tr.tr1].remove(pos);
         //-- step 3.
         pos = self.index_in_star(&self.stars[opposite], tr.tr2);
         self.stars[opposite].insert(pos + 1, tr.tr0);
         //-- step 4.
-        self.stars[tr.tr2].remove(tr.tr1);
+        pos = self.index_in_star(&self.stars[tr.tr2], tr.tr1);
+        self.stars[tr.tr2].remove(pos);
+        //-- make 2 triangles to return (to stack)
+        let ret0 = Triangle {
+            tr0: tr.tr0,
+            tr1: tr.tr1,
+            tr2: opposite,
+        };
+        let ret1 = Triangle {
+            tr0: tr.tr0,
+            tr1: opposite,
+            tr2: tr.tr2,
+        };
+        (ret0, ret1)
     }
 
     fn star_update_infinite_first(&mut self, i: usize) {
