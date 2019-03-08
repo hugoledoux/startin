@@ -1,4 +1,4 @@
-// $ ./rustri < ../../samples2.xyz
+// $ ./rustin < ../../samples2.xyz
 
 #![allow(dead_code)]
 
