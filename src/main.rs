@@ -477,35 +477,7 @@ impl fmt::Display for Triangulation {
 
 //--------------------------------------------------
 
-fn testincircle() {
-    let a = Point3d {
-        x: 0.0,
-        y: 0.0,
-        z: 0.0,
-    };
-    let b = Point3d {
-        x: 1.0,
-        y: 0.0,
-        z: 0.0,
-    };
-    let c = Point3d {
-        x: 1.0,
-        y: 1.0,
-        z: 0.0,
-    };
-    let p = Point3d {
-        x: 1.99,
-        y: 1.99,
-        z: 0.0,
-    };
-    let re = incircle(&a, &b, &c, &p);
-    println!("re: {}", re);
-}
-
 fn main() {
-    // testincircle();
-    // return;
-
     let re = read_xyz_file();
     let vec = match re {
         Ok(vec) => vec,
@@ -598,12 +570,6 @@ fn incircle(a: &Point3d, b: &Point3d, c: &Point3d, p: &Point3d) -> i8 {
     } else {
         return -1;
     }
-}
-
-fn dosmth(vpts: &Vec<Point3d>) {
-    println!("===TOTAL: {} points", vpts.len());
-    // println!("{:#?}", vpts); //-- to format with \n
-    // println!("{:?}", vpts);
 }
 
 // fn main() {
