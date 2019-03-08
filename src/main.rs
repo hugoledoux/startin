@@ -420,7 +420,7 @@ impl Triangulation {
                             tr2: k,
                         };
                         if tr.is_infinite() == false {
-                            println!("{}", tr);
+                            // println!("{}", tr);
                             trs.push(tr);
                         }
                     }
@@ -590,7 +590,7 @@ fn incircle(a: &Point3d, b: &Point3d, c: &Point3d, p: &Point3d) -> i8 {
     let j = at.1 * (bt.0 * ct.2 - bt.2 * ct.0);
     let k = at.2 * (bt.0 * ct.1 - bt.1 * ct.0);
     let re = i - j + k;
-    println!("INCIRCLE TEST: {}", re);
+    // println!("INCIRCLE TEST: {}", re);
     if re.abs() < 1e-12 {
         return 0;
     } else if re > 0.0 {
