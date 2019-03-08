@@ -86,7 +86,7 @@ impl Triangulation {
 
     //-- insert_one_pt
     pub fn insert_one_pt(&mut self, p: Point3d) -> (usize, bool) {
-        println!("-->{:?}", p);
+        // println!("-->{:?}", p);
         if self.pts.len() <= 3 {
             for (i, pi) in self.pts.iter().enumerate() {
                 if pi.square_2d_distance(&p) <= (self.tol * self.tol) {
@@ -127,10 +127,7 @@ impl Triangulation {
             self.cur = self.pts.len() - 1;
             return (self.pts.len() - 1, true);
         } else {
-            println!("-->WALK TO TRIANGLE");
             let tr = self.walk(&p);
-
-            println!("-->TEST FOR DISTANCE");
             if p.square_2d_distance(&self.pts[tr.tr0]) < (self.tol * self.tol) {
                 return (tr.tr0, false);
             }
@@ -140,10 +137,6 @@ impl Triangulation {
             if p.square_2d_distance(&self.pts[tr.tr2]) < (self.tol * self.tol) {
                 return (tr.tr2, false);
             }
-
-            println!("-->INSERT");
-            println!("{}", tr);
-
             self.pts.push(p);
             self.stars.push([].to_vec());
             let pi = self.pts.len() - 1;
@@ -184,12 +177,8 @@ impl Triangulation {
                     None => break,
                     Some(x) => x,
                 };
-                println!("STACK: {}", tr);
                 let opposite = self.get_opposite_vertex(&tr);
-                println!("OPPOSITE VERTEX: {}", opposite);
-                if opposite == 0 {
-                    println!("INFINITE VERTEX FOUND: NO FLIP");
-                } else {
+                if opposite != 0 {
                     if tr.is_infinite() == true {
                         let mut a: i8 = 0;
                         if tr.tr0 == 0 {
@@ -239,7 +228,6 @@ impl Triangulation {
             tr2: 0,
         };
         let cur = self.cur;
-        println!("cur: #{}: {:?}", cur, self.stars[cur]);
         //-- 1. find a finite triangle
         tr.tr0 = cur;
         if self.stars[cur][0] == 0 {
@@ -260,7 +248,6 @@ impl Triangulation {
             }
         }
         //-- 3. start the walk
-        println!("start tr: {}", tr);
         //-- we know that tr0-tr1-x is CCW
         loop {
             if tr.is_infinite() == true {
@@ -268,7 +255,6 @@ impl Triangulation {
             }
             if orient2d(&self.pts[tr.tr1], &self.pts[tr.tr2], &x) != -1 {
                 if orient2d(&self.pts[tr.tr2], &self.pts[tr.tr0], &x) != -1 {
-                    println!("Found the tr!");
                     break;
                 } else {
                     //-- walk to incident to tr1,tr2
@@ -297,7 +283,6 @@ impl Triangulation {
     }
 
     fn flip(&mut self, tr: &Triangle, opposite: usize) -> (Triangle, Triangle) {
-        println!("FLIP {} {}", tr, opposite);
         //-- step 1.
         let mut pos = self.index_in_star(&self.stars[tr.tr0], tr.tr1);
         self.stars[tr.tr0].insert(pos + 1, opposite);
@@ -439,7 +424,7 @@ impl Triangulation {
                     continue;
                 }
                 if incircle(&self.pts[tr.tr0], &self.pts[tr.tr1], &self.pts[tr.tr2], pt) > 0 {
-                    println!("NOT DELAUNAY FFS!");
+                    // println!("NOT DELAUNAY FFS!");
                     re = false
                 }
             }
@@ -447,18 +432,21 @@ impl Triangulation {
         re
     }
 
-    pub fn write_obj(&self, path: String) -> std::io::Result<()> {
+    pub fn write_obj(&self, path: String, twod: bool) -> std::io::Result<()> {
         let trs = self.get_triangles();
         let mut f = File::create(path)?;
         for (i, v) in self.pts.iter().enumerate() {
             if i != 0 {
-                write!(f, "v {} {} {}\n", v.x, v.y, 0).unwrap();
+                if twod == true {
+                    write!(f, "v {} {} {}\n", v.x, v.y, 0).unwrap();
+                } else {
+                    write!(f, "v {} {} {}\n", v.x, v.y, v.z).unwrap();
+                }
             }
         }
         for tr in trs.iter() {
             write!(f, "f {} {} {}\n", tr.tr0, tr.tr1, tr.tr2).unwrap();
         }
-
         Ok(())
     }
 }
@@ -498,9 +486,10 @@ fn main() {
         let (i, b) = tr.insert_one_pt(p);
         if b == false {
             println!("Duplicate point ({})", i);
-        } else {
-            println!("{}", tr);
         }
+        // else {
+        //     println!("{}", tr);
+        // }
     }
 
     println!("****** is Delaunay? ******");
@@ -508,8 +497,8 @@ fn main() {
     println!("**************************");
 
     // println!("Number of points in DT: {}", tr.number_pts());
-    println!("{}", tr);
-    tr.write_obj("/Users/hugo/temp/out.obj".to_string())
+    // println!("{}", tr);
+    tr.write_obj("/Users/hugo/temp/out.obj".to_string(), false)
         .unwrap();
 }
 
