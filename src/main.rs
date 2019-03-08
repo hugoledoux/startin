@@ -1,13 +1,11 @@
 // $ ./rustin < ../../data/samples2.xyz
 
-#![allow(dead_code)]
-
+#[allow(dead_code)]
 extern crate csv;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 
-// use serde_json::json;
 use std::error::Error;
 use std::fmt;
 use std::fs::File;
@@ -287,14 +285,12 @@ impl Triangulation {
         let mut pos = self.index_in_star(&self.stars[tr.tr0], tr.tr1);
         self.stars[tr.tr0].insert(pos + 1, opposite);
         //-- step 2.
-        pos = self.index_in_star(&self.stars[tr.tr1], tr.tr2);
-        self.stars[tr.tr1].remove(pos);
+        self.delete_in_star(tr.tr1, tr.tr2);
         //-- step 3.
         pos = self.index_in_star(&self.stars[opposite], tr.tr2);
         self.stars[opposite].insert(pos + 1, tr.tr0);
         //-- step 4.
-        pos = self.index_in_star(&self.stars[tr.tr2], tr.tr1);
-        self.stars[tr.tr2].remove(pos);
+        self.delete_in_star(tr.tr2, tr.tr1);
         //-- make 2 triangles to return (to stack)
         let ret0 = Triangle {
             tr0: tr.tr0,
@@ -329,32 +325,12 @@ impl Triangulation {
         }
     }
 
-    fn next_pos_star(&self, s: &Vec<usize>, i: usize) -> usize {
-        //-- get next position/index in the star
-        //-- helper function not have a circular star
-        if i == (s.len() - 1) {
-            0
-        } else {
-            (i + 1)
-        }
-    }
-
     fn next_vertex_star(&self, s: &Vec<usize>, i: usize) -> usize {
         //-- get next vertex (its global index) in a star
         if i == (s.len() - 1) {
             s[0]
         } else {
             s[(i + 1)]
-        }
-    }
-
-    fn prev_pos_star(&self, s: &Vec<usize>, i: usize) -> usize {
-        //-- get next position/index in the star
-        //-- helper function not have a circular star
-        if i == 0 {
-            (s.len() - 1)
-        } else {
-            (i - 1)
         }
     }
 
