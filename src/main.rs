@@ -185,6 +185,21 @@ impl Triangulation {
                     Some(x) => x,
                 };
                 println!("STACK: {}", tr);
+                let opposite = self.get_opposite_vertex(&tr);
+                if opposite == 0 {
+                    println!("INFINITE VERTEX FOUND");
+                } else {
+                    if incircle(
+                        &self.pts[tr.tr0],
+                        &self.pts[tr.tr1],
+                        &self.pts[tr.tr2],
+                        &self.pts[opposite],
+                    ) < 0
+                    {
+                        self.flip(&tr, opposite);
+                        //--add to stack
+                    }
+                }
             }
 
             self.cur = self.pts.len() - 1;
@@ -263,8 +278,18 @@ impl Triangulation {
         return tr;
     }
 
-    fn flip(&mut self, tr: Triangle, opposite: usize) {
+    fn flip(&mut self, tr: &Triangle, opposite: usize) {
         println!("FLIP");
+        //-- step 1.
+        let mut pos = self.index_in_star(&self.stars[tr.tr0], tr.tr1);
+        self.stars[tr.tr0].insert(pos + 1, opposite);
+        //-- step 2.
+        self.stars[tr.tr1].remove(tr.tr2);
+        //-- step 3.
+        pos = self.index_in_star(&self.stars[opposite], tr.tr2);
+        self.stars[opposite].insert(pos + 1, tr.tr0);
+        //-- step 4.
+        self.stars[tr.tr2].remove(tr.tr1);
     }
 
     fn star_update_infinite_first(&mut self, i: usize) {
@@ -331,7 +356,8 @@ impl Triangulation {
 
     fn get_opposite_vertex(&self, tr: &Triangle) -> usize {
         println!("GET OPPOSITE VERTEX");
-        return 8;
+        let pos = self.index_in_star(&self.stars[tr.tr2], tr.tr1);
+        self.next_vertex_star(&self.stars[tr.tr2], pos)
     }
 
     fn delete_in_star(&mut self, i: usize, value: usize) {
