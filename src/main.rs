@@ -186,18 +186,33 @@ impl Triangulation {
                 };
                 println!("STACK: {}", tr);
                 let opposite = self.get_opposite_vertex(&tr);
+                println!("OPPOSITE VERTEX: {}", opposite);
                 if opposite == 0 {
-                    println!("INFINITE VERTEX FOUND");
+                    println!("INFINITE VERTEX FOUND: NO FLIP");
                 } else {
-                    if incircle(
-                        &self.pts[tr.tr0],
-                        &self.pts[tr.tr1],
-                        &self.pts[tr.tr2],
-                        &self.pts[opposite],
-                    ) < 0
-                    {
-                        self.flip(&tr, opposite);
-                        //--add to stack
+                    if tr.is_infinite() == true {
+                        let mut a: i8 = 0;
+                        if tr.tr0 == 0 {
+                            a = orient2d(&self.pts[opposite], &self.pts[tr.tr1], &self.pts[tr.tr2]);
+                        } else if tr.tr1 == 0 {
+                            a = orient2d(&self.pts[tr.tr0], &self.pts[opposite], &self.pts[tr.tr2]);
+                        } else if tr.tr2 == 0 {
+                            a = orient2d(&self.pts[tr.tr0], &self.pts[tr.tr1], &self.pts[opposite]);
+                        }
+                        if a > 0 {
+                            self.flip(&tr, opposite);
+                        }
+                    } else {
+                        if incircle(
+                            &self.pts[tr.tr0],
+                            &self.pts[tr.tr1],
+                            &self.pts[tr.tr2],
+                            &self.pts[opposite],
+                        ) > 0
+                        {
+                            self.flip(&tr, opposite);
+                            //--add to stack
+                        }
                     }
                 }
             }
@@ -293,7 +308,7 @@ impl Triangulation {
     }
 
     fn star_update_infinite_first(&mut self, i: usize) {
-        println!("INFINITE {:?}", self.stars[i]);
+        // println!("INFINITE {:?}", self.stars[i]);
         let re = self.stars[i].iter().position(|&x| x == 0);
         if re != None {
             let posinf = re.unwrap();
@@ -355,7 +370,6 @@ impl Triangulation {
     }
 
     fn get_opposite_vertex(&self, tr: &Triangle) -> usize {
-        println!("GET OPPOSITE VERTEX");
         let pos = self.index_in_star(&self.stars[tr.tr2], tr.tr1);
         self.next_vertex_star(&self.stars[tr.tr2], pos)
     }
@@ -429,7 +443,35 @@ impl fmt::Display for Triangulation {
 
 //--------------------------------------------------
 
+fn testincircle() {
+    let a = Point3d {
+        x: 0.0,
+        y: 0.0,
+        z: 0.0,
+    };
+    let b = Point3d {
+        x: 1.0,
+        y: 0.0,
+        z: 0.0,
+    };
+    let c = Point3d {
+        x: 1.0,
+        y: 1.0,
+        z: 0.0,
+    };
+    let p = Point3d {
+        x: 1.99,
+        y: 1.99,
+        z: 0.0,
+    };
+    let re = incircle(&a, &b, &c, &p);
+    println!("re: {}", re);
+}
+
 fn main() {
+    // testincircle();
+    // return;
+
     let re = read_xyz_file();
     let vec = match re {
         Ok(vec) => vec,
@@ -488,6 +530,9 @@ fn orient2d(a: &Point3d, b: &Point3d, c: &Point3d) -> i8 {
 }
 
 fn incircle(a: &Point3d, b: &Point3d, c: &Point3d, p: &Point3d) -> i8 {
+    //-- INSIDE   == +1
+    //-- OUTSIDE  == -1
+    //-- ONCIRCLE == 0
     let at = (
         a.x - p.x,
         a.y - p.y,
@@ -507,6 +552,7 @@ fn incircle(a: &Point3d, b: &Point3d, c: &Point3d, p: &Point3d) -> i8 {
     let j = at.1 * (bt.0 * ct.2 - bt.2 * ct.0);
     let k = at.2 * (bt.0 * ct.1 - bt.1 * ct.0);
     let re = i - j + k;
+    println!("INCIRCLE TEST: {}", re);
     if re.abs() < 1e-12 {
         return 0;
     } else if re > 0.0 {
