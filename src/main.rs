@@ -430,6 +430,23 @@ impl Triangulation {
         trs
     }
 
+    fn is_delaunay(&self) -> bool {
+        let mut re = true;
+        let trs = self.get_triangles();
+        for tr in trs.iter() {
+            for (i, pt) in self.pts.iter().enumerate() {
+                if i == 0 {
+                    continue;
+                }
+                if incircle(&self.pts[tr.tr0], &self.pts[tr.tr1], &self.pts[tr.tr2], pt) > 0 {
+                    println!("NOT DELAUNAY FFS!");
+                    re = false
+                }
+            }
+        }
+        re
+    }
+
     pub fn write_obj(&self, path: String) -> std::io::Result<()> {
         let trs = self.get_triangles();
         let mut f = File::create(path)?;
@@ -513,6 +530,10 @@ fn main() {
             println!("{}", tr);
         }
     }
+
+    println!("****** is Delaunay? ******");
+    println!("{}", tr.is_delaunay());
+    println!("**************************");
 
     // println!("Number of points in DT: {}", tr.number_pts());
     println!("{}", tr);
