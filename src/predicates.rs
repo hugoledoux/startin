@@ -3,7 +3,7 @@ use super::Point3d;
 pub fn orient2d(a: &Point3d, b: &Point3d, c: &Point3d) -> i8 {
     //-- CCW    = +1
     //-- CW     = -1
-    //-- linear = 0
+    //-- colinear = 0
     let re: f64 = ((a.x - c.x) * (b.y - c.y)) - ((a.y - c.y) * (b.x - c.x));
     if re.abs() < 1e-12 {
         return 0;
@@ -15,9 +15,9 @@ pub fn orient2d(a: &Point3d, b: &Point3d, c: &Point3d) -> i8 {
 }
 
 pub fn incircle(a: &Point3d, b: &Point3d, c: &Point3d, p: &Point3d) -> i8 {
-    //-- INSIDE   == +1
-    //-- OUTSIDE  == -1
-    //-- ONCIRCLE == 0
+    //-- p is INSIDE   == +1
+    //-- p is OUTSIDE  == -1
+    //-- p is ONCIRCLE == 0
     let at = (
         a.x - p.x,
         a.y - p.y,
