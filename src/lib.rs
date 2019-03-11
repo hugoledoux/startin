@@ -463,11 +463,12 @@ impl Triangulation {
 impl fmt::Display for Triangulation {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         fmt.write_str("=== TRIANGULATION ===\n")?;
-        fmt.write_str(&format!("#pts: {}\n", self.number_of_vertices()))?;
-        for (i, _p) in self.pts.iter().enumerate() {
-            fmt.write_str(&format!("{}: {:?}\n", i, self.stars[i]))?;
-        }
-        fmt.write_str("===============\n")?;
+        fmt.write_str(&format!("# vertices: {:9}\n", self.number_of_vertices()))?;
+        fmt.write_str(&format!("# triangles: {:8}\n", self.number_of_triangles()))?;
+        // for (i, _p) in self.pts.iter().enumerate() {
+        //     fmt.write_str(&format!("{}: {:?}\n", i, self.stars[i]))?;
+        // }
+        fmt.write_str("=====================\n")?;
         Ok(())
     }
 }
