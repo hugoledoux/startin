@@ -220,9 +220,32 @@ impl Triangulation {
         }
     }
 
-    pub fn number_vertices(&self) -> usize {
+    pub fn number_of_vertices(&self) -> usize {
         //-- number of finite vertices
         (self.pts.len() - 1)
+    }
+
+    pub fn number_of_triangles(&self) -> usize {
+        //-- number of finite triangles
+        let mut count: usize = 0;
+        for (i, star) in self.stars.iter().enumerate() {
+            for (j, value) in star.iter().enumerate() {
+                if i < *value {
+                    let k = star[self.nexti(star.len(), j)];
+                    if i < k {
+                        let tr = Triangle {
+                            tr0: i,
+                            tr1: *value,
+                            tr2: k,
+                        };
+                        if tr.is_infinite() == false {
+                            count = count + 1;
+                        }
+                    }
+                }
+            }
+        }
+        count
     }
 
     fn walk(&self, x: &Point3d) -> Triangle {
@@ -440,7 +463,7 @@ impl Triangulation {
 impl fmt::Display for Triangulation {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         fmt.write_str("=== TRIANGULATION ===\n")?;
-        fmt.write_str(&format!("#pts: {}\n", self.number_vertices()))?;
+        fmt.write_str(&format!("#pts: {}\n", self.number_of_vertices()))?;
         for (i, _p) in self.pts.iter().enumerate() {
             fmt.write_str(&format!("{}: {:?}\n", i, self.stars[i]))?;
         }
