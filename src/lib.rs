@@ -258,6 +258,16 @@ impl Triangulation {
         count
     }
 
+    // Get convex hull, oriented CCW
+    // as a list of vertices (first != last)
+    pub fn get_convex_hull(&self) -> Vec<usize> {
+        let mut re: Vec<usize> = Vec::new();
+        for x in self.stars[0].iter().rev() {
+            re.push(*x);
+        }
+        re
+    }
+
     pub fn number_of_vertices_on_ch(&self) -> usize {
         //-- number of finite vertices on the boundary of the convex hull
         self.stars[0].len()
