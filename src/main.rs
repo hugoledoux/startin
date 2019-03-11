@@ -44,6 +44,7 @@ fn main() {
     // println!("Number of points in DT: {}", tr.number_of_vertices());
     // println!("Number of trianges in DT: {}", tr.number_of_triangles());
     println!("{}", tr);
+    // println!("{:?}", tr);
     tr.write_obj("/Users/hugo/temp/out.obj".to_string(), false)
         .unwrap();
 }
