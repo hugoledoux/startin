@@ -80,7 +80,7 @@ impl Triangulation {
             y: py,
             z: pz,
         };
-        // println!("-->{:?}", p);
+        // println!("-->{}", p);
         if self.pts.len() <= 3 {
             for (i, pi) in self.pts.iter().enumerate() {
                 if pi.square_2d_distance(&p) <= (self.tol * self.tol) {
@@ -92,8 +92,8 @@ impl Triangulation {
             if self.pts.len() == 4 {
                 if predicates::orient2d(&self.pts[1], &self.pts[2], &self.pts[3]) == 1 {
                     self.stars[0].push(1);
-                    self.stars[0].push(2);
                     self.stars[0].push(3);
+                    self.stars[0].push(2);
                     self.stars[1].push(0);
                     self.stars[1].push(2);
                     self.stars[1].push(3);
@@ -122,6 +122,7 @@ impl Triangulation {
             return (true, self.pts.len() - 1);
         } else {
             let tr = self.walk(&p);
+            // println!("STARTING TR: {}", tr);
             if p.square_2d_distance(&self.pts[tr.tr0]) < (self.tol * self.tol) {
                 return (false, tr.tr0);
             }
