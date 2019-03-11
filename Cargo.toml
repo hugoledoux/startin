@@ -6,8 +6,6 @@ authors = ["Hugo Ledoux <h.ledoux@tudelft.nl>"]
 edition = "2018"
 
 [dependencies]
-rand = "0.3.14"
 csv = "1"
 serde = "1.0"
 serde_derive = "1.0"
-serde_json = "1.0"
