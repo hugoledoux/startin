@@ -248,6 +248,11 @@ impl Triangulation {
         count
     }
 
+    pub fn number_of_vertices_on_ch(&self) -> usize {
+        //-- number of finite vertices on the boundary of the convex hull
+        self.stars[0].len()
+    }
+
     fn walk(&self, x: &Point3d) -> Triangle {
         //-- TODO: random sample some and pick closest?
         //-- find the starting tr
