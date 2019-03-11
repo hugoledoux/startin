@@ -26,18 +26,16 @@ fn main() {
     };
 
     let mut tr = rustin::Triangulation::new();
+    let mut duplicates = 0;
     for p in vec.into_iter() {
-        // println!("{}", p);
-        let (b, i) = tr.insert_one_pt(p.x, p.y, p.z);
-        if b == false {
-            println!(
-                "Duplicate point ({}, {}), z={} already exists",
-                p.x,
-                p.y,
-                tr.get_point(i).z
-            );
-        }
+        let re = tr.insert_one_pt(p.x, p.y, p.z);
+        match re {
+            Ok(_x) => continue,
+            Err(_e) => duplicates = duplicates + 1,
+            // Err(e) => println!("Duplicate point! Not inserted {}", tr.get_point(e)),
+        };
     }
+    println!("Duplicates? yup: {} of them", duplicates);
 
     println!("****** is Delaunay? ******");
     println!("{}", tr.is_delaunay());
@@ -45,7 +43,7 @@ fn main() {
 
     // println!("Number of points in DT: {}", tr.number_of_vertices());
     // println!("Number of trianges in DT: {}", tr.number_of_triangles());
-    println!("{:?}", tr);
+    // println!("{:?}", tr);
     // println!("{}", tr);
     // let ch = tr.get_convex_hull();
     // println!("{:?}", ch);
