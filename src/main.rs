@@ -28,13 +28,15 @@ fn main() {
     let mut tr = rustin::Triangulation::new();
     for p in vec.into_iter() {
         // println!("{}", p);
-        let (i, b) = tr.insert_one_pt(p.x, p.y, p.z);
+        let (b, i) = tr.insert_one_pt(p.x, p.y, p.z);
         if b == false {
-            println!("Duplicate point ({})", i);
+            println!(
+                "Duplicate point ({}, {}), z={} already exists",
+                p.x,
+                p.y,
+                tr.get_point(i).z
+            );
         }
-        // else {
-        //     println!("{}", tr);
-        // }
     }
 
     println!("****** is Delaunay? ******");

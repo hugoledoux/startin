@@ -216,7 +216,16 @@ impl Triangulation {
             }
 
             self.cur = self.pts.len() - 1;
-            return (self.pts.len() - 1, true);
+            return (true, self.pts.len() - 1);
+        }
+    }
+
+    pub fn get_point(&self, i: usize) -> Point3d {
+        let p = &self.pts[i];
+        Point3d {
+            x: p.x,
+            y: p.y,
+            z: p.z,
         }
     }
 
