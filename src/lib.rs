@@ -74,7 +74,7 @@ impl Triangulation {
     }
 
     //-- insert_one_pt
-    pub fn insert_one_pt(&mut self, px: f64, py: f64, pz: f64) -> (usize, bool) {
+    pub fn insert_one_pt(&mut self, px: f64, py: f64, pz: f64) -> (bool, usize) {
         let p = Point3d {
             x: px,
             y: py,
@@ -84,7 +84,7 @@ impl Triangulation {
         if self.pts.len() <= 3 {
             for (i, pi) in self.pts.iter().enumerate() {
                 if pi.square_2d_distance(&p) <= (self.tol * self.tol) {
-                    return (i, false);
+                    return (false, i);
                 }
             }
             self.pts.push(p);
@@ -119,17 +119,17 @@ impl Triangulation {
                 }
             }
             self.cur = self.pts.len() - 1;
-            return (self.pts.len() - 1, true);
+            return (true, self.pts.len() - 1);
         } else {
             let tr = self.walk(&p);
             if p.square_2d_distance(&self.pts[tr.tr0]) < (self.tol * self.tol) {
-                return (tr.tr0, false);
+                return (false, tr.tr0);
             }
             if p.square_2d_distance(&self.pts[tr.tr1]) < (self.tol * self.tol) {
-                return (tr.tr1, false);
+                return (false, tr.tr1);
             }
             if p.square_2d_distance(&self.pts[tr.tr2]) < (self.tol * self.tol) {
-                return (tr.tr2, false);
+                return (false, tr.tr2);
             }
             self.pts.push(p);
             self.stars.push([].to_vec());
