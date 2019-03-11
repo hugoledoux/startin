@@ -2,13 +2,22 @@
 extern crate csv;
 extern crate rustin;
 extern crate serde;
+#[macro_use]
+extern crate serde_derive;
 
-use rustin::Point3d;
 use std::error::Error;
 use std::io;
 
 // To run:
 // $ ./rustin < ../../data/samples2.xyz
+
+#[derive(Debug, Deserialize)]
+pub struct Point {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+}
+
 fn main() {
     let re = read_xyz_file();
     let vec = match re {
@@ -16,18 +25,10 @@ fn main() {
         Err(error) => panic!("Problem with the file {:?}", error),
     };
 
-    // println!("===TOTAL: {} points", re.len());
-    // println!("{:?}", vec);
-    // dosmth(&vec);
-
-    // for (i, p) in vec.iter().enumerate() {
-    //   println!("#{}: {}", i, p.printme());
-    // }
-
     let mut tr = rustin::Triangulation::new();
     for p in vec.into_iter() {
         // println!("{}", p);
-        let (i, b) = tr.insert_one_pt(p);
+        let (i, b) = tr.insert_one_pt(p.x, p.y, p.z);
         if b == false {
             println!("Duplicate point ({})", i);
         }
@@ -46,13 +47,13 @@ fn main() {
         .unwrap();
 }
 
-fn read_xyz_file() -> Result<Vec<Point3d>, Box<Error>> {
+fn read_xyz_file() -> Result<Vec<Point>, Box<Error>> {
     let mut rdr = csv::ReaderBuilder::new()
         .delimiter(b' ')
         .from_reader(io::stdin());
-    let mut vpts: Vec<Point3d> = Vec::new();
+    let mut vpts: Vec<Point> = Vec::new();
     for result in rdr.deserialize() {
-        let record: Point3d = result?;
+        let record: Point = result?;
         vpts.push(record);
     }
     Ok(vpts)

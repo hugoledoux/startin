@@ -1,13 +1,10 @@
 mod predicates;
 
 use std::fmt;
-#[macro_use]
-extern crate serde_derive;
 use std::fs::File;
 use std::io::Write;
 use std::mem;
 
-#[derive(Debug, Deserialize)]
 pub struct Point3d {
     pub x: f64,
     pub y: f64,
@@ -77,7 +74,12 @@ impl Triangulation {
     }
 
     //-- insert_one_pt
-    pub fn insert_one_pt(&mut self, p: Point3d) -> (usize, bool) {
+    pub fn insert_one_pt(&mut self, px: f64, py: f64, pz: f64) -> (usize, bool) {
+        let p = Point3d {
+            x: px,
+            y: py,
+            z: pz,
+        };
         // println!("-->{:?}", p);
         if self.pts.len() <= 3 {
             for (i, pi) in self.pts.iter().enumerate() {
