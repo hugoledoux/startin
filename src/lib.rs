@@ -208,7 +208,7 @@ impl Triangulation {
                             &self.pts[opposite],
                         );
                     }
-                    println!("INCIRCLE FOR INFINITY {}", a);
+                    println!("TODO: INCIRCLE FOR INFINITY {}", a);
                     if a > 0 {
                         println!("FLIPPED0 {} {}", tr, opposite);
                         let (ret0, ret1) = self.flip(&tr, opposite);
@@ -217,6 +217,7 @@ impl Triangulation {
                     }
                 } else {
                     if opposite == 0 {
+                        //- if insertion on CH then break the edge
                         if predicates::orient2d(
                             &self.pts[tr.tr0],
                             &self.pts[tr.tr1],
@@ -244,7 +245,6 @@ impl Triangulation {
                     }
                 }
             }
-
             self.cur = self.pts.len() - 1;
             Ok(self.pts.len() - 1)
         }
@@ -313,6 +313,7 @@ impl Triangulation {
         let cur = self.cur;
         println!("cur: {}", cur);
         //-- 1. find a finite triangle
+        // TODO: necessary?
         tr.tr0 = cur;
         if self.stars[cur].len() < 3 {
             tr.tr1 = self.stars[cur][0];
