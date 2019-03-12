@@ -186,32 +186,45 @@ impl Triangulation {
                 };
                 let opposite = self.get_opposite_vertex(&tr);
                 println!("stacked: {} {}", tr, opposite);
-                if opposite != 0 {
-                    if tr.is_infinite() == true {
-                        let mut a: i8 = 0;
-                        if tr.tr0 == 0 {
-                            a = predicates::orient2d(
-                                &self.pts[opposite],
-                                &self.pts[tr.tr1],
-                                &self.pts[tr.tr2],
-                            );
-                        } else if tr.tr1 == 0 {
-                            a = predicates::orient2d(
-                                &self.pts[tr.tr0],
-                                &self.pts[opposite],
-                                &self.pts[tr.tr2],
-                            );
-                        } else if tr.tr2 == 0 {
-                            a = predicates::orient2d(
-                                &self.pts[tr.tr0],
-                                &self.pts[tr.tr1],
-                                &self.pts[opposite],
-                            );
-                        }
-                        println!("INCIRCLE FOR INFINITY {}", a);
-                        if a > 0 {
-                            println!("FLIPPED0 {} {}", tr, opposite);
-                            let (ret0, ret1) = self.flip(&tr, opposite);
+
+                if tr.is_infinite() == true {
+                    let mut a: i8 = 0;
+                    if tr.tr0 == 0 {
+                        a = predicates::orient2d(
+                            &self.pts[opposite],
+                            &self.pts[tr.tr1],
+                            &self.pts[tr.tr2],
+                        );
+                    } else if tr.tr1 == 0 {
+                        a = predicates::orient2d(
+                            &self.pts[tr.tr0],
+                            &self.pts[opposite],
+                            &self.pts[tr.tr2],
+                        );
+                    } else if tr.tr2 == 0 {
+                        a = predicates::orient2d(
+                            &self.pts[tr.tr0],
+                            &self.pts[tr.tr1],
+                            &self.pts[opposite],
+                        );
+                    }
+                    println!("INCIRCLE FOR INFINITY {}", a);
+                    if a > 0 {
+                        println!("FLIPPED0 {} {}", tr, opposite);
+                        let (ret0, ret1) = self.flip(&tr, opposite);
+                        mystack.push(ret0);
+                        mystack.push(ret1);
+                    }
+                } else {
+                    if opposite == 0 {
+                        if predicates::orient2d(
+                            &self.pts[tr.tr0],
+                            &self.pts[tr.tr1],
+                            &self.pts[tr.tr2],
+                        ) == 0
+                        {
+                            println!("FLIPPED1 {} {}", tr, 0);
+                            let (ret0, ret1) = self.flip(&tr, 0);
                             mystack.push(ret0);
                             mystack.push(ret1);
                         }
@@ -223,7 +236,7 @@ impl Triangulation {
                             &self.pts[opposite],
                         ) > 0
                         {
-                            println!("FLIPPED1 {} {}", tr, opposite);
+                            println!("FLIPPED2 {} {}", tr, opposite);
                             let (ret0, ret1) = self.flip(&tr, opposite);
                             mystack.push(ret0);
                             mystack.push(ret1);
