@@ -80,7 +80,7 @@ impl Triangulation {
             y: py,
             z: pz,
         };
-        // println!("-->{}", p);
+        println!("-->{}", p);
         if self.pts.len() <= 3 {
             for (i, pi) in self.pts.iter().enumerate() {
                 if pi.square_2d_distance(&p) <= (self.tol * self.tol) {
@@ -116,13 +116,25 @@ impl Triangulation {
                     self.stars[3].push(0);
                     self.stars[3].push(2);
                     self.stars[3].push(1);
+                    if predicates::orient2d(&self.pts[1], &self.pts[2], &self.pts[3]) == 0 {
+                        println!("****** FUCKKKKKK");
+                        let tr = Triangle {
+                            tr0: 2,
+                            tr1: 1,
+                            tr2: 3,
+                        };
+                        self.flip(&tr, 0);
+                        // self.stars[1].push(0);
+                        // self.stars[3].push(0);
+                    }
                 }
             }
             self.cur = self.pts.len() - 1;
             Ok(self.pts.len() - 1)
         } else {
+            println!("Walking");
             let tr = self.walk(&p);
-            // println!("STARTING TR: {}", tr);
+            println!("STARTING TR: {}", tr);
             if p.square_2d_distance(&self.pts[tr.tr0]) < (self.tol * self.tol) {
                 return Err(tr.tr0);
             }
@@ -173,6 +185,7 @@ impl Triangulation {
                     Some(x) => x,
                 };
                 let opposite = self.get_opposite_vertex(&tr);
+                println!("stacked: {} {}", tr, opposite);
                 if opposite != 0 {
                     if tr.is_infinite() == true {
                         let mut a: i8 = 0;
@@ -195,7 +208,9 @@ impl Triangulation {
                                 &self.pts[opposite],
                             );
                         }
+                        println!("INCIRCLE FOR INFINITY {}", a);
                         if a > 0 {
+                            println!("FLIPPED0 {} {}", tr, opposite);
                             let (ret0, ret1) = self.flip(&tr, opposite);
                             mystack.push(ret0);
                             mystack.push(ret1);
@@ -208,6 +223,7 @@ impl Triangulation {
                             &self.pts[opposite],
                         ) > 0
                         {
+                            println!("FLIPPED1 {} {}", tr, opposite);
                             let (ret0, ret1) = self.flip(&tr, opposite);
                             mystack.push(ret0);
                             mystack.push(ret1);
@@ -282,8 +298,14 @@ impl Triangulation {
             tr2: 0,
         };
         let cur = self.cur;
+        println!("cur: {}", cur);
         //-- 1. find a finite triangle
         tr.tr0 = cur;
+        if self.stars[cur].len() < 3 {
+            tr.tr1 = self.stars[cur][0];
+            tr.tr2 = self.stars[cur][1];
+            return tr;
+        }
         if self.stars[cur][0] == 0 {
             tr.tr1 = self.stars[cur][1];
             tr.tr2 = self.stars[cur][2];
@@ -291,6 +313,7 @@ impl Triangulation {
             tr.tr1 = self.stars[cur][0];
             tr.tr2 = self.stars[cur][1];
         }
+
         //-- 2. order it such that tr0-tr1-x is CCW
         if predicates::orient2d(&self.pts[tr.tr0], &self.pts[tr.tr1], &x) == -1 {
             if predicates::orient2d(&self.pts[tr.tr1], &self.pts[tr.tr2], &x) != -1 {

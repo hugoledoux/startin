@@ -30,7 +30,8 @@ fn main() {
     for p in vec.into_iter() {
         let re = tr.insert_one_pt(p.x, p.y, p.z);
         match re {
-            Ok(_x) => continue,
+            Ok(_x) => println!("{:?}", tr),
+            // Ok(_x) => continue,
             Err(_e) => duplicates = duplicates + 1,
             // Err(e) => println!("Duplicate point! Not inserted {}", tr.get_point(e)),
         };
@@ -43,7 +44,7 @@ fn main() {
 
     // println!("Number of points in DT: {}", tr.number_of_vertices());
     // println!("Number of trianges in DT: {}", tr.number_of_triangles());
-    // println!("{:?}", tr);
+    println!("{:?}", tr);
     // println!("{}", tr);
     // let ch = tr.get_convex_hull();
     // println!("{:?}", ch);
