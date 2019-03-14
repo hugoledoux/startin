@@ -51,6 +51,7 @@ pub struct Triangulation {
     stars: Vec<Vec<usize>>,
     tol: f64,
     cur: usize,
+    has_one_finite_tr: bool,
 }
 
 impl Triangulation {
@@ -70,7 +71,54 @@ impl Triangulation {
             stars: s,
             tol: 0.001,
             cur: 0,
+            has_one_finite_tr: false,
         }
+    }
+
+    fn insert_one_pt_init_phase(&mut self, p: Point3d) -> Result<usize, usize> {
+        for (i, pi) in self.pts.iter().enumerate() {
+            if pi.square_2d_distance(&p) <= (self.tol * self.tol) {
+                return Err(i);
+            }
+        }
+        self.pts.push(p);
+        self.stars.push([].to_vec());
+
+        if self.pts.len() == 4 {
+            if predicates::orient2d(&self.pts[1], &self.pts[2], &self.pts[3]) == 1 {
+                let mut v = vec![1, 3, 2];
+                self.stars[0].append(&mut v);
+                v = vec![0, 2, 3];
+                self.stars[1].append(&mut v);
+                v = vec![0, 3, 1];
+                self.stars[2].append(&mut v);
+                v = vec![0, 1, 2];
+                self.stars[3].append(&mut v);
+                self.has_one_finite_tr = true;
+            } else if predicates::orient2d(&self.pts[1], &self.pts[2], &self.pts[3]) == -1 {
+                let mut v = vec![1, 2, 3];
+                self.stars[0].append(&mut v);
+                v = vec![0, 3, 2];
+                self.stars[1].append(&mut v);
+                v = vec![0, 1, 3];
+                self.stars[2].append(&mut v);
+                v = vec![0, 2, 1];
+                self.stars[3].append(&mut v);
+                self.has_one_finite_tr = true;
+            } else {
+                //predicates::orient2d(&self.pts[1], &self.pts[2], &self.pts[3]) == 0
+                let mut v = vec![1, 2, 3, 2];
+                self.stars[0].append(&mut v);
+                v = vec![0, 2];
+                self.stars[1].append(&mut v);
+                v = vec![0, 1, 0, 3];
+                self.stars[2].append(&mut v);
+                v = vec![0, 2];
+                self.stars[3].append(&mut v);
+            }
+        }
+        self.cur = self.pts.len() - 1;
+        Ok(self.cur)
     }
 
     //-- insert_one_pt
@@ -81,173 +129,123 @@ impl Triangulation {
             z: pz,
         };
         println!("-->{}", p);
-        if self.pts.len() <= 3 {
-            for (i, pi) in self.pts.iter().enumerate() {
-                if pi.square_2d_distance(&p) <= (self.tol * self.tol) {
-                    return Err(i);
+
+        if self.has_one_finite_tr == false {
+            return self.insert_one_pt_init_phase(p);
+        }
+
+        println!("Walking");
+        let tr = self.walk(&p);
+        println!("STARTING TR: {}", tr);
+        if p.square_2d_distance(&self.pts[tr.tr0]) < (self.tol * self.tol) {
+            return Err(tr.tr0);
+        }
+        if p.square_2d_distance(&self.pts[tr.tr1]) < (self.tol * self.tol) {
+            return Err(tr.tr1);
+        }
+        if p.square_2d_distance(&self.pts[tr.tr2]) < (self.tol * self.tol) {
+            return Err(tr.tr2);
+        }
+        self.pts.push(p);
+        self.stars.push([].to_vec());
+        let pi = self.pts.len() - 1;
+        self.stars[pi].push(tr.tr0);
+        self.stars[pi].push(tr.tr1);
+        self.stars[pi].push(tr.tr2);
+
+        let mut i = self.index_in_star(&self.stars[tr.tr0], tr.tr1);
+        self.stars[tr.tr0].insert(i + 1, pi);
+        i = self.index_in_star(&self.stars[tr.tr1], tr.tr2);
+        self.stars[tr.tr1].insert(i + 1, pi);
+        i = self.index_in_star(&self.stars[tr.tr2], tr.tr0);
+        self.stars[tr.tr2].insert(i + 1, pi);
+
+        //-- put infinite vertex first in list
+        self.star_update_infinite_first(pi);
+
+        // println!("-->FLIP");
+        let mut mystack: Vec<Triangle> = Vec::new();
+        mystack.push(Triangle {
+            tr0: pi,
+            tr1: tr.tr0,
+            tr2: tr.tr1,
+        });
+        mystack.push(Triangle {
+            tr0: pi,
+            tr1: tr.tr1,
+            tr2: tr.tr2,
+        });
+        mystack.push(Triangle {
+            tr0: pi,
+            tr1: tr.tr2,
+            tr2: tr.tr0,
+        });
+
+        loop {
+            let tr = match mystack.pop() {
+                None => break,
+                Some(x) => x,
+            };
+            let opposite = self.get_opposite_vertex(&tr);
+            println!("stacked: {} {}", tr, opposite);
+
+            if tr.is_infinite() == true {
+                let mut a: i8 = 0;
+                if tr.tr0 == 0 {
+                    a = predicates::orient2d(
+                        &self.pts[opposite],
+                        &self.pts[tr.tr1],
+                        &self.pts[tr.tr2],
+                    );
+                } else if tr.tr1 == 0 {
+                    a = predicates::orient2d(
+                        &self.pts[tr.tr0],
+                        &self.pts[opposite],
+                        &self.pts[tr.tr2],
+                    );
+                } else if tr.tr2 == 0 {
+                    a = predicates::orient2d(
+                        &self.pts[tr.tr0],
+                        &self.pts[tr.tr1],
+                        &self.pts[opposite],
+                    );
                 }
-            }
-            self.pts.push(p);
-            self.stars.push([].to_vec());
-            if self.pts.len() == 4 {
-                if predicates::orient2d(&self.pts[1], &self.pts[2], &self.pts[3]) == 1 {
-                    self.stars[0].push(1);
-                    self.stars[0].push(3);
-                    self.stars[0].push(2);
-                    self.stars[1].push(0);
-                    self.stars[1].push(2);
-                    self.stars[1].push(3);
-                    self.stars[2].push(0);
-                    self.stars[2].push(3);
-                    self.stars[2].push(1);
-                    self.stars[3].push(0);
-                    self.stars[3].push(1);
-                    self.stars[3].push(2);
-                } else {
-                    self.stars[0].push(1);
-                    self.stars[0].push(2);
-                    self.stars[0].push(3);
-                    self.stars[1].push(0);
-                    self.stars[1].push(3);
-                    self.stars[1].push(2);
-                    self.stars[2].push(0);
-                    self.stars[2].push(1);
-                    self.stars[2].push(3);
-                    self.stars[3].push(0);
-                    self.stars[3].push(2);
-                    self.stars[3].push(1);
-                    if predicates::orient2d(&self.pts[1], &self.pts[2], &self.pts[3]) == 0 {
-                        println!("****** FUCKKKKKK");
-                        let tr = Triangle {
-                            tr0: 2,
-                            tr1: 1,
-                            tr2: 3,
-                        };
-                        self.flip(&tr, 0);
-                        // self.stars[1].push(0);
-                        // self.stars[3].push(0);
-                    }
+                println!("TODO: INCIRCLE FOR INFINITY {}", a);
+                if a > 0 {
+                    println!("FLIPPED0 {} {}", tr, opposite);
+                    let (ret0, ret1) = self.flip(&tr, opposite);
+                    mystack.push(ret0);
+                    mystack.push(ret1);
                 }
-            }
-            self.cur = self.pts.len() - 1;
-            Ok(self.pts.len() - 1)
-        } else {
-            println!("Walking");
-            let tr = self.walk(&p);
-            println!("STARTING TR: {}", tr);
-            if p.square_2d_distance(&self.pts[tr.tr0]) < (self.tol * self.tol) {
-                return Err(tr.tr0);
-            }
-            if p.square_2d_distance(&self.pts[tr.tr1]) < (self.tol * self.tol) {
-                return Err(tr.tr1);
-            }
-            if p.square_2d_distance(&self.pts[tr.tr2]) < (self.tol * self.tol) {
-                return Err(tr.tr2);
-            }
-            self.pts.push(p);
-            self.stars.push([].to_vec());
-            let pi = self.pts.len() - 1;
-            self.stars[pi].push(tr.tr0);
-            self.stars[pi].push(tr.tr1);
-            self.stars[pi].push(tr.tr2);
-
-            let mut i = self.index_in_star(&self.stars[tr.tr0], tr.tr1);
-            self.stars[tr.tr0].insert(i + 1, pi);
-            i = self.index_in_star(&self.stars[tr.tr1], tr.tr2);
-            self.stars[tr.tr1].insert(i + 1, pi);
-            i = self.index_in_star(&self.stars[tr.tr2], tr.tr0);
-            self.stars[tr.tr2].insert(i + 1, pi);
-
-            //-- put infinite vertex first in list
-            self.star_update_infinite_first(pi);
-
-            // println!("-->FLIP");
-            let mut mystack: Vec<Triangle> = Vec::new();
-            mystack.push(Triangle {
-                tr0: pi,
-                tr1: tr.tr0,
-                tr2: tr.tr1,
-            });
-            mystack.push(Triangle {
-                tr0: pi,
-                tr1: tr.tr1,
-                tr2: tr.tr2,
-            });
-            mystack.push(Triangle {
-                tr0: pi,
-                tr1: tr.tr2,
-                tr2: tr.tr0,
-            });
-
-            loop {
-                let tr = match mystack.pop() {
-                    None => break,
-                    Some(x) => x,
-                };
-                let opposite = self.get_opposite_vertex(&tr);
-                println!("stacked: {} {}", tr, opposite);
-
-                if tr.is_infinite() == true {
-                    let mut a: i8 = 0;
-                    if tr.tr0 == 0 {
-                        a = predicates::orient2d(
-                            &self.pts[opposite],
-                            &self.pts[tr.tr1],
-                            &self.pts[tr.tr2],
-                        );
-                    } else if tr.tr1 == 0 {
-                        a = predicates::orient2d(
-                            &self.pts[tr.tr0],
-                            &self.pts[opposite],
-                            &self.pts[tr.tr2],
-                        );
-                    } else if tr.tr2 == 0 {
-                        a = predicates::orient2d(
-                            &self.pts[tr.tr0],
-                            &self.pts[tr.tr1],
-                            &self.pts[opposite],
-                        );
-                    }
-                    println!("TODO: INCIRCLE FOR INFINITY {}", a);
-                    if a > 0 {
-                        println!("FLIPPED0 {} {}", tr, opposite);
-                        let (ret0, ret1) = self.flip(&tr, opposite);
+            } else {
+                if opposite == 0 {
+                    //- if insertion on CH then break the edge
+                    if predicates::orient2d(&self.pts[tr.tr0], &self.pts[tr.tr1], &self.pts[tr.tr2])
+                        == 0
+                    {
+                        println!("FLIPPED1 {} {}", tr, 0);
+                        let (ret0, ret1) = self.flip(&tr, 0);
                         mystack.push(ret0);
                         mystack.push(ret1);
                     }
                 } else {
-                    if opposite == 0 {
-                        //- if insertion on CH then break the edge
-                        if predicates::orient2d(
-                            &self.pts[tr.tr0],
-                            &self.pts[tr.tr1],
-                            &self.pts[tr.tr2],
-                        ) == 0
-                        {
-                            println!("FLIPPED1 {} {}", tr, 0);
-                            let (ret0, ret1) = self.flip(&tr, 0);
-                            mystack.push(ret0);
-                            mystack.push(ret1);
-                        }
-                    } else {
-                        if predicates::incircle(
-                            &self.pts[tr.tr0],
-                            &self.pts[tr.tr1],
-                            &self.pts[tr.tr2],
-                            &self.pts[opposite],
-                        ) > 0
-                        {
-                            println!("FLIPPED2 {} {}", tr, opposite);
-                            let (ret0, ret1) = self.flip(&tr, opposite);
-                            mystack.push(ret0);
-                            mystack.push(ret1);
-                        }
+                    if predicates::incircle(
+                        &self.pts[tr.tr0],
+                        &self.pts[tr.tr1],
+                        &self.pts[tr.tr2],
+                        &self.pts[opposite],
+                    ) > 0
+                    {
+                        println!("FLIPPED2 {} {}", tr, opposite);
+                        let (ret0, ret1) = self.flip(&tr, opposite);
+                        mystack.push(ret0);
+                        mystack.push(ret1);
                     }
                 }
             }
-            self.cur = self.pts.len() - 1;
-            Ok(self.pts.len() - 1)
         }
+        self.cur = self.pts.len() - 1;
+        Ok(self.pts.len() - 1)
     }
 
     pub fn get_point(&self, i: usize) -> Point3d {
@@ -297,9 +295,12 @@ impl Triangulation {
         re
     }
 
-    pub fn number_of_vertices_on_ch(&self) -> usize {
+    pub fn number_of_vertices_on_convex_hull(&self) -> usize {
         //-- number of finite vertices on the boundary of the convex hull
-        self.stars[0].len()
+        if self.has_one_finite_tr == false {
+            return 0;
+        }
+        return self.stars[0].len();
     }
 
     fn walk(&self, x: &Point3d) -> Triangle {
@@ -528,8 +529,8 @@ impl fmt::Display for Triangulation {
         fmt.write_str(&format!("# vertices: {:19}\n", self.number_of_vertices()))?;
         fmt.write_str(&format!("# triangles: {:18}\n", self.number_of_triangles()))?;
         fmt.write_str(&format!(
-            "# on convex hull: {:13}\n",
-            self.number_of_vertices_on_ch()
+            "# convex hull: {:13}\n",
+            self.number_of_vertices_on_convex_hull()
         ))?;
         // for (i, _p) in self.pts.iter().enumerate() {
         //     fmt.write_str(&format!("{}: {:?}\n", i, self.stars[i]))?;
@@ -545,8 +546,8 @@ impl fmt::Debug for Triangulation {
         fmt.write_str(&format!("# vertices: {:19}\n", self.number_of_vertices()))?;
         fmt.write_str(&format!("# triangles: {:18}\n", self.number_of_triangles()))?;
         fmt.write_str(&format!(
-            "# on convex hull: {:13}\n",
-            self.number_of_vertices_on_ch()
+            "# convex hull: {:13}\n",
+            self.number_of_vertices_on_convex_hull()
         ))?;
         for (i, _p) in self.pts.iter().enumerate() {
             fmt.write_str(&format!("{}: {:?}\n", i, self.stars[i]))?;
