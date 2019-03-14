@@ -51,7 +51,7 @@ pub struct Triangulation {
     stars: Vec<Vec<usize>>,
     tol: f64,
     cur: usize,
-    has_one_finite_tr: bool,
+    is_init: bool,
 }
 
 impl Triangulation {
@@ -71,7 +71,7 @@ impl Triangulation {
             stars: s,
             tol: 0.001,
             cur: 0,
-            has_one_finite_tr: false,
+            is_init: false,
         }
     }
 
@@ -81,9 +81,9 @@ impl Triangulation {
                 return Err(i);
             }
         }
+        //-- add point to Triangulation and create its star
         self.pts.push(p);
         self.stars.push([].to_vec());
-
         if self.pts.len() == 4 {
             if predicates::orient2d(&self.pts[1], &self.pts[2], &self.pts[3]) == 1 {
                 let mut v = vec![1, 3, 2];
@@ -94,7 +94,7 @@ impl Triangulation {
                 self.stars[2].append(&mut v);
                 v = vec![0, 1, 2];
                 self.stars[3].append(&mut v);
-                self.has_one_finite_tr = true;
+                self.is_init = true;
             } else if predicates::orient2d(&self.pts[1], &self.pts[2], &self.pts[3]) == -1 {
                 let mut v = vec![1, 2, 3];
                 self.stars[0].append(&mut v);
@@ -104,7 +104,7 @@ impl Triangulation {
                 self.stars[2].append(&mut v);
                 v = vec![0, 2, 1];
                 self.stars[3].append(&mut v);
-                self.has_one_finite_tr = true;
+                self.is_init = true;
             } else {
                 //predicates::orient2d(&self.pts[1], &self.pts[2], &self.pts[3]) == 0
                 let mut v = vec![1, 2, 3, 2];
@@ -130,7 +130,7 @@ impl Triangulation {
         };
         println!("-->{}", p);
 
-        if self.has_one_finite_tr == false {
+        if self.is_init == false {
             return self.insert_one_pt_init_phase(p);
         }
 
@@ -297,7 +297,7 @@ impl Triangulation {
 
     pub fn number_of_vertices_on_convex_hull(&self) -> usize {
         //-- number of finite vertices on the boundary of the convex hull
-        if self.has_one_finite_tr == false {
+        if self.is_init == false {
             return 0;
         }
         return self.stars[0].len();
@@ -529,7 +529,7 @@ impl fmt::Display for Triangulation {
         fmt.write_str(&format!("# vertices: {:19}\n", self.number_of_vertices()))?;
         fmt.write_str(&format!("# triangles: {:18}\n", self.number_of_triangles()))?;
         fmt.write_str(&format!(
-            "# convex hull: {:13}\n",
+            "# convex hull: {:16}\n",
             self.number_of_vertices_on_convex_hull()
         ))?;
         // for (i, _p) in self.pts.iter().enumerate() {
@@ -546,7 +546,7 @@ impl fmt::Debug for Triangulation {
         fmt.write_str(&format!("# vertices: {:19}\n", self.number_of_vertices()))?;
         fmt.write_str(&format!("# triangles: {:18}\n", self.number_of_triangles()))?;
         fmt.write_str(&format!(
-            "# convex hull: {:13}\n",
+            "# convex hull: {:16}\n",
             self.number_of_vertices_on_convex_hull()
         ))?;
         for (i, _p) in self.pts.iter().enumerate() {
