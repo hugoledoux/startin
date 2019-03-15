@@ -79,7 +79,7 @@ impl Vector {
             y: by - ay,
         }
     }
-    pub fn dot(&self, other: Self) -> f64 {
+    pub fn dot(&self, other: &Self) -> f64 {
         self.x * other.x + self.y * other.y
     }
     pub fn length(&self) -> f64 {
@@ -95,13 +95,15 @@ impl Vector {
     }
 }
 
-pub fn vector_projection(a: &Point3d, b: &Point3d, c: &Point3d) -> f32 {
+pub fn vector_projection(a: &Point3d, b: &Point3d, c: &Point3d) -> f64 {
     let mut p = Vector::new(a.x, a.y, b.x, b.y);
-    let mut q = Vector::new(a.x, a.y, c.x, c.y);
-
+    let q = Vector::new(a.x, a.y, c.x, c.y);
+    let plength = p.length();
     p.normalise();
-
-    0.22
+    let q1 = q.dot(&p);
+    println!("q1: {}", q1);
+    //-- normalise the answer, so we know before/after?
+    q1 / plength
 }
 
 #[cfg(test)]
@@ -109,12 +111,56 @@ mod tests {
     use super::*;
 
     #[test]
-    fn normalise() {
+    fn vector_projection_test() {
+        let a = Point3d {
+            x: 1.0,
+            y: 1.0,
+            z: 0.0,
+        };
+        let b = Point3d {
+            x: 5.0,
+            y: 1.0,
+            z: 0.0,
+        };
+        let mut c = Point3d {
+            x: 3.0,
+            y: 3.0,
+            z: 0.0,
+        };
+        let re = vector_projection(&a, &b, &c);
+        assert_eq!(re, 0.5);
+        c = Point3d {
+            x: -2.0,
+            y: 4.0,
+            z: 0.0,
+        };
+        let re = vector_projection(&a, &b, &c);
+        assert_eq!(re, -0.75);
+    }
+
+    #[test]
+    fn length() {
         let mut v = Vector::new(0.0, 0.0, 1.0, 0.0);
         assert_eq!(v.length(), 1.0);
         v = Vector::new(1.0, 1.0, 1.0, 5.0);
         assert_eq!(v.length(), 4.0);
+        v = Vector::new(1.0, 1.0, 1.0, 5.0);
+        assert_eq!(v.length(), 4.0);
     }
+
+    #[test]
+    fn normalise() {
+        let mut v = Vector::new(0.0, 0.0, 1.0, 0.0);
+        v.normalise();
+        // println!("({}, {})", v.x, v.y);
+        assert_eq!(v.x, 1.0);
+        assert_eq!(v.y, 0.0);
+        v = Vector::new(1.0, 1.0, 5.0, 4.0);
+        v.normalise();
+        assert_eq!(v.x, 0.8);
+        assert_eq!(v.y, 0.6);
+    }
+
     #[test]
     #[should_panic]
     fn normalise_panic() {
