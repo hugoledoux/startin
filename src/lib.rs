@@ -108,15 +108,40 @@ impl Triangulation {
                 self.is_init = true;
             } else {
                 //geom::orient2d(&self.pts[1], &self.pts[2], &self.pts[3]) == 0
-                // FIXME: order is important
-                let mut v = vec![1, 2, 3, 2];
+                let mut s: usize = 0;
+                let mut m: usize = 0;
+                let mut e: usize = 0;
+                let r = geom::vector_projection(&self.pts[1], &self.pts[2], &self.pts[3]);
+                // println!("r: {}", r);
+                if r >= 1.0 {
+                    //-- 3 is after 1-2
+                    s = 1;
+                    m = 2;
+                    e = 3;
+                } else if r <= 0.0 {
+                    //-- 3 is before 1-2
+                    s = 3;
+                    m = 1;
+                    e = 2;
+                } else {
+                    //     println!("//-- 3 is in the middle of 1-2");
+                    s = 1;
+                    m = 3;
+                    e = 2;
+                }
+                if (self.pts[2].x - self.pts[1].x).signum() == -1.0 {
+                    //-- flip to be CCW
+                    mem::swap(&mut s, &mut e);
+                }
+
+                let mut v = vec![s, m, e, m];
                 self.stars[0].append(&mut v);
-                v = vec![0, 2];
-                self.stars[1].append(&mut v);
-                v = vec![0, 1, 0, 3];
-                self.stars[2].append(&mut v);
-                v = vec![0, 2];
-                self.stars[3].append(&mut v);
+                v = vec![0, m];
+                self.stars[s].append(&mut v);
+                v = vec![0, s, 0, e];
+                self.stars[m].append(&mut v);
+                v = vec![0, m];
+                self.stars[e].append(&mut v);
             }
             self.cur = self.pts.len() - 1;
             return Ok(self.cur);
