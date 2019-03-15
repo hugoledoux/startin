@@ -1,4 +1,4 @@
-mod predicates;
+mod geom;
 
 use std::fmt;
 use std::fs::File;
@@ -86,7 +86,7 @@ impl Triangulation {
         self.stars.push([].to_vec());
         //-- form the first triangles (finite + infinite)
         if self.pts.len() == 4 {
-            if predicates::orient2d(&self.pts[1], &self.pts[2], &self.pts[3]) == 1 {
+            if geom::orient2d(&self.pts[1], &self.pts[2], &self.pts[3]) == 1 {
                 let mut v = vec![1, 3, 2];
                 self.stars[0].append(&mut v);
                 v = vec![0, 2, 3];
@@ -96,7 +96,7 @@ impl Triangulation {
                 v = vec![0, 1, 2];
                 self.stars[3].append(&mut v);
                 self.is_init = true;
-            } else if predicates::orient2d(&self.pts[1], &self.pts[2], &self.pts[3]) == -1 {
+            } else if geom::orient2d(&self.pts[1], &self.pts[2], &self.pts[3]) == -1 {
                 let mut v = vec![1, 2, 3];
                 self.stars[0].append(&mut v);
                 v = vec![0, 3, 2];
@@ -107,7 +107,7 @@ impl Triangulation {
                 self.stars[3].append(&mut v);
                 self.is_init = true;
             } else {
-                //predicates::orient2d(&self.pts[1], &self.pts[2], &self.pts[3]) == 0
+                //geom::orient2d(&self.pts[1], &self.pts[2], &self.pts[3]) == 0
                 // FIXME: order is important
                 let mut v = vec![1, 2, 3, 2];
                 self.stars[0].append(&mut v);
@@ -213,23 +213,11 @@ impl Triangulation {
             if tr.is_infinite() == true {
                 let mut a: i8 = 0;
                 if tr.tr0 == 0 {
-                    a = predicates::orient2d(
-                        &self.pts[opposite],
-                        &self.pts[tr.tr1],
-                        &self.pts[tr.tr2],
-                    );
+                    a = geom::orient2d(&self.pts[opposite], &self.pts[tr.tr1], &self.pts[tr.tr2]);
                 } else if tr.tr1 == 0 {
-                    a = predicates::orient2d(
-                        &self.pts[tr.tr0],
-                        &self.pts[opposite],
-                        &self.pts[tr.tr2],
-                    );
+                    a = geom::orient2d(&self.pts[tr.tr0], &self.pts[opposite], &self.pts[tr.tr2]);
                 } else if tr.tr2 == 0 {
-                    a = predicates::orient2d(
-                        &self.pts[tr.tr0],
-                        &self.pts[tr.tr1],
-                        &self.pts[opposite],
-                    );
+                    a = geom::orient2d(&self.pts[tr.tr0], &self.pts[tr.tr1], &self.pts[opposite]);
                 }
                 println!("TODO: INCIRCLE FOR INFINITY {}", a);
                 if a > 0 {
@@ -241,8 +229,7 @@ impl Triangulation {
             } else {
                 if opposite == 0 {
                     //- if insertion on CH then break the edge
-                    if predicates::orient2d(&self.pts[tr.tr0], &self.pts[tr.tr1], &self.pts[tr.tr2])
-                        == 0
+                    if geom::orient2d(&self.pts[tr.tr0], &self.pts[tr.tr1], &self.pts[tr.tr2]) == 0
                     {
                         println!("FLIPPED1 {} {}", tr, 0);
                         let (ret0, ret1) = self.flip(&tr, 0);
@@ -250,7 +237,7 @@ impl Triangulation {
                         mystack.push(ret1);
                     }
                 } else {
-                    if predicates::incircle(
+                    if geom::incircle(
                         &self.pts[tr.tr0],
                         &self.pts[tr.tr1],
                         &self.pts[tr.tr2],
@@ -351,8 +338,8 @@ impl Triangulation {
         }
 
         //-- 2. order it such that tr0-tr1-x is CCW
-        if predicates::orient2d(&self.pts[tr.tr0], &self.pts[tr.tr1], &x) == -1 {
-            if predicates::orient2d(&self.pts[tr.tr1], &self.pts[tr.tr2], &x) != -1 {
+        if geom::orient2d(&self.pts[tr.tr0], &self.pts[tr.tr1], &x) == -1 {
+            if geom::orient2d(&self.pts[tr.tr1], &self.pts[tr.tr2], &x) != -1 {
                 mem::swap(&mut tr.tr0, &mut tr.tr1);
                 mem::swap(&mut tr.tr1, &mut tr.tr2);
             } else {
@@ -366,8 +353,8 @@ impl Triangulation {
             if tr.is_infinite() == true {
                 break;
             }
-            if predicates::orient2d(&self.pts[tr.tr1], &self.pts[tr.tr2], &x) != -1 {
-                if predicates::orient2d(&self.pts[tr.tr2], &self.pts[tr.tr0], &x) != -1 {
+            if geom::orient2d(&self.pts[tr.tr1], &self.pts[tr.tr2], &x) != -1 {
+                if geom::orient2d(&self.pts[tr.tr2], &self.pts[tr.tr0], &x) != -1 {
                     break;
                 } else {
                     //-- walk to incident to tr1,tr2
@@ -514,9 +501,7 @@ impl Triangulation {
                 if i == 0 {
                     continue;
                 }
-                if predicates::incircle(&self.pts[tr.tr0], &self.pts[tr.tr1], &self.pts[tr.tr2], pt)
-                    > 0
-                {
+                if geom::incircle(&self.pts[tr.tr0], &self.pts[tr.tr1], &self.pts[tr.tr2], pt) > 0 {
                     // println!("NOT DELAUNAY FFS!");
                     re = false
                 }
