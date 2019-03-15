@@ -81,9 +81,10 @@ impl Triangulation {
                 return Err(i);
             }
         }
-        //-- add point to Triangulation and create its star
+        //-- add point to Triangulation and create its empty star
         self.pts.push(p);
         self.stars.push([].to_vec());
+        //-- form the first triangles (finite + infinite)
         if self.pts.len() == 4 {
             if predicates::orient2d(&self.pts[1], &self.pts[2], &self.pts[3]) == 1 {
                 let mut v = vec![1, 3, 2];
@@ -107,6 +108,7 @@ impl Triangulation {
                 self.is_init = true;
             } else {
                 //predicates::orient2d(&self.pts[1], &self.pts[2], &self.pts[3]) == 0
+                // FIXME: order is important
                 let mut v = vec![1, 2, 3, 2];
                 self.stars[0].append(&mut v);
                 v = vec![0, 2];
@@ -116,7 +118,26 @@ impl Triangulation {
                 v = vec![0, 2];
                 self.stars[3].append(&mut v);
             }
+            self.cur = self.pts.len() - 1;
+            return Ok(self.cur);
         }
+        //-- here the triangulation is formed only of collinear vertices
+        if self.pts.len() > 4 {
+            //-- find pq (first-last of line segment)
+            let mut pi: usize = 0;
+            let mut qi: usize = 0;
+            for (i, each) in self.stars.iter().enumerate() {
+                if each.len() == 2 {
+                    if pi == 0 {
+                        pi = i;
+                    } else {
+                        qi = i;
+                    }
+                }
+            }
+            println!("{} {}", pi, qi);
+        }
+
         self.cur = self.pts.len() - 1;
         Ok(self.cur)
     }
