@@ -49,7 +49,7 @@ impl fmt::Display for Triangle {
 pub struct Triangulation {
     pts: Vec<Point3d>,
     stars: Vec<Vec<usize>>,
-    tol: f64,
+    snaptol: f64,
     cur: usize,
     is_init: bool,
 }
@@ -69,7 +69,7 @@ impl Triangulation {
         Triangulation {
             pts: v,
             stars: s,
-            tol: 0.001,
+            snaptol: 0.001,
             cur: 0,
             is_init: false,
         }
@@ -77,7 +77,7 @@ impl Triangulation {
 
     fn insert_one_pt_init_phase(&mut self, p: Point3d) -> Result<usize, usize> {
         for (i, pi) in self.pts.iter().enumerate() {
-            if pi.square_2d_distance(&p) <= (self.tol * self.tol) {
+            if pi.square_2d_distance(&p) <= (self.snaptol * self.snaptol) {
                 return Err(i);
             }
         }
@@ -85,85 +85,46 @@ impl Triangulation {
         self.pts.push(p);
         self.stars.push([].to_vec());
         //-- form the first triangles (finite + infinite)
-        if self.pts.len() == 4 {
-            if geom::orient2d(&self.pts[1], &self.pts[2], &self.pts[3]) == 1 {
-                let mut v = vec![1, 3, 2];
+        let l = self.pts.len();
+        if l >= 4 {
+            let a = l - 3;
+            let b = l - 2;
+            let c = l - 1;
+            let re = geom::orient2d(&self.pts[a], &self.pts[b], &self.pts[c]);
+            if re == 1 {
+                println!("init: ({},{},{})", a, b, c);
+                let mut v = vec![a, c, b];
                 self.stars[0].append(&mut v);
-                v = vec![0, 2, 3];
-                self.stars[1].append(&mut v);
-                v = vec![0, 3, 1];
-                self.stars[2].append(&mut v);
-                v = vec![0, 1, 2];
-                self.stars[3].append(&mut v);
+                v = vec![0, b, c];
+                self.stars[a].append(&mut v);
+                v = vec![0, c, a];
+                self.stars[b].append(&mut v);
+                v = vec![0, a, b];
+                self.stars[c].append(&mut v);
                 self.is_init = true;
-            } else if geom::orient2d(&self.pts[1], &self.pts[2], &self.pts[3]) == -1 {
-                let mut v = vec![1, 2, 3];
+            } else if re == -1 {
+                println!("init: ({},{},{})", a, c, b);
+                let mut v = vec![a, b, c];
                 self.stars[0].append(&mut v);
-                v = vec![0, 3, 2];
-                self.stars[1].append(&mut v);
-                v = vec![0, 1, 3];
-                self.stars[2].append(&mut v);
-                v = vec![0, 2, 1];
-                self.stars[3].append(&mut v);
+                v = vec![0, c, b];
+                self.stars[a].append(&mut v);
+                v = vec![0, a, c];
+                self.stars[b].append(&mut v);
+                v = vec![0, b, a];
+                self.stars[c].append(&mut v);
                 self.is_init = true;
-            } else {
-                //geom::orient2d(&self.pts[1], &self.pts[2], &self.pts[3]) == 0
-                let mut s: usize = 0;
-                let mut m: usize = 0;
-                let mut e: usize = 0;
-                let r = geom::vector_projection(&self.pts[1], &self.pts[2], &self.pts[3]);
-                // println!("r: {}", r);
-                if r >= 1.0 {
-                    //-- 3 is after 1-2
-                    s = 1;
-                    m = 2;
-                    e = 3;
-                } else if r <= 0.0 {
-                    //-- 3 is before 1-2
-                    s = 3;
-                    m = 1;
-                    e = 2;
-                } else {
-                    //     println!("//-- 3 is in the middle of 1-2");
-                    s = 1;
-                    m = 3;
-                    e = 2;
-                }
-                if (self.pts[2].x - self.pts[1].x).signum() == -1.0 {
-                    //-- flip to be CCW
-                    mem::swap(&mut s, &mut e);
-                }
-
-                let mut v = vec![s, m, e, m];
-                self.stars[0].append(&mut v);
-                v = vec![0, m];
-                self.stars[s].append(&mut v);
-                v = vec![0, s, 0, e];
-                self.stars[m].append(&mut v);
-                v = vec![0, m];
-                self.stars[e].append(&mut v);
             }
-            self.cur = self.pts.len() - 1;
-            return Ok(self.cur);
         }
-        //-- here the triangulation is formed only of collinear vertices
-        if self.pts.len() > 4 {
-            //-- find pq (first-last of line segment)
-            let mut pi: usize = 0;
-            let mut qi: usize = 0;
-            for (i, each) in self.stars.iter().enumerate() {
-                if each.len() == 2 {
-                    if pi == 0 {
-                        pi = i;
-                    } else {
-                        qi = i;
-                    }
-                }
+        self.cur = l - 1;
+        if self.is_init == true {
+            //-- insert the previous vertices in the dt
+            for j in 1..(l - 3) {
+                let tr = self.walk(&self.pts[j]);
+                println!("found tr: {}", tr);
+                self.flip13(j, &tr);
+                self.update_dt(j);
             }
-            println!("{} {}", pi, qi);
         }
-
-        self.cur = self.pts.len() - 1;
         Ok(self.cur)
     }
 
@@ -180,51 +141,49 @@ impl Triangulation {
             return self.insert_one_pt_init_phase(p);
         }
 
+        //-- walk
         println!("Walking");
         let tr = self.walk(&p);
         println!("STARTING TR: {}", tr);
-        if p.square_2d_distance(&self.pts[tr.tr0]) < (self.tol * self.tol) {
+        if p.square_2d_distance(&self.pts[tr.tr0]) < (self.snaptol * self.snaptol) {
             return Err(tr.tr0);
         }
-        if p.square_2d_distance(&self.pts[tr.tr1]) < (self.tol * self.tol) {
+        if p.square_2d_distance(&self.pts[tr.tr1]) < (self.snaptol * self.snaptol) {
             return Err(tr.tr1);
         }
-        if p.square_2d_distance(&self.pts[tr.tr2]) < (self.tol * self.tol) {
+        if p.square_2d_distance(&self.pts[tr.tr2]) < (self.snaptol * self.snaptol) {
             return Err(tr.tr2);
         }
         self.pts.push(p);
         self.stars.push([].to_vec());
         let pi = self.pts.len() - 1;
-        self.stars[pi].push(tr.tr0);
-        self.stars[pi].push(tr.tr1);
-        self.stars[pi].push(tr.tr2);
 
-        let mut i = self.index_in_star(&self.stars[tr.tr0], tr.tr1);
-        self.stars[tr.tr0].insert(i + 1, pi);
-        i = self.index_in_star(&self.stars[tr.tr1], tr.tr2);
-        self.stars[tr.tr1].insert(i + 1, pi);
-        i = self.index_in_star(&self.stars[tr.tr2], tr.tr0);
-        self.stars[tr.tr2].insert(i + 1, pi);
+        //-- flip13()
+        self.flip13(pi, &tr);
+        //-- update_dt()
+        self.update_dt(pi);
 
-        //-- put infinite vertex first in list
-        self.star_update_infinite_first(pi);
+        self.cur = self.pts.len() - 1;
+        Ok(self.pts.len() - 1)
+    }
 
-        // println!("-->FLIP");
+    fn update_dt(&mut self, pi: usize) {
+        println!("--> Update DT");
         let mut mystack: Vec<Triangle> = Vec::new();
         mystack.push(Triangle {
             tr0: pi,
-            tr1: tr.tr0,
-            tr2: tr.tr1,
+            tr1: self.stars[pi][0],
+            tr2: self.stars[pi][1],
         });
         mystack.push(Triangle {
             tr0: pi,
-            tr1: tr.tr1,
-            tr2: tr.tr2,
+            tr1: self.stars[pi][1],
+            tr2: self.stars[pi][2],
         });
         mystack.push(Triangle {
             tr0: pi,
-            tr1: tr.tr2,
-            tr2: tr.tr0,
+            tr1: self.stars[pi][2],
+            tr2: self.stars[pi][0],
         });
 
         loop {
@@ -253,7 +212,7 @@ impl Triangulation {
                 }
             } else {
                 if opposite == 0 {
-                    //- if insertion on CH then break the edge
+                    //- if insertion on CH then break the edge, otherwise do nothing
                     if geom::orient2d(&self.pts[tr.tr0], &self.pts[tr.tr1], &self.pts[tr.tr2]) == 0
                     {
                         println!("FLIPPED1 {} {}", tr, 0);
@@ -277,8 +236,20 @@ impl Triangulation {
                 }
             }
         }
-        self.cur = self.pts.len() - 1;
-        Ok(self.pts.len() - 1)
+    }
+
+    fn flip13(&mut self, pi: usize, tr: &Triangle) {
+        self.stars[pi].push(tr.tr0);
+        self.stars[pi].push(tr.tr1);
+        self.stars[pi].push(tr.tr2);
+        let mut i = self.index_in_star(&self.stars[tr.tr0], tr.tr1);
+        self.stars[tr.tr0].insert(i + 1, pi);
+        i = self.index_in_star(&self.stars[tr.tr1], tr.tr2);
+        self.stars[tr.tr1].insert(i + 1, pi);
+        i = self.index_in_star(&self.stars[tr.tr2], tr.tr0);
+        self.stars[tr.tr2].insert(i + 1, pi);
+        //-- put infinite vertex first in list
+        self.star_update_infinite_first(pi);
     }
 
     pub fn get_point(&self, i: usize) -> Point3d {
