@@ -92,7 +92,7 @@ impl Triangulation {
             let c = l - 1;
             let re = geom::orient2d(&self.pts[a], &self.pts[b], &self.pts[c]);
             if re == 1 {
-                println!("init: ({},{},{})", a, b, c);
+                // println!("init: ({},{},{})", a, b, c);
                 let mut v = vec![a, c, b];
                 self.stars[0].append(&mut v);
                 v = vec![0, b, c];
@@ -103,7 +103,7 @@ impl Triangulation {
                 self.stars[c].append(&mut v);
                 self.is_init = true;
             } else if re == -1 {
-                println!("init: ({},{},{})", a, c, b);
+                // println!("init: ({},{},{})", a, c, b);
                 let mut v = vec![a, b, c];
                 self.stars[0].append(&mut v);
                 v = vec![0, c, b];
@@ -120,7 +120,7 @@ impl Triangulation {
             //-- insert the previous vertices in the dt
             for j in 1..(l - 3) {
                 let tr = self.walk(&self.pts[j]);
-                println!("found tr: {}", tr);
+                // println!("found tr: {}", tr);
                 self.flip13(j, &tr);
                 self.update_dt(j);
             }
@@ -135,16 +135,16 @@ impl Triangulation {
             y: py,
             z: pz,
         };
-        println!("-->{}", p);
+        // println!("-->{}", p);
 
         if self.is_init == false {
             return self.insert_one_pt_init_phase(p);
         }
 
         //-- walk
-        println!("Walking");
+        // println!("Walking");
         let tr = self.walk(&p);
-        println!("STARTING TR: {}", tr);
+        // println!("STARTING TR: {}", tr);
         if p.square_2d_distance(&self.pts[tr.tr0]) < (self.snaptol * self.snaptol) {
             return Err(tr.tr0);
         }
@@ -168,7 +168,7 @@ impl Triangulation {
     }
 
     fn update_dt(&mut self, pi: usize) {
-        println!("--> Update DT");
+        // println!("--> Update DT");
         let mut mystack: Vec<Triangle> = Vec::new();
         mystack.push(Triangle {
             tr0: pi,
@@ -192,7 +192,7 @@ impl Triangulation {
                 Some(x) => x,
             };
             let opposite = self.get_opposite_vertex(&tr);
-            println!("stacked: {} {}", tr, opposite);
+            // println!("stacked: {} {}", tr, opposite);
 
             if tr.is_infinite() == true {
                 let mut a: i8 = 0;
@@ -203,9 +203,9 @@ impl Triangulation {
                 } else if tr.tr2 == 0 {
                     a = geom::orient2d(&self.pts[tr.tr0], &self.pts[tr.tr1], &self.pts[opposite]);
                 }
-                println!("TODO: INCIRCLE FOR INFINITY {}", a);
+                // println!("TODO: INCIRCLE FOR INFINITY {}", a);
                 if a > 0 {
-                    println!("FLIPPED0 {} {}", tr, opposite);
+                    // println!("FLIPPED0 {} {}", tr, opposite);
                     let (ret0, ret1) = self.flip(&tr, opposite);
                     mystack.push(ret0);
                     mystack.push(ret1);
@@ -213,9 +213,10 @@ impl Triangulation {
             } else {
                 if opposite == 0 {
                     //- if insertion on CH then break the edge, otherwise do nothing
+                    //-- TODO sure the flips are okay here?
                     if geom::orient2d(&self.pts[tr.tr0], &self.pts[tr.tr1], &self.pts[tr.tr2]) == 0
                     {
-                        println!("FLIPPED1 {} {}", tr, 0);
+                        // println!("FLIPPED1 {} {}", tr, 0);
                         let (ret0, ret1) = self.flip(&tr, 0);
                         mystack.push(ret0);
                         mystack.push(ret1);
@@ -228,7 +229,7 @@ impl Triangulation {
                         &self.pts[opposite],
                     ) > 0
                     {
-                        println!("FLIPPED2 {} {}", tr, opposite);
+                        // println!("FLIPPED2 {} {}", tr, opposite);
                         let (ret0, ret1) = self.flip(&tr, opposite);
                         mystack.push(ret0);
                         mystack.push(ret1);
@@ -316,7 +317,7 @@ impl Triangulation {
             tr2: 0,
         };
         let cur = self.cur;
-        println!("cur: {}", cur);
+        // println!("cur: {}", cur);
         //-- 1. find a finite triangle
         // TODO: necessary?
         tr.tr0 = cur;

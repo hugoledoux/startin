@@ -1,4 +1,4 @@
-#[allow(dead_code)]
+// #[allow(dead_code)]
 extern crate csv;
 extern crate rustin;
 extern crate serde;
@@ -30,8 +30,8 @@ fn main() {
     for p in vec.into_iter() {
         let re = tr.insert_one_pt(p.x, p.y, p.z);
         match re {
-            Ok(_x) => println!("{:?}", tr),
-            // Ok(_x) => continue,
+            // Ok(_x) => println!("{:?}", tr),
+            Ok(_x) => continue,
             Err(_e) => duplicates = duplicates + 1,
             // Err(e) => println!("Duplicate point! Not inserted {}", tr.get_point(e)),
         };
@@ -49,7 +49,7 @@ fn main() {
     // let ch = tr.get_convex_hull();
     // println!("{:?}", ch);
 
-    tr.write_obj("/Users/hugo/temp/out.obj".to_string(), false)
+    tr.write_obj("/Users/hugo/temp/out.obj".to_string(), true)
         .unwrap();
 }
 
