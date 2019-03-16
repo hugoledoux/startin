@@ -39,9 +39,9 @@ fn main() {
     }
     println!("Duplicates? yup: {} of them", duplicates);
 
-    println!("****** is Delaunay? ******");
-    println!("{}", tr.is_delaunay());
-    println!("**************************");
+    // println!("****** is Delaunay? ******");
+    // println!("{}", tr.is_delaunay());
+    // println!("**************************");
 
     // println!("Number of points in DT: {}", tr.number_of_vertices());
     // println!("Number of trianges in DT: {}", tr.number_of_triangles());
@@ -50,8 +50,8 @@ fn main() {
     // let ch = tr.get_convex_hull();
     // println!("{:?}", ch);
 
-    tr.write_obj("/Users/hugo/temp/out.obj".to_string(), true)
-        .unwrap();
+    // tr.write_obj("/Users/hugo/temp/out.obj".to_string(), true)
+    //     .unwrap();
 }
 
 fn read_xyz_file() -> Result<Vec<Point>, Box<Error>> {
