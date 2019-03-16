@@ -44,8 +44,8 @@ fn main() {
 
     // println!("Number of points in DT: {}", tr.number_of_vertices());
     // println!("Number of trianges in DT: {}", tr.number_of_triangles());
-    println!("{:?}", tr);
-    // println!("{}", tr);
+    // println!("{:?}", tr);
+    println!("{}", tr);
     // let ch = tr.get_convex_hull();
     // println!("{:?}", ch);
 

@@ -97,6 +97,7 @@ impl Vector {
 
 pub fn vector_projection(a: &Point3d, b: &Point3d, c: &Point3d) -> f64 {
     let mut p = Vector::new(a.x, a.y, b.x, b.y);
+    // println!("parrow: {},{}", p.x, p.y);
     let q = Vector::new(a.x, a.y, c.x, c.y);
     let plength = p.length();
     p.normalise();
