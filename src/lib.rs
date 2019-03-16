@@ -1,9 +1,13 @@
 mod geom;
 
+use rand::prelude::thread_rng;
+use rand::Rng;
 use std::fmt;
 use std::fs::File;
 use std::io::Write;
 use std::mem;
+
+extern crate rand;
 
 pub struct Point3d {
     pub x: f64,
@@ -322,12 +326,26 @@ impl Triangulation {
     fn walk(&self, x: &Point3d) -> Triangle {
         //-- TODO: random sample some and pick closest?
         //-- find the starting tr
+
+        let mut cur = self.cur;
+
+        let mut rng = thread_rng();
+        let mut d: f64 = x.square_2d_distance(&self.pts[self.cur]);
+        let n = (self.pts.len() as f64).powf(0.25) * 7.0;
+        for _i in 0..n as i32 {
+            let re: usize = rng.gen_range(1, self.pts.len());
+            let dtemp = x.square_2d_distance(&self.pts[re]);
+            if dtemp < d {
+                cur = re;
+                d = dtemp;
+            }
+        }
+
         let mut tr = Triangle {
             tr0: 0,
             tr1: 0,
             tr2: 0,
         };
-        let cur = self.cur;
         // println!("cur: {}", cur);
         //-- 1. find a finite triangle
         // TODO: necessary?
