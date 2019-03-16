@@ -128,6 +128,17 @@ impl Triangulation {
         Ok(self.cur)
     }
 
+    pub fn set_snap_tolerance(&mut self, snaptol: f64) -> f64 {
+        if snaptol > 0.0 {
+            self.snaptol = snaptol;
+        }
+        self.snaptol
+    }
+
+    pub fn get_snap_tolerance(&self) -> f64 {
+        self.snaptol
+    }
+
     //-- insert_one_pt
     pub fn insert_one_pt(&mut self, px: f64, py: f64, pz: f64) -> Result<usize, usize> {
         let p = Point3d {
