@@ -332,11 +332,11 @@ impl Triangulation {
         //-- 1. find a finite triangle
         // TODO: necessary?
         tr.tr0 = cur;
-        if self.stars[cur].len() < 3 {
-            tr.tr1 = self.stars[cur][0];
-            tr.tr2 = self.stars[cur][1];
-            return tr;
-        }
+        // if self.stars[cur].len() < 3 {
+        //     tr.tr1 = self.stars[cur][0];
+        //     tr.tr2 = self.stars[cur][1];
+        //     return tr;
+        // }
         if self.stars[cur][0] == 0 {
             tr.tr1 = self.stars[cur][1];
             tr.tr2 = self.stars[cur][2];
