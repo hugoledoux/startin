@@ -68,8 +68,11 @@ impl Triangulation {
             y: 9999999.0,
             z: 9999999.0,
         });
-        let mut s: Vec<Vec<usize>> = Vec::new();
+        // let mut s: Vec<Vec<usize>> = Vec::new();
+        // s.push([].to_vec());
+        let mut s: Vec<Vec<usize>> = Vec::with_capacity(1000);
         s.push([].to_vec());
+
         Triangulation {
             pts: v,
             stars: s,
@@ -170,7 +173,9 @@ impl Triangulation {
             return Err(tr.tr2);
         }
         self.pts.push(p);
-        self.stars.push([].to_vec());
+        let s = Vec::with_capacity(10);
+        self.stars.push(s);
+        // self.stars.push([].to_vec());
         let pi = self.pts.len() - 1;
 
         //-- flip13()
