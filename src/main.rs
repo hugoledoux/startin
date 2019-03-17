@@ -50,6 +50,9 @@ fn main() {
     // let ch = tr.get_convex_hull();
     // println!("{:?}", ch);
 
+    // let stats = tr.stats_degree();
+    // println!("stats: {}--{}--{}", stats.0, stats.1, stats.2);
+
     // tr.write_obj("/Users/hugo/temp/out.obj".to_string(), true)
     //     .unwrap();
 }

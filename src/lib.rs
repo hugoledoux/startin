@@ -277,6 +277,23 @@ impl Triangulation {
         }
     }
 
+    pub fn stats_degree(&self) -> (f64, usize, usize) {
+        let mut total: f64 = 0.0;
+        let mut min: usize = usize::max_value();
+        let mut max: usize = usize::min_value();
+        for i in 1..self.pts.len() {
+            total = total + self.stars[i].len() as f64;
+            if self.stars[i].len() > max {
+                max = self.stars[i].len();
+            }
+            if self.stars[i].len() < min {
+                min = self.stars[i].len();
+            }
+        }
+        total = total / (self.pts.len() - 2) as f64;
+        return (total, min, max);
+    }
+
     pub fn number_of_vertices(&self) -> usize {
         //-- number of finite vertices
         (self.pts.len() - 1)
