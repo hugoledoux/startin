@@ -558,6 +558,14 @@ impl Triangulation {
         }
     }
 
+    pub fn get_vertices(&self) -> Vec<Point3d> {
+        let mut pts: Vec<Point3d> = Vec::with_capacity(self.stars.len() - 1);
+        for i in 1..self.stars.len() {
+            pts.push(self.stars[i].pt);
+        }
+        pts
+    }
+
     fn get_triangles(&self) -> Vec<Triangle> {
         let mut trs: Vec<Triangle> = Vec::new();
         for (i, star) in self.stars.iter().enumerate() {
