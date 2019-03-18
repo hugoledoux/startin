@@ -37,7 +37,12 @@ fn main() {
             // Err(e) => println!("Duplicate point! Not inserted {}", tr.get_point(e)),
         };
     }
-    println!("Duplicates? yup: {} of them", duplicates);
+
+    if duplicates > 0 {
+        println!("Duplicates? {} of them.\n", duplicates);
+    } else {
+        println!("Duplicates? none.\n");
+    }
 
     // println!("****** is Delaunay? ******");
     // println!("{}", tr.is_delaunay());
