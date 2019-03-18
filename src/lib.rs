@@ -373,18 +373,18 @@ impl Triangulation {
         let mut cur = self.cur;
 
         //-- jump-and-walk
-        // let mut rng = thread_rng();
-        // let mut d: f64 = x.square_2d_distance(&self.pts[self.cur]);
-        // // let n = (self.pts.len() as f64).powf(0.25);
-        // let n = (self.pts.len() as f64).powf(0.25) * 7.0;
-        // for _i in 0..n as i32 {
-        //     let re: usize = rng.gen_range(1, self.pts.len());
-        //     let dtemp = x.square_2d_distance(&self.pts[re]);
-        //     if dtemp < d {
-        //         cur = re;
-        //         d = dtemp;
-        //     }
-        // }
+        let mut rng = thread_rng();
+        let mut d: f64 = x.square_2d_distance(&self.stars[self.cur].pt);
+        let n = (self.stars.len() as f64).powf(0.25);
+        // let n = (self.stars.len() as f64).powf(0.25) * 7.0;
+        for _i in 0..n as i32 {
+            let re: usize = rng.gen_range(1, self.stars.len());
+            let dtemp = x.square_2d_distance(&self.stars[re].pt);
+            if dtemp < d {
+                cur = re;
+                d = dtemp;
+            }
+        }
 
         let mut tr = Triangle {
             tr0: 0,
