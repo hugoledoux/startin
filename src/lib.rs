@@ -73,6 +73,7 @@ pub struct Triangulation {
     snaptol: f64,
     cur: usize,
     is_init: bool,
+    jump_and_walk: bool,
 }
 
 impl Triangulation {
@@ -91,6 +92,7 @@ impl Triangulation {
             snaptol: 0.001,
             cur: 0,
             is_init: false,
+            jump_and_walk: true,
         }
     }
 
@@ -155,6 +157,10 @@ impl Triangulation {
 
     pub fn get_snap_tolerance(&self) -> f64 {
         self.snaptol
+    }
+
+    pub fn set_jump_and_walk(&mut self, b: bool) {
+        self.jump_and_walk = b;
     }
 
     //-- insert_one_pt
@@ -373,16 +379,18 @@ impl Triangulation {
         let mut cur = self.cur;
 
         //-- jump-and-walk
-        let mut rng = thread_rng();
-        let mut d: f64 = x.square_2d_distance(&self.stars[self.cur].pt);
-        let n = (self.stars.len() as f64).powf(0.25);
-        // let n = (self.stars.len() as f64).powf(0.25) * 7.0;
-        for _i in 0..n as i32 {
-            let re: usize = rng.gen_range(1, self.stars.len());
-            let dtemp = x.square_2d_distance(&self.stars[re].pt);
-            if dtemp < d {
-                cur = re;
-                d = dtemp;
+        if self.jump_and_walk == true {
+            let mut rng = thread_rng();
+            let mut d: f64 = x.square_2d_distance(&self.stars[self.cur].pt);
+            let n = (self.stars.len() as f64).powf(0.25);
+            // let n = (self.stars.len() as f64).powf(0.25) * 7.0;
+            for _i in 0..n as i32 {
+                let re: usize = rng.gen_range(1, self.stars.len());
+                let dtemp = x.square_2d_distance(&self.stars[re].pt);
+                if dtemp < d {
+                    cur = re;
+                    d = dtemp;
+                }
             }
         }
 

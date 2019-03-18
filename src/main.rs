@@ -27,6 +27,7 @@ fn main() {
 
     let mut tr = rustin::Triangulation::new();
     // tr.set_snap_tolerance(0.1);
+    tr.set_jump_and_walk(false);
     let mut duplicates = 0;
     for p in vec.into_iter() {
         let re = tr.insert_one_pt(p.x, p.y, p.z);
