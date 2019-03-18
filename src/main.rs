@@ -25,18 +25,18 @@ fn main() {
         Err(error) => panic!("Problem with the file {:?}", error),
     };
 
-    let mut tr = rustin::Triangulation::new();
-    // tr.set_snap_tolerance(0.1);
-    tr.set_jump_and_walk(false);
+    let mut dt = rustin::Triangulation::new();
+    // dt.set_snap_tolerance(0.1);
+    dt.set_jump_and_walk(false);
 
     let mut duplicates = 0;
     for p in vec.into_iter() {
-        let re = tr.insert_one_pt(p.x, p.y, p.z);
+        let re = dt.insert_one_pt(p.x, p.y, p.z);
         match re {
-            // Ok(_x) => println!("{:?}", tr),
+            // Ok(_x) => println!("{:?}", dt),
             Ok(_x) => continue,
             Err(_e) => duplicates = duplicates + 1,
-            // Err(e) => println!("Duplicate point! Not inserted {}", tr.get_point(e)),
+            // Err(e) => println!("Duplicate point! Not inserted {}", dt.get_point(e)),
         };
     }
 
@@ -47,38 +47,38 @@ fn main() {
     }
 
     // println!("****** is Delaunay? ******");
-    // println!("{}", tr.is_delaunay());
+    // println!("{}", dt.is_delaunay());
     // println!("**************************");
 
-    // println!("Number of points in DT: {}", tr.number_of_vertices());
-    // println!("Number of trianges in DT: {}", tr.number_of_triangles());
-    // println!("{:?}", tr);
-    println!("{}", tr);
-    // let ch = tr.get_convex_hull();
+    // println!("Number of points in DT: {}", dt.number_of_vertices());
+    // println!("Number of trianges in DT: {}", dt.number_of_triangles());
+    // println!("{:?}", dt);
+    println!("{}", dt);
+    // let ch = dt.get_convex_hull();
     // println!("{:?}", ch);
 
-    let pts = tr.get_vertices();
+    let pts = dt.get_vertices();
     println!("Size pts: {}", pts.len());
 
     //-- fetch triangle containing (x, y)
-    let re = tr.locate(50.0, 50.0);
+    let re = dt.locate(50.0, 50.0);
     if re.is_some() {
         let mut t = re.unwrap();
         println!("{}", t);
-        println!("({})", tr.get_point(t.tr0));
-        println!("({})", tr.get_point(t.tr1));
-        println!("({})", tr.get_point(t.tr2));
-        println!("is_triangle(): {}", tr.is_triangle(&t));
+        println!("({})", dt.get_point(t.tr0));
+        println!("({})", dt.get_point(t.tr1));
+        println!("({})", dt.get_point(t.tr2));
+        println!("is_triangle(): {}", dt.is_triangle(&t));
         t.tr2 = 999;
-        println!("is_triangle(): {}", tr.is_triangle(&t));
+        println!("is_triangle(): {}", dt.is_triangle(&t));
     } else {
         println!("Outside convex hull");
     }
 
-    // let stats = tr.stats_degree();
+    // let stats = dt.stats_degree();
     // println!("stats: {}--{}--{}", stats.0, stats.1, stats.2);
 
-    // tr.write_obj("/Users/hugo/temp/out.obj".to_string(), true)
+    // dt.write_obj("/Users/hugo/temp/out.obj".to_string(), true)
     //     .unwrap();
 }
 
