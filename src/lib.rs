@@ -80,18 +80,6 @@ pub struct Triangulation {
 impl Triangulation {
     //-- new
     pub fn new() -> Triangulation {
-        //-- add point at infinity
-        // let mut v: Vec<Point3d> = Vec::new();
-        // let mut v: Vec<Point3d> = Vec::with_capacity(210000);
-        // v.push(Point3d {
-        // x: 9999999.0,
-        // y: 9999999.0,
-        // z: 9999999.0,
-        // });
-        // let mut s: Vec<Vec<usize>> = Vec::new();
-        // let mut s: Vec<Vec<usize>> = Vec::with_capacity(210000);
-        // s.push([].to_vec());
-
         let infinity = Point3d {
             x: 0.0,
             y: 0.0,
@@ -99,11 +87,8 @@ impl Triangulation {
         };
         let mut l: Vec<Star> = Vec::new();
         l.push(Star::new(infinity));
-
         Triangulation {
             sss: l,
-            // pts: v,
-            // stars: s,
             snaptol: 0.001,
             cur: 0,
             is_init: false,
@@ -117,8 +102,6 @@ impl Triangulation {
             }
         }
         //-- add point to Triangulation and create its empty star
-        // self.pts.push(p);
-        // self.stars.push([].to_vec());
         self.sss.push(Star::new(p));
         //-- form the first triangles (finite + infinite)
         let l = self.sss.len();
@@ -183,11 +166,9 @@ impl Triangulation {
             z: pz,
         };
         // println!("-->{}", p);
-
         if self.is_init == false {
             return self.insert_one_pt_init_phase(p);
         }
-
         //-- walk
         // println!("Walking");
         let tr = self.walk(&p);
@@ -201,13 +182,8 @@ impl Triangulation {
         if p.square_2d_distance(&self.sss[tr.tr2].pt) < (self.snaptol * self.snaptol) {
             return Err(tr.tr2);
         }
-        // self.pts.push(p);
-        // let s = Vec::with_capacity(10);
-        // self.stars.push(s);
         self.sss.push(Star::new(p));
-        // self.stars.push([].to_vec());
         let pi = self.sss.len() - 1;
-
         //-- flip13()
         self.flip13(pi, &tr);
         //-- update_dt()
