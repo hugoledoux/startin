@@ -9,6 +9,7 @@ use std::mem;
 
 extern crate rand;
 
+#[derive(Copy, Clone)]
 pub struct Point3d {
     pub x: f64,
     pub y: f64,
