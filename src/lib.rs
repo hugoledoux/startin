@@ -69,8 +69,6 @@ impl Star {
 
 //----------------------
 pub struct Triangulation {
-    // pts: Vec<Point3d>,
-    // stars: Vec<Vec<usize>>,
     stars: Vec<Star>,
     snaptol: f64,
     cur: usize,
@@ -85,7 +83,8 @@ impl Triangulation {
             y: 0.0,
             z: 0.0,
         };
-        let mut l: Vec<Star> = Vec::new();
+        let mut l: Vec<Star> = Vec::with_capacity(100000);
+        // let mut l: Vec<Star> = Vec::new();
         l.push(Star::new(infinity));
         Triangulation {
             stars: l,
@@ -394,13 +393,7 @@ impl Triangulation {
         };
         // println!("cur: {}", cur);
         //-- 1. find a finite triangle
-        // TODO: necessary?
         tr.tr0 = cur;
-        // if self.stars[cur].len() < 3 {
-        //     tr.tr1 = self.stars[cur][0];
-        //     tr.tr2 = self.stars[cur][1];
-        //     return tr;
-        // }
         if self.stars[cur].link[0] == 0 {
             tr.tr1 = self.stars[cur].link[1];
             tr.tr2 = self.stars[cur].link[2];
