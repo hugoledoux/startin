@@ -373,6 +373,19 @@ impl Triangulation {
         return self.stars[0].link.len();
     }
 
+    pub fn locate(&self, px: f64, py: f64) -> Option<Triangle> {
+        let p = Point3d {
+            x: px,
+            y: py,
+            z: 0.0,
+        };
+        let re = self.walk(&p);
+        match re.is_infinite() {
+            true => None,
+            false => Some(re),
+        }
+    }
+
     fn walk(&self, x: &Point3d) -> Triangle {
         //-- TODO: random sample some and pick closest?
         //-- find the starting tr
