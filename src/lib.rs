@@ -62,7 +62,8 @@ impl Triangulation {
     //-- new
     pub fn new() -> Triangulation {
         //-- add point at infinity
-        let mut v: Vec<Point3d> = Vec::new();
+        // let mut v: Vec<Point3d> = Vec::new();
+        let mut v: Vec<Point3d> = Vec::with_capacity(10000);
         v.push(Point3d {
             x: 9999999.0,
             y: 9999999.0,
@@ -70,7 +71,7 @@ impl Triangulation {
         });
         // let mut s: Vec<Vec<usize>> = Vec::new();
         // s.push([].to_vec());
-        let mut s: Vec<Vec<usize>> = Vec::with_capacity(1000);
+        let mut s: Vec<Vec<usize>> = Vec::with_capacity(10000);
         s.push([].to_vec());
 
         Triangulation {
