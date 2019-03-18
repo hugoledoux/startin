@@ -61,13 +61,16 @@ fn main() {
     println!("Size pts: {}", pts.len());
 
     //-- fetch triangle containing (x, y)
-    let re = tr.locate(450.0, 50.0);
+    let re = tr.locate(50.0, 50.0);
     if re.is_some() {
-        let t = re.unwrap();
+        let mut t = re.unwrap();
         println!("{}", t);
         println!("({})", tr.get_point(t.tr0));
         println!("({})", tr.get_point(t.tr1));
         println!("({})", tr.get_point(t.tr2));
+        println!("is_triangle(): {}", tr.is_triangle(&t));
+        t.tr2 = 999;
+        println!("is_triangle(): {}", tr.is_triangle(&t));
     } else {
         println!("Outside convex hull");
     }

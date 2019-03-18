@@ -310,6 +310,20 @@ impl Triangulation {
         }
     }
 
+    pub fn is_triangle(&self, tr: &Triangle) -> bool {
+        let re = self.is_index_in_star(&self.stars[tr.tr0].link, tr.tr1);
+        if re.is_none() {
+            return false;
+        } else {
+            let re2 = self.next_vertex_star(&self.stars[tr.tr0].link, re.unwrap());
+            if re2 == tr.tr2 {
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
     pub fn stats_degree(&self) -> (f64, usize, usize) {
         let mut total: f64 = 0.0;
         let mut min: usize = usize::max_value();
@@ -531,6 +545,15 @@ impl Triangulation {
             s[(s.len() - 1)]
         } else {
             s[(i - 1)]
+        }
+    }
+
+    fn is_index_in_star(&self, s: &Vec<usize>, i: usize) -> Option<usize> {
+        let re = s.iter().position(|&x| x == i);
+        if re.is_some() {
+            return re;
+        } else {
+            return None;
         }
     }
 
