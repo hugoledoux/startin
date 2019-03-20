@@ -19,30 +19,31 @@ pub mod shewchuk {
     }
 }
 
-pub fn orient2d(a: &Point3d, b: &Point3d, c: &Point3d) -> i8 {
+pub fn orient2d(a: &Point3d, b: &Point3d, c: &Point3d, robust_predicates: bool) -> i8 {
     //-- CCW    = +1
     //-- CW     = -1
     //-- colinear = 0
-    return orient2d_fast(&a, &b, &c);
+    if robust_predicates == true {
+        return orient2d_robust(&a, &b, &c);
+    } else {
+        return orient2d_fast(&a, &b, &c);
+    }
 }
 
-pub fn test_shewchuk() {
-    let mut a: Vec<f64> = vec![1.1, 1.110001];
-    let mut b: Vec<f64> = vec![5.1, 1.110001];
-    let mut c: Vec<f64> = vec![10.1, 1.110001];
-    // let mut d: Vec<f64> = vec![1.1, 1.110001, 5.1, 1.110001, 10.1, 1.110001];
-    let pa = a.as_mut_ptr();
-    let pb = b.as_mut_ptr();
-    let pc = c.as_mut_ptr();
-    // let pd = d.as_mut_ptr();
-    // let re = unsafe { orient2d(pa, pc, pb) };
-    let re = unsafe { shewchuk::orient2d(pa, pb, pc) };
+pub fn orient2d_robust(ppa: &Point3d, ppb: &Point3d, ppc: &Point3d) -> i8 {
+    //-- CCW    = +1
+    //-- CW     = -1
+    //-- colinear = 0
+    let mut a: Vec<f64> = vec![ppa.x, ppa.y];
+    let mut b: Vec<f64> = vec![ppb.x, ppb.y];
+    let mut c: Vec<f64> = vec![ppc.x, ppc.y];
+    let re = unsafe { shewchuk::orient2d(a.as_mut_ptr(), b.as_mut_ptr(), c.as_mut_ptr()) };
     if re == 0.0 {
-        println!("COLLINEAR");
+        return 0;
     } else if re > 0.0 {
-        println!("CCW");
+        return 1;
     } else {
-        println!("CW");
+        return -1;
     }
 }
 

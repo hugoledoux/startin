@@ -98,7 +98,7 @@ impl Triangulation {
             cur: 0,
             is_init: false,
             jump_and_walk: true,
-            robust_predicates: true,
+            robust_predicates: false,
         }
     }
 
@@ -116,7 +116,12 @@ impl Triangulation {
             let a = l - 3;
             let b = l - 2;
             let c = l - 1;
-            let re = geom::orient2d(&self.stars[a].pt, &self.stars[b].pt, &self.stars[c].pt);
+            let re = geom::orient2d(
+                &self.stars[a].pt,
+                &self.stars[b].pt,
+                &self.stars[c].pt,
+                self.robust_predicates,
+            );
             if re == 1 {
                 // println!("init: ({},{},{})", a, b, c);
                 let mut v = vec![a, c, b];
@@ -238,18 +243,21 @@ impl Triangulation {
                         &self.stars[opposite].pt,
                         &self.stars[tr.tr1].pt,
                         &self.stars[tr.tr2].pt,
+                        self.robust_predicates,
                     );
                 } else if tr.tr1 == 0 {
                     a = geom::orient2d(
                         &self.stars[tr.tr0].pt,
                         &self.stars[opposite].pt,
                         &self.stars[tr.tr2].pt,
+                        self.robust_predicates,
                     );
                 } else if tr.tr2 == 0 {
                     a = geom::orient2d(
                         &self.stars[tr.tr0].pt,
                         &self.stars[tr.tr1].pt,
                         &self.stars[opposite].pt,
+                        self.robust_predicates,
                     );
                 }
                 // println!("TODO: INCIRCLE FOR INFINITY {}", a);
@@ -267,6 +275,7 @@ impl Triangulation {
                         &self.stars[tr.tr0].pt,
                         &self.stars[tr.tr1].pt,
                         &self.stars[tr.tr2].pt,
+                        self.robust_predicates,
                     ) == 0
                     {
                         // println!("FLIPPED1 {} {}", tr, 0);
@@ -444,8 +453,20 @@ impl Triangulation {
         }
 
         //-- 2. order it such that tr0-tr1-x is CCW
-        if geom::orient2d(&self.stars[tr.tr0].pt, &self.stars[tr.tr1].pt, &x) == -1 {
-            if geom::orient2d(&self.stars[tr.tr1].pt, &self.stars[tr.tr2].pt, &x) != -1 {
+        if geom::orient2d(
+            &self.stars[tr.tr0].pt,
+            &self.stars[tr.tr1].pt,
+            &x,
+            self.robust_predicates,
+        ) == -1
+        {
+            if geom::orient2d(
+                &self.stars[tr.tr1].pt,
+                &self.stars[tr.tr2].pt,
+                &x,
+                self.robust_predicates,
+            ) != -1
+            {
                 mem::swap(&mut tr.tr0, &mut tr.tr1);
                 mem::swap(&mut tr.tr1, &mut tr.tr2);
             } else {
@@ -459,8 +480,20 @@ impl Triangulation {
             if tr.is_infinite() == true {
                 break;
             }
-            if geom::orient2d(&self.stars[tr.tr1].pt, &self.stars[tr.tr2].pt, &x) != -1 {
-                if geom::orient2d(&self.stars[tr.tr2].pt, &self.stars[tr.tr0].pt, &x) != -1 {
+            if geom::orient2d(
+                &self.stars[tr.tr1].pt,
+                &self.stars[tr.tr2].pt,
+                &x,
+                self.robust_predicates,
+            ) != -1
+            {
+                if geom::orient2d(
+                    &self.stars[tr.tr2].pt,
+                    &self.stars[tr.tr0].pt,
+                    &x,
+                    self.robust_predicates,
+                ) != -1
+                {
                     break;
                 } else {
                     //-- walk to incident to tr1,tr2
