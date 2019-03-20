@@ -118,6 +118,15 @@
 #include <math.h>
 #include <sys/time.h>
 
+/* ----- HL ----- */
+#ifdef CPU86
+  #include <float.h>
+#endif /* CPU86 */
+#ifdef LINUX
+  #include <fpu_control.h>
+#endif /* LINUX */
+/* ----- HL ----- */
+
 /* On some machines, the exact arithmetic routines might be defeated by the  */
 /*   use of internal extended precision floating-point registers.  Sometimes */
 /*   this problem can be fixed by defining certain values to be volatile,    */
