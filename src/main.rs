@@ -58,29 +58,29 @@ fn main() {
     // let ch = dt.get_convex_hull();
     // println!("{:?}", ch);
 
-    let pts = dt.get_vertices();
-    println!("Size pts: {}", pts.len());
+    // let pts = dt.get_vertices();
+    // println!("Size pts: {}", pts.len());
 
     // //-- fetch triangle containing (x, y)
     // let re = dt.locate(50.0, 50.0);
     // if re.is_some() {
     //     let mut t = re.unwrap();
     //     println!("{}", t);
-    //     println!("({})", dt.get_point(t.tr0));
-    //     println!("({})", dt.get_point(t.tr1));
-    //     println!("({})", dt.get_point(t.tr2));
+    //     // println!("({:?})", dt.get_point(t.tr0));
+    //     // println!("({:?})", dt.get_point(t.tr1));
+    //     // println!("({:?})", dt.get_point(t.tr2));
     //     println!("is_triangle(): {}", dt.is_triangle(&t));
-    //     t.tr2 = 999;
+    //     t.tr1 = 999;
     //     println!("is_triangle(): {}", dt.is_triangle(&t));
     // } else {
     //     println!("Outside convex hull");
     // }
 
-    // let stats = dt.stats_degree();
-    // println!("stats: {}--{}--{}", stats.0, stats.1, stats.2);
+    let stats = dt.stats_degree();
+    println!("stats: {}--{}--{}", stats.0, stats.1, stats.2);
 
     // dt.write_obj("/Users/hugo/temp/out.obj".to_string(), false)
-    // .unwrap();
+    //     .unwrap();
     // println!("--> OBJ output saved to: '/Users/hugo/temp/out.obj'");
 }
 
