@@ -75,6 +75,7 @@ pub struct Triangulation {
     cur: usize,
     is_init: bool,
     jump_and_walk: bool,
+    robust_predicates: bool,
 }
 
 impl Triangulation {
@@ -88,12 +89,16 @@ impl Triangulation {
         let mut l: Vec<Star> = Vec::with_capacity(100000);
         // let mut l: Vec<Star> = Vec::new();
         l.push(Star::new(infinity));
+        unsafe {
+            geom::shewchuk::exactinit();
+        }
         Triangulation {
             stars: l,
             snaptol: 0.001,
             cur: 0,
             is_init: false,
             jump_and_walk: true,
+            robust_predicates: true,
         }
     }
 

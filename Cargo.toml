@@ -1,12 +1,17 @@
 
 [package]
 name = "rustin"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Hugo Ledoux <h.ledoux@tudelft.nl>"]
 edition = "2018"
+build = "build.rs"
 
 [dependencies]
 csv = "1"
 serde = "1.0"
 serde_derive = "1.0"
 rand = "0.6"
+libc = "0.2"
+
+[build-dependencies]
+cc = "1.0"
