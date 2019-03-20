@@ -9,25 +9,6 @@ use std::mem;
 
 extern crate rand;
 
-#[derive(Copy, Clone)]
-pub struct Point3d {
-    pub x: f64,
-    pub y: f64,
-    pub z: f64,
-}
-
-impl Point3d {
-    fn square_2d_distance(&self, p: &Point3d) -> f64 {
-        (p.x - self.x) * (p.x - self.x) + (p.y - self.y) * (p.y - self.y)
-    }
-}
-
-impl fmt::Display for Point3d {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "POINT({:.3}, {:.3}, {:.3})", self.x, self.y, self.z)
-    }
-}
-
 //----------------------
 pub struct Triangle {
     pub tr0: usize,
@@ -52,19 +33,17 @@ impl fmt::Display for Triangle {
 
 //----------------------
 pub struct Star {
-    pub pt: Point3d,
+    pub pt: [f64; 3],
     pub link: Vec<usize>,
 }
 
 impl Star {
-    pub fn new(p: Point3d) -> Star {
+    pub fn new(x: f64, y: f64, z: f64) -> Star {
         let s: Vec<usize> = Vec::with_capacity(8);
-        let p = Point3d {
-            x: p.x,
-            y: p.y,
-            z: p.z,
-        };
-        Star { pt: p, link: s }
+        Star {
+            pt: [x, y, z],
+            link: s,
+        }
     }
 }
 
@@ -81,14 +60,9 @@ pub struct Triangulation {
 impl Triangulation {
     //-- new
     pub fn new() -> Triangulation {
-        let infinity = Point3d {
-            x: 0.0,
-            y: 0.0,
-            z: 0.0,
-        };
         let mut l: Vec<Star> = Vec::with_capacity(100000);
         // let mut l: Vec<Star> = Vec::new();
-        l.push(Star::new(infinity));
+        l.push(Star::new(0.0, 0.0, 0.0));
         unsafe {
             geom::shewchuk::exactinit();
         }
@@ -98,18 +72,19 @@ impl Triangulation {
             cur: 0,
             is_init: false,
             jump_and_walk: true,
-            robust_predicates: false,
+            robust_predicates: true,
         }
     }
 
-    fn insert_one_pt_init_phase(&mut self, p: Point3d) -> Result<usize, usize> {
+    fn insert_one_pt_init_phase(&mut self, x: f64, y: f64, z: f64) -> Result<usize, usize> {
+        let p: [f64; 3] = [x, y, z];
         for i in 1..self.stars.len() {
-            if self.stars[i].pt.square_2d_distance(&p) <= (self.snaptol * self.snaptol) {
+            if geom::distance2d_squared(&self.stars[i].pt, &p) <= (self.snaptol * self.snaptol) {
                 return Err(i);
             }
         }
         //-- add point to Triangulation and create its empty star
-        self.stars.push(Star::new(p));
+        self.stars.push(Star::new(x, y, z));
         //-- form the first triangles (finite + infinite)
         let l = self.stars.len();
         if l >= 4 {
@@ -176,29 +151,25 @@ impl Triangulation {
 
     //-- insert_one_pt
     pub fn insert_one_pt(&mut self, px: f64, py: f64, pz: f64) -> Result<usize, usize> {
-        let p = Point3d {
-            x: px,
-            y: py,
-            z: pz,
-        };
         // println!("-->{}", p);
         if self.is_init == false {
-            return self.insert_one_pt_init_phase(p);
+            return self.insert_one_pt_init_phase(px, py, pz);
         }
         //-- walk
         // println!("Walking");
+        let p: [f64; 3] = [px, py, pz];
         let tr = self.walk(&p);
         // println!("STARTING TR: {}", tr);
-        if p.square_2d_distance(&self.stars[tr.tr0].pt) < (self.snaptol * self.snaptol) {
+        if geom::distance2d_squared(&self.stars[tr.tr0].pt, &p) <= (self.snaptol * self.snaptol) {
             return Err(tr.tr0);
         }
-        if p.square_2d_distance(&self.stars[tr.tr1].pt) < (self.snaptol * self.snaptol) {
+        if geom::distance2d_squared(&self.stars[tr.tr1].pt, &p) <= (self.snaptol * self.snaptol) {
             return Err(tr.tr1);
         }
-        if p.square_2d_distance(&self.stars[tr.tr2].pt) < (self.snaptol * self.snaptol) {
+        if geom::distance2d_squared(&self.stars[tr.tr2].pt, &p) <= (self.snaptol * self.snaptol) {
             return Err(tr.tr2);
         }
-        self.stars.push(Star::new(p));
+        self.stars.push(Star::new(px, py, pz));
         let pi = self.stars.len() - 1;
         //-- flip13()
         self.flip13(pi, &tr);
@@ -289,6 +260,7 @@ impl Triangulation {
                         &self.stars[tr.tr1].pt,
                         &self.stars[tr.tr2].pt,
                         &self.stars[opposite].pt,
+                        self.robust_predicates,
                     ) > 0
                     {
                         // println!("FLIPPED2 {} {}", tr, opposite);
@@ -315,13 +287,8 @@ impl Triangulation {
         self.star_update_infinite_first(pi);
     }
 
-    pub fn get_point(&self, i: usize) -> Point3d {
-        let p = &self.stars[i].pt;
-        Point3d {
-            x: p.x,
-            y: p.y,
-            z: p.z,
-        }
+    pub fn get_point(&self, i: usize) -> Vec<f64> {
+        self.stars[i].pt.to_vec()
     }
 
     pub fn is_triangle(&self, tr: &Triangle) -> bool {
@@ -402,11 +369,7 @@ impl Triangulation {
     }
 
     pub fn locate(&self, px: f64, py: f64) -> Option<Triangle> {
-        let p = Point3d {
-            x: px,
-            y: py,
-            z: 0.0,
-        };
+        let p: [f64; 3] = [px, py, 0.0];
         let re = self.walk(&p);
         match re.is_infinite() {
             true => None,
@@ -414,7 +377,7 @@ impl Triangulation {
         }
     }
 
-    fn walk(&self, x: &Point3d) -> Triangle {
+    fn walk(&self, x: &[f64]) -> Triangle {
         //-- TODO: random sample some and pick closest?
         //-- find the starting tr
 
@@ -423,12 +386,13 @@ impl Triangulation {
         //-- jump-and-walk
         if self.jump_and_walk == true {
             let mut rng = thread_rng();
-            let mut d: f64 = x.square_2d_distance(&self.stars[self.cur].pt);
+            let mut d: f64 = geom::distance2d_squared(&self.stars[self.cur].pt, &x);
             let n = (self.stars.len() as f64).powf(0.25);
             // let n = (self.stars.len() as f64).powf(0.25) * 7.0;
             for _i in 0..n as i32 {
                 let re: usize = rng.gen_range(1, self.stars.len());
-                let dtemp = x.square_2d_distance(&self.stars[re].pt);
+                // let dtemp = x.square_2d_distance(&self.stars[re].pt);
+                let dtemp = geom::distance2d_squared(&self.stars[re].pt, &x);
                 if dtemp < d {
                     cur = re;
                     d = dtemp;
@@ -619,10 +583,10 @@ impl Triangulation {
         }
     }
 
-    pub fn get_vertices(&self) -> Vec<Point3d> {
-        let mut pts: Vec<Point3d> = Vec::with_capacity(self.stars.len() - 1);
+    pub fn get_vertices(&self) -> Vec<Vec<f64>> {
+        let mut pts: Vec<Vec<f64>> = Vec::with_capacity(self.stars.len() - 1);
         for i in 1..self.stars.len() {
-            pts.push(self.stars[i].pt);
+            pts.push(self.stars[i].pt.to_vec());
         }
         pts
     }
@@ -661,6 +625,7 @@ impl Triangulation {
                     &self.stars[tr.tr1].pt,
                     &self.stars[tr.tr2].pt,
                     &self.stars[i].pt,
+                    self.robust_predicates,
                 ) > 0
                 {
                     // println!("NOT DELAUNAY FFS!");
@@ -676,12 +641,17 @@ impl Triangulation {
         let mut f = File::create(path)?;
         for i in 1..self.stars.len() {
             if twod == true {
-                write!(f, "v {} {} {}\n", self.stars[i].pt.x, self.stars[i].pt.y, 0).unwrap();
+                write!(
+                    f,
+                    "v {} {} {}\n",
+                    self.stars[i].pt[0], self.stars[i].pt[1], 0
+                )
+                .unwrap();
             } else {
                 write!(
                     f,
                     "v {} {} {}\n",
-                    self.stars[i].pt.x, self.stars[i].pt.y, self.stars[i].pt.z
+                    self.stars[i].pt[0], self.stars[i].pt[1], self.stars[i].pt[2]
                 )
                 .unwrap();
             }
@@ -702,9 +672,7 @@ impl fmt::Display for Triangulation {
             "# convex hull: {:16}\n",
             self.number_of_vertices_on_convex_hull()
         ))?;
-        // for (i, _p) in self.pts.iter().enumerate() {
-        //     fmt.write_str(&format!("{}: {:?}\n", i, self.stars[i]))?;
-        // }
+        fmt.write_str(&format!("---\nrobust: {}\n", self.robust_predicates))?;
         fmt.write_str("===============================\n")?;
         Ok(())
     }
