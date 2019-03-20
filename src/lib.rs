@@ -32,53 +32,49 @@ impl fmt::Display for Triangle {
 }
 
 //----------------------
-pub struct Link {
-    l: Vec<usize>,
-}
+pub struct Link(Vec<usize>);
 
 impl Link {
     fn new() -> Link {
-        Link {
-            l: Vec::with_capacity(8),
-        }
+        Link(Vec::with_capacity(8))
     }
     fn len(&self) -> usize {
-        self.l.len()
+        self.0.len()
     }
-    fn push(&mut self, v: usize) {
-        self.l.push(v);
+    fn add(&mut self, v: usize) {
+        self.0.push(v);
     }
     fn insert_after_v(&mut self, v: usize, after: usize) {
-        let pos = self.l.iter().position(|&x| x == after).unwrap();
-        self.l.insert(pos + 1, v);
+        let pos = self.0.iter().position(|&x| x == after).unwrap();
+        self.0.insert(pos + 1, v);
     }
     fn delete(&mut self, v: usize) {
-        let re = self.l.iter().position(|&x| x == v);
+        let re = self.0.iter().position(|&x| x == v);
         if re != None {
-            self.l.remove(re.unwrap());
+            self.0.remove(re.unwrap());
         }
     }
     fn infinite_first(&mut self) {
-        let re = self.l.iter().position(|&x| x == 0);
+        let re = self.0.iter().position(|&x| x == 0);
         if re != None {
             let posinf = re.unwrap();
             if posinf == 0 {
                 return;
             }
             let mut newstar: Vec<usize> = Vec::new();
-            for j in posinf..self.l.len() {
-                newstar.push(self.l[j]);
+            for j in posinf..self.0.len() {
+                newstar.push(self.0[j]);
             }
             for j in 0..posinf {
-                newstar.push(self.l[j]);
+                newstar.push(self.0[j]);
             }
             // println!("newstar: {:?}", newstar);
-            self.l = newstar;
+            self.0 = newstar;
         }
     }
 
     fn next_index(&self, i: usize) -> usize {
-        if i == (self.l.len() - 1) {
+        if i == (self.0.len() - 1) {
             0
         } else {
             i + 1
@@ -86,7 +82,7 @@ impl Link {
     }
 
     fn get_index(&self, v: usize) -> Option<usize> {
-        return self.l.iter().position(|&x| x == v);
+        return self.0.iter().position(|&x| x == v);
     }
 
     fn get_next_vertex(&self, v: usize) -> Option<usize> {
@@ -95,10 +91,10 @@ impl Link {
             return None;
         }
         let pos = re.unwrap();
-        if pos == (self.l.len() - 1) {
-            return Some(self.l[0]);
+        if pos == (self.0.len() - 1) {
+            return Some(self.0[0]);
         } else {
-            return Some(self.l[(pos + 1)]);
+            return Some(self.0[(pos + 1)]);
         }
     }
 
