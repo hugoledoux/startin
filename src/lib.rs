@@ -32,17 +32,107 @@ impl fmt::Display for Triangle {
 }
 
 //----------------------
+pub struct Link {
+    l: Vec<usize>,
+}
+
+impl Link {
+    fn new() -> Link {
+        // let s: Vec<u32> = Vec::new();
+        Link {
+            l: Vec::with_capacity(8),
+        }
+    }
+    fn len(&self) -> usize {
+        self.l.len()
+    }
+    fn push(&mut self, v: usize) {
+        self.l.push(v);
+    }
+    fn insert_after_v(&mut self, v: usize, after: usize) {
+        let pos = self.l.iter().position(|&x| x == after).unwrap();
+        self.l.insert(pos + 1, v);
+    }
+    fn delete(&mut self, v: usize) {
+        let re = self.l.iter().position(|&x| x == v);
+        if re != None {
+            self.l.remove(re.unwrap());
+        }
+    }
+    fn infinite_first(&mut self) {
+        let re = self.l.iter().position(|&x| x == 0);
+        if re != None {
+            let posinf = re.unwrap();
+            if posinf == 0 {
+                return;
+            }
+            let mut newstar: Vec<usize> = Vec::new();
+            for j in posinf..self.l.len() {
+                newstar.push(self.l[j]);
+            }
+            for j in 0..posinf {
+                newstar.push(self.l[j]);
+            }
+            // println!("newstar: {:?}", newstar);
+            self.l = newstar;
+        }
+    }
+
+    fn next_index(&self, i: usize) -> usize {
+        if i == (self.l.len() - 1) {
+            0
+        } else {
+            i + 1
+        }
+    }
+    fn get_index(&self, v: usize) -> usize {
+        self.l.iter().position(|&x| x == v).unwrap()
+    }
+    fn get_next_vertex(&self, v: usize) -> usize {
+        let pos = self.get_index(v);
+        if pos == (self.l.len() - 1) {
+            self.l[0]
+        } else {
+            self.l[(pos + 1)]
+        }
+    }
+    fn get_prev_vertex(&self, v: usize) -> usize {
+        let pos = self.get_index(v);
+        if pos == 0 {
+            self.l[(self.l.len() - 1)]
+        } else {
+            self.l[(pos - 1)]
+        }
+    }
+}
+
+impl std::ops::Index<usize> for Link {
+    type Output = usize;
+    fn index(&self, idx: usize) -> &usize {
+        &self.l[idx as usize]
+    }
+}
+// impl std::ops::Index<u32> for Link {
+//     type Output = u32;
+//     fn index(&self, idx: u32) -> &u32 {
+//         &self.l[idx as usize]
+//     }
+// }
+
+//----------------------
 pub struct Star {
     pub pt: [f64; 3],
-    pub link: Vec<usize>,
+    pub link: Link,
 }
 
 impl Star {
     pub fn new(x: f64, y: f64, z: f64) -> Star {
-        let s: Vec<usize> = Vec::with_capacity(8);
+        // let s: Vec<usize> = Vec::with_capacity(8);
+        let l = Link::new();
         Star {
             pt: [x, y, z],
-            link: s,
+            // link: s,
+            link: l,
         }
     }
 }
@@ -99,25 +189,33 @@ impl Triangulation {
             );
             if re == 1 {
                 // println!("init: ({},{},{})", a, b, c);
-                let mut v = vec![a, c, b];
-                self.stars[0].link.append(&mut v);
-                v = vec![0, b, c];
-                self.stars[a].link.append(&mut v);
-                v = vec![0, c, a];
-                self.stars[b].link.append(&mut v);
-                v = vec![0, a, b];
-                self.stars[c].link.append(&mut v);
+                self.stars[0].link.push(a);
+                self.stars[0].link.push(c);
+                self.stars[0].link.push(b);
+                self.stars[a].link.push(0);
+                self.stars[a].link.push(b);
+                self.stars[a].link.push(c);
+                self.stars[b].link.push(0);
+                self.stars[b].link.push(c);
+                self.stars[b].link.push(a);
+                self.stars[c].link.push(0);
+                self.stars[c].link.push(a);
+                self.stars[c].link.push(b);
                 self.is_init = true;
             } else if re == -1 {
                 // println!("init: ({},{},{})", a, c, b);
-                let mut v = vec![a, b, c];
-                self.stars[0].link.append(&mut v);
-                v = vec![0, c, b];
-                self.stars[a].link.append(&mut v);
-                v = vec![0, a, c];
-                self.stars[b].link.append(&mut v);
-                v = vec![0, b, a];
-                self.stars[c].link.append(&mut v);
+                self.stars[0].link.push(a);
+                self.stars[0].link.push(b);
+                self.stars[0].link.push(c);
+                self.stars[a].link.push(0);
+                self.stars[a].link.push(c);
+                self.stars[a].link.push(b);
+                self.stars[b].link.push(0);
+                self.stars[b].link.push(a);
+                self.stars[b].link.push(c);
+                self.stars[c].link.push(0);
+                self.stars[c].link.push(b);
+                self.stars[c].link.push(a);
                 self.is_init = true;
             }
         }
@@ -178,7 +276,7 @@ impl Triangulation {
             return Err(tr.tr2);
         }
         self.stars.push(Star::new(px, py, pz));
-        let pi = self.stars.len() - 1;
+        let pi: usize = self.stars.len() - 1;
         //-- flip13()
         self.flip13(pi, &tr);
         //-- update_dt()
@@ -285,33 +383,30 @@ impl Triangulation {
         self.stars[pi].link.push(tr.tr0);
         self.stars[pi].link.push(tr.tr1);
         self.stars[pi].link.push(tr.tr2);
-        let mut i = self.index_in_star(&self.stars[tr.tr0].link, tr.tr1);
-        self.stars[tr.tr0].link.insert(i + 1, pi);
-        i = self.index_in_star(&self.stars[tr.tr1].link, tr.tr2);
-        self.stars[tr.tr1].link.insert(i + 1, pi);
-        i = self.index_in_star(&self.stars[tr.tr2].link, tr.tr0);
-        self.stars[tr.tr2].link.insert(i + 1, pi);
+        self.stars[tr.tr0].link.insert_after_v(pi, tr.tr1);
+        self.stars[tr.tr1].link.insert_after_v(pi, tr.tr2);
+        self.stars[tr.tr2].link.insert_after_v(pi, tr.tr0);
         //-- put infinite vertex first in list
-        self.star_update_infinite_first(pi);
+        self.stars[pi].link.infinite_first();
     }
 
     pub fn get_point(&self, i: usize) -> Vec<f64> {
         self.stars[i].pt.to_vec()
     }
 
-    pub fn is_triangle(&self, tr: &Triangle) -> bool {
-        let re = self.is_index_in_star(&self.stars[tr.tr0].link, tr.tr1);
-        if re.is_none() {
-            return false;
-        } else {
-            let re2 = self.next_vertex_star(&self.stars[tr.tr0].link, re.unwrap());
-            if re2 == tr.tr2 {
-                return true;
-            } else {
-                return false;
-            }
-        }
-    }
+    // pub fn is_triangle(&self, tr: &Triangle) -> bool {
+    //     let re = self.is_index_in_star(&self.stars[tr.tr0].link, tr.tr1);
+    //     if re.is_none() {
+    //         return false;
+    //     } else {
+    //         let re2 = self.next_vertex_star(&self.stars[tr.tr0].link, re.unwrap());
+    //         if re2 == tr.tr2 {
+    //             return true;
+    //         } else {
+    //             return false;
+    //         }
+    //     }
+    // }
 
     pub fn stats_degree(&self) -> (f64, usize, usize) {
         let mut total: f64 = 0.0;
@@ -339,9 +434,10 @@ impl Triangulation {
         //-- number of finite triangles
         let mut count: usize = 0;
         for (i, star) in self.stars.iter().enumerate() {
-            for (j, value) in star.link.iter().enumerate() {
+            for (j, value) in star.link.l.iter().enumerate() {
                 if i < *value {
-                    let k = star.link[self.nexti(star.link.len(), j)];
+                    // let k = star.link[self.nexti(star.link.len(), j)];
+                    let k = star.link[star.link.next_index(j)];
                     if i < k {
                         let tr = Triangle {
                             tr0: i,
@@ -362,7 +458,7 @@ impl Triangulation {
     // as a list of vertices (first != last)
     pub fn get_convex_hull(&self) -> Vec<usize> {
         let mut re: Vec<usize> = Vec::new();
-        for x in self.stars[0].link.iter().rev() {
+        for x in self.stars[0].link.l.iter().rev() {
             re.push(*x);
         }
         re
@@ -470,24 +566,14 @@ impl Triangulation {
                 } else {
                     //-- walk to incident to tr1,tr2
                     // println!("here");
-                    let pos = &self.stars[tr.tr2]
-                        .link
-                        .iter()
-                        .position(|&x| x == tr.tr0)
-                        .unwrap();
-                    let prev = self.prev_vertex_star(&self.stars[tr.tr2].link, *pos);
+                    let prev = self.stars[tr.tr2].link.get_prev_vertex(tr.tr0);
                     tr.tr1 = tr.tr2;
                     tr.tr2 = prev;
                 }
             } else {
                 //-- walk to incident to tr1,tr2
                 // a.iter().position(|&x| x == 2), Some(1)
-                let pos = &self.stars[tr.tr1]
-                    .link
-                    .iter()
-                    .position(|&x| x == tr.tr2)
-                    .unwrap();
-                let prev = self.prev_vertex_star(&self.stars[tr.tr1].link, *pos);
+                let prev = self.stars[tr.tr1].link.get_prev_vertex(tr.tr2);
                 tr.tr0 = tr.tr2;
                 tr.tr2 = prev;
             }
@@ -497,15 +583,13 @@ impl Triangulation {
 
     fn flip(&mut self, tr: &Triangle, opposite: usize) -> (Triangle, Triangle) {
         //-- step 1.
-        let mut pos = self.index_in_star(&self.stars[tr.tr0].link, tr.tr1);
-        self.stars[tr.tr0].link.insert(pos + 1, opposite);
+        self.stars[tr.tr0].link.insert_after_v(opposite, tr.tr1);
         //-- step 2.
-        self.delete_in_star(tr.tr1, tr.tr2);
+        self.stars[tr.tr1].link.delete(tr.tr2);
         //-- step 3.
-        pos = self.index_in_star(&self.stars[opposite].link, tr.tr2);
-        self.stars[opposite].link.insert(pos + 1, tr.tr0);
+        self.stars[opposite].link.insert_after_v(tr.tr0, tr.tr2);
         //-- step 4.
-        self.delete_in_star(tr.tr2, tr.tr1);
+        self.stars[tr.tr2].link.delete(tr.tr1);
         //-- make 2 triangles to return (to stack)
         let ret0 = Triangle {
             tr0: tr.tr0,
@@ -520,76 +604,57 @@ impl Triangulation {
         (ret0, ret1)
     }
 
-    fn star_update_infinite_first(&mut self, i: usize) {
-        // println!("INFINITE {:?}", self.stars[i]);
-        let re = self.stars[i].link.iter().position(|&x| x == 0);
-        if re != None {
-            let posinf = re.unwrap();
-            if posinf == 0 {
-                return;
-            }
-            let mut newstar: Vec<usize> = Vec::new();
-            for j in posinf..self.stars[i].link.len() {
-                newstar.push(self.stars[i].link[j]);
-            }
-            for j in 0..posinf {
-                newstar.push(self.stars[i].link[j]);
-            }
-            // println!("newstar: {:?}", newstar);
-            self.stars[i].link = newstar;
-        }
-    }
+    // fn next_vertex_star(&self, s: &Vec<usize>, i: usize) -> usize {
+    //     //-- get next vertex (its global index) in a star
+    //     if i == (s.len() - 1) {
+    //         s[0]
+    //     } else {
+    //         s[(i + 1)]
+    //     }
+    // }
 
-    fn next_vertex_star(&self, s: &Vec<usize>, i: usize) -> usize {
-        //-- get next vertex (its global index) in a star
-        if i == (s.len() - 1) {
-            s[0]
-        } else {
-            s[(i + 1)]
-        }
-    }
+    // fn prev_vertex_star(&self, s: &Vec<usize>, i: usize) -> usize {
+    //     //-- get prev vertex (its global index) in a star
+    //     if i == 0 {
+    //         s[(s.len() - 1)]
+    //     } else {
+    //         s[(i - 1)]
+    //     }
+    // }
 
-    fn prev_vertex_star(&self, s: &Vec<usize>, i: usize) -> usize {
-        //-- get prev vertex (its global index) in a star
-        if i == 0 {
-            s[(s.len() - 1)]
-        } else {
-            s[(i - 1)]
-        }
-    }
+    // fn is_index_in_star(&self, s: &Vec<usize>, i: usize) -> Option<usize> {
+    //     let re = s.iter().position(|&x| x == i);
+    //     if re.is_some() {
+    //         return re;
+    //     } else {
+    //         return None;
+    //     }
+    // }
 
-    fn is_index_in_star(&self, s: &Vec<usize>, i: usize) -> Option<usize> {
-        let re = s.iter().position(|&x| x == i);
-        if re.is_some() {
-            return re;
-        } else {
-            return None;
-        }
-    }
-
-    fn index_in_star(&self, s: &Vec<usize>, i: usize) -> usize {
-        s.iter().position(|&x| x == i).unwrap()
-    }
+    // fn index_in_star(&self, s: &Vec<usize>, i: usize) -> usize {
+    //     s.iter().position(|&x| x == i).unwrap()
+    // }
 
     fn get_opposite_vertex(&self, tr: &Triangle) -> usize {
-        let pos = self.index_in_star(&self.stars[tr.tr2].link, tr.tr1);
-        self.next_vertex_star(&self.stars[tr.tr2].link, pos)
+        // let pos = self.index_in_star(&self.stars[tr.tr2].link, tr.tr1);
+        // self.next_vertex_star(&self.stars[tr.tr2].link, pos)
+        self.stars[tr.tr2].link.get_next_vertex(tr.tr1)
     }
 
-    fn delete_in_star(&mut self, i: usize, value: usize) {
-        let re = self.stars[i].link.iter().position(|&x| x == value);
-        if re != None {
-            self.stars[i].link.remove(re.unwrap());
-        }
-    }
+    // fn delete_in_star(&mut self, i: usize, value: usize) {
+    //     let re = self.stars[i].link.iter().position(|&x| x == value);
+    //     if re != None {
+    //         self.stars[i].link.remove(re.unwrap());
+    //     }
+    // }
 
-    fn nexti(&self, len: usize, i: usize) -> usize {
-        if i == (len - 1) {
-            0
-        } else {
-            i + 1
-        }
-    }
+    // fn nexti(&self, len: usize, i: usize) -> usize {
+    //     if i == (len - 1) {
+    //         0
+    //     } else {
+    //         i + 1
+    //     }
+    // }
 
     pub fn get_vertices(&self) -> Vec<Vec<f64>> {
         let mut pts: Vec<Vec<f64>> = Vec::with_capacity(self.stars.len() - 1);
@@ -603,9 +668,10 @@ impl Triangulation {
         let mut trs: Vec<Triangle> = Vec::new();
         for (i, star) in self.stars.iter().enumerate() {
             //-- reconstruct triangles
-            for (j, value) in star.link.iter().enumerate() {
+            for (j, value) in star.link.l.iter().enumerate() {
                 if i < *value {
-                    let k = star.link[self.nexti(star.link.len(), j)];
+                    // let k = star.l[self.nexti(star.link.len(), j)];
+                    let k = star.link[star.link.next_index(j)];
                     if i < k {
                         let tr = Triangle {
                             tr0: i,
@@ -686,19 +752,19 @@ impl fmt::Display for Triangulation {
     }
 }
 
-impl fmt::Debug for Triangulation {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        fmt.write_str("======== DEBUG ========\n")?;
-        fmt.write_str(&format!("# vertices: {:19}\n", self.number_of_vertices()))?;
-        fmt.write_str(&format!("# triangles: {:18}\n", self.number_of_triangles()))?;
-        fmt.write_str(&format!(
-            "# convex hull: {:16}\n",
-            self.number_of_vertices_on_convex_hull()
-        ))?;
-        for (i, _p) in self.stars.iter().enumerate() {
-            fmt.write_str(&format!("{}: {:?}\n", i, self.stars[i].link))?;
-        }
-        fmt.write_str("===============================\n")?;
-        Ok(())
-    }
-}
+// impl fmt::Debug for Triangulation {
+//     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+//         fmt.write_str("======== DEBUG ========\n")?;
+//         fmt.write_str(&format!("# vertices: {:19}\n", self.number_of_vertices()))?;
+//         fmt.write_str(&format!("# triangles: {:18}\n", self.number_of_triangles()))?;
+//         fmt.write_str(&format!(
+//             "# convex hull: {:16}\n",
+//             self.number_of_vertices_on_convex_hull()
+//         ))?;
+//         for (i, _p) in self.stars.iter().enumerate() {
+//             fmt.write_str(&format!("{}: {:?}\n", i, self.stars[i].link.l))?;
+//         }
+//         fmt.write_str("===============================\n")?;
+//         Ok(())
+//     }
+// }
