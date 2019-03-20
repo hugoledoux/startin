@@ -76,6 +76,12 @@ fn main() {
     //     println!("Outside convex hull");
     // }
 
+    let trs = dt.get_incident_triangles(66);
+    for tr in trs {
+        println!("{}", tr);
+        // println!("is_triangle? {}", dt.is_triangle(&tr));
+    }
+
     let stats = dt.stats_degree();
     println!("stats: {}--{}--{}", stats.0, stats.1, stats.2);
 
