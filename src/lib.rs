@@ -38,7 +38,6 @@ pub struct Link {
 
 impl Link {
     fn new() -> Link {
-        // let s: Vec<u32> = Vec::new();
         Link {
             l: Vec::with_capacity(8),
         }
@@ -85,23 +84,34 @@ impl Link {
             i + 1
         }
     }
-    fn get_index(&self, v: usize) -> usize {
-        self.l.iter().position(|&x| x == v).unwrap()
+
+    fn get_index(&self, v: usize) -> Option<usize> {
+        return self.l.iter().position(|&x| x == v);
     }
-    fn get_next_vertex(&self, v: usize) -> usize {
-        let pos = self.get_index(v);
+
+    fn get_next_vertex(&self, v: usize) -> Option<usize> {
+        let re = self.get_index(v);
+        if re.is_none() {
+            return None;
+        }
+        let pos = re.unwrap();
         if pos == (self.l.len() - 1) {
-            self.l[0]
+            return Some(self.l[0]);
         } else {
-            self.l[(pos + 1)]
+            return Some(self.l[(pos + 1)]);
         }
     }
-    fn get_prev_vertex(&self, v: usize) -> usize {
-        let pos = self.get_index(v);
+
+    fn get_prev_vertex(&self, v: usize) -> Option<usize> {
+        let re = self.get_index(v);
+        if re.is_none() {
+            return None;
+        }
+        let pos = re.unwrap();
         if pos == 0 {
-            self.l[(self.l.len() - 1)]
+            return Some(self.l[(self.l.len() - 1)]);
         } else {
-            self.l[(pos - 1)]
+            return Some(self.l[(pos - 1)]);
         }
     }
 }
@@ -394,19 +404,18 @@ impl Triangulation {
         self.stars[i].pt.to_vec()
     }
 
-    // pub fn is_triangle(&self, tr: &Triangle) -> bool {
-    //     let re = self.is_index_in_star(&self.stars[tr.tr0].link, tr.tr1);
-    //     if re.is_none() {
-    //         return false;
-    //     } else {
-    //         let re2 = self.next_vertex_star(&self.stars[tr.tr0].link, re.unwrap());
-    //         if re2 == tr.tr2 {
-    //             return true;
-    //         } else {
-    //             return false;
-    //         }
-    //     }
-    // }
+    pub fn is_triangle(&self, tr: &Triangle) -> bool {
+        let re = self.stars[tr.tr0].link.get_next_vertex(tr.tr1);
+        if re.is_none() {
+            return false;
+        } else {
+            if re.unwrap() == tr.tr2 {
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
 
     pub fn stats_degree(&self) -> (f64, usize, usize) {
         let mut total: f64 = 0.0;
@@ -436,7 +445,6 @@ impl Triangulation {
         for (i, star) in self.stars.iter().enumerate() {
             for (j, value) in star.link.l.iter().enumerate() {
                 if i < *value {
-                    // let k = star.link[self.nexti(star.link.len(), j)];
                     let k = star.link[star.link.next_index(j)];
                     if i < k {
                         let tr = Triangle {
@@ -482,11 +490,8 @@ impl Triangulation {
     }
 
     fn walk(&self, x: &[f64]) -> Triangle {
-        //-- TODO: random sample some and pick closest?
         //-- find the starting tr
-
         let mut cur = self.cur;
-
         //-- jump-and-walk
         if self.jump_and_walk == true {
             let mut rng = thread_rng();
@@ -503,7 +508,6 @@ impl Triangulation {
                 }
             }
         }
-
         let mut tr = Triangle {
             tr0: 0,
             tr1: 0,
@@ -519,7 +523,6 @@ impl Triangulation {
             tr.tr1 = self.stars[cur].link[0];
             tr.tr2 = self.stars[cur].link[1];
         }
-
         //-- 2. order it such that tr0-tr1-x is CCW
         if geom::orient2d(
             &self.stars[tr.tr0].pt,
@@ -566,14 +569,14 @@ impl Triangulation {
                 } else {
                     //-- walk to incident to tr1,tr2
                     // println!("here");
-                    let prev = self.stars[tr.tr2].link.get_prev_vertex(tr.tr0);
+                    let prev = self.stars[tr.tr2].link.get_prev_vertex(tr.tr0).unwrap();
                     tr.tr1 = tr.tr2;
                     tr.tr2 = prev;
                 }
             } else {
                 //-- walk to incident to tr1,tr2
                 // a.iter().position(|&x| x == 2), Some(1)
-                let prev = self.stars[tr.tr1].link.get_prev_vertex(tr.tr2);
+                let prev = self.stars[tr.tr1].link.get_prev_vertex(tr.tr2).unwrap();
                 tr.tr0 = tr.tr2;
                 tr.tr2 = prev;
             }
@@ -604,57 +607,9 @@ impl Triangulation {
         (ret0, ret1)
     }
 
-    // fn next_vertex_star(&self, s: &Vec<usize>, i: usize) -> usize {
-    //     //-- get next vertex (its global index) in a star
-    //     if i == (s.len() - 1) {
-    //         s[0]
-    //     } else {
-    //         s[(i + 1)]
-    //     }
-    // }
-
-    // fn prev_vertex_star(&self, s: &Vec<usize>, i: usize) -> usize {
-    //     //-- get prev vertex (its global index) in a star
-    //     if i == 0 {
-    //         s[(s.len() - 1)]
-    //     } else {
-    //         s[(i - 1)]
-    //     }
-    // }
-
-    // fn is_index_in_star(&self, s: &Vec<usize>, i: usize) -> Option<usize> {
-    //     let re = s.iter().position(|&x| x == i);
-    //     if re.is_some() {
-    //         return re;
-    //     } else {
-    //         return None;
-    //     }
-    // }
-
-    // fn index_in_star(&self, s: &Vec<usize>, i: usize) -> usize {
-    //     s.iter().position(|&x| x == i).unwrap()
-    // }
-
     fn get_opposite_vertex(&self, tr: &Triangle) -> usize {
-        // let pos = self.index_in_star(&self.stars[tr.tr2].link, tr.tr1);
-        // self.next_vertex_star(&self.stars[tr.tr2].link, pos)
-        self.stars[tr.tr2].link.get_next_vertex(tr.tr1)
+        self.stars[tr.tr2].link.get_next_vertex(tr.tr1).unwrap()
     }
-
-    // fn delete_in_star(&mut self, i: usize, value: usize) {
-    //     let re = self.stars[i].link.iter().position(|&x| x == value);
-    //     if re != None {
-    //         self.stars[i].link.remove(re.unwrap());
-    //     }
-    // }
-
-    // fn nexti(&self, len: usize, i: usize) -> usize {
-    //     if i == (len - 1) {
-    //         0
-    //     } else {
-    //         i + 1
-    //     }
-    // }
 
     pub fn get_vertices(&self) -> Vec<Vec<f64>> {
         let mut pts: Vec<Vec<f64>> = Vec::with_capacity(self.stars.len() - 1);
@@ -751,20 +706,3 @@ impl fmt::Display for Triangulation {
         Ok(())
     }
 }
-
-// impl fmt::Debug for Triangulation {
-//     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-//         fmt.write_str("======== DEBUG ========\n")?;
-//         fmt.write_str(&format!("# vertices: {:19}\n", self.number_of_vertices()))?;
-//         fmt.write_str(&format!("# triangles: {:18}\n", self.number_of_triangles()))?;
-//         fmt.write_str(&format!(
-//             "# convex hull: {:16}\n",
-//             self.number_of_vertices_on_convex_hull()
-//         ))?;
-//         for (i, _p) in self.stars.iter().enumerate() {
-//             fmt.write_str(&format!("{}: {:?}\n", i, self.stars[i].link.l))?;
-//         }
-//         fmt.write_str("===============================\n")?;
-//         Ok(())
-//     }
-// }
