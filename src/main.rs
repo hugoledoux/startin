@@ -28,6 +28,7 @@ fn main() {
     let mut dt = rustin::Triangulation::new();
     // dt.set_snap_tolerance(0.1);
     dt.set_jump_and_walk(false);
+    // dt.set_robust_predicates(false);
 
     let mut duplicates = 0;
     for p in vec.into_iter() {

@@ -149,6 +149,14 @@ impl Triangulation {
         self.jump_and_walk = b;
     }
 
+    pub fn get_robust_predicates(&self) -> bool {
+        self.robust_predicates
+    }
+
+    pub fn set_robust_predicates(&mut self, b: bool) {
+        self.robust_predicates = b;
+    }
+
     //-- insert_one_pt
     pub fn insert_one_pt(&mut self, px: f64, py: f64, pz: f64) -> Result<usize, usize> {
         // println!("-->{}", p);
