@@ -105,25 +105,68 @@ impl Link {
         }
         let pos = re.unwrap();
         if pos == 0 {
-            return Some(self.l[(self.l.len() - 1)]);
+            return Some(self.0[(self.0.len() - 1)]);
         } else {
-            return Some(self.l[(pos - 1)]);
+            return Some(self.0[(pos - 1)]);
         }
     }
+
+    fn iter(&self) -> Iter {
+        Iter(Box::new(self.0.iter()))
+    }
 }
+
+//-- taken from https://stackoverflow.com/questions/40668074/am-i-incorrectly-implementing-intoiterator-for-a-reference-or-is-this-a-rust-bug
+struct Iter<'a>(Box<Iterator<Item = &'a usize> + 'a>);
+
+impl<'a> Iterator for Iter<'a> {
+    type Item = &'a usize;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next()
+    }
+}
+
+// impl<'a> IntoIterator for &'a Link {
+//     type Item = &'a usize;
+//     type IntoIter = Iter<'a>;
+
+//     fn into_iter(self) -> Self::IntoIter {
+//         self.iter()
+//     }
+// }
+
+// impl IntoIterator for Link {
+//     type Item = usize;
+//     type IntoIter = ::std::vec::IntoIter<usize>;
+
+//     fn into_iter(self) -> Self::IntoIter {
+//         self.0.into_iter()
+//     }
+// }
+
+// impl Iterator for Link {
+//     type Item = usize;
+
+//     fn next(&mut self) -> Option<usize> {
+//         // Increment our count. This is why we started at zero.
+//         self.count += 1;
+
+//         // Check to see if we've finished counting or not.
+//         if self.count < 6 {
+//             Some(self.count)
+//         } else {
+//             None
+//         }
+//     }
+// }
 
 impl std::ops::Index<usize> for Link {
     type Output = usize;
     fn index(&self, idx: usize) -> &usize {
-        &self.l[idx as usize]
+        &self.0[idx as usize]
     }
 }
-// impl std::ops::Index<u32> for Link {
-//     type Output = u32;
-//     fn index(&self, idx: u32) -> &u32 {
-//         &self.l[idx as usize]
-//     }
-// }
 
 //----------------------
 pub struct Star {
@@ -195,33 +238,33 @@ impl Triangulation {
             );
             if re == 1 {
                 // println!("init: ({},{},{})", a, b, c);
-                self.stars[0].link.push(a);
-                self.stars[0].link.push(c);
-                self.stars[0].link.push(b);
-                self.stars[a].link.push(0);
-                self.stars[a].link.push(b);
-                self.stars[a].link.push(c);
-                self.stars[b].link.push(0);
-                self.stars[b].link.push(c);
-                self.stars[b].link.push(a);
-                self.stars[c].link.push(0);
-                self.stars[c].link.push(a);
-                self.stars[c].link.push(b);
+                self.stars[0].link.add(a);
+                self.stars[0].link.add(c);
+                self.stars[0].link.add(b);
+                self.stars[a].link.add(0);
+                self.stars[a].link.add(b);
+                self.stars[a].link.add(c);
+                self.stars[b].link.add(0);
+                self.stars[b].link.add(c);
+                self.stars[b].link.add(a);
+                self.stars[c].link.add(0);
+                self.stars[c].link.add(a);
+                self.stars[c].link.add(b);
                 self.is_init = true;
             } else if re == -1 {
                 // println!("init: ({},{},{})", a, c, b);
-                self.stars[0].link.push(a);
-                self.stars[0].link.push(b);
-                self.stars[0].link.push(c);
-                self.stars[a].link.push(0);
-                self.stars[a].link.push(c);
-                self.stars[a].link.push(b);
-                self.stars[b].link.push(0);
-                self.stars[b].link.push(a);
-                self.stars[b].link.push(c);
-                self.stars[c].link.push(0);
-                self.stars[c].link.push(b);
-                self.stars[c].link.push(a);
+                self.stars[0].link.add(a);
+                self.stars[0].link.add(b);
+                self.stars[0].link.add(c);
+                self.stars[a].link.add(0);
+                self.stars[a].link.add(c);
+                self.stars[a].link.add(b);
+                self.stars[b].link.add(0);
+                self.stars[b].link.add(a);
+                self.stars[b].link.add(c);
+                self.stars[c].link.add(0);
+                self.stars[c].link.add(b);
+                self.stars[c].link.add(a);
                 self.is_init = true;
             }
         }
@@ -386,9 +429,9 @@ impl Triangulation {
     }
 
     fn flip13(&mut self, pi: usize, tr: &Triangle) {
-        self.stars[pi].link.push(tr.tr0);
-        self.stars[pi].link.push(tr.tr1);
-        self.stars[pi].link.push(tr.tr2);
+        self.stars[pi].link.add(tr.tr0);
+        self.stars[pi].link.add(tr.tr1);
+        self.stars[pi].link.add(tr.tr2);
         self.stars[tr.tr0].link.insert_after_v(pi, tr.tr1);
         self.stars[tr.tr1].link.insert_after_v(pi, tr.tr2);
         self.stars[tr.tr2].link.insert_after_v(pi, tr.tr0);
@@ -396,8 +439,23 @@ impl Triangulation {
         self.stars[pi].link.infinite_first();
     }
 
-    pub fn get_point(&self, i: usize) -> Vec<f64> {
-        self.stars[i].pt.to_vec()
+    pub fn get_point(&self, v: usize) -> Vec<f64> {
+        self.stars[v].pt.to_vec()
+    }
+
+    // TODO: get_adjacent_triangles(&self, tr: Triangle)
+
+    pub fn get_incident_triangles(&self, v: usize) -> Vec<Triangle> {
+        let mut trs: Vec<Triangle> = Vec::new();
+        for (i, each) in self.stars[v].link.iter().enumerate() {
+            let j = self.stars[v].link.next_index(i);
+            trs.push(Triangle {
+                tr0: v,
+                tr1: *each,
+                tr2: self.stars[v].link[j],
+            });
+        }
+        trs
     }
 
     pub fn is_triangle(&self, tr: &Triangle) -> bool {
@@ -439,7 +497,7 @@ impl Triangulation {
         //-- number of finite triangles
         let mut count: usize = 0;
         for (i, star) in self.stars.iter().enumerate() {
-            for (j, value) in star.link.l.iter().enumerate() {
+            for (j, value) in star.link.iter().enumerate() {
                 if i < *value {
                     let k = star.link[star.link.next_index(j)];
                     if i < k {
@@ -462,9 +520,10 @@ impl Triangulation {
     // as a list of vertices (first != last)
     pub fn get_convex_hull(&self) -> Vec<usize> {
         let mut re: Vec<usize> = Vec::new();
-        for x in self.stars[0].link.l.iter().rev() {
+        for x in self.stars[0].link.iter() {
             re.push(*x);
         }
+        re.reverse();
         re
     }
 
@@ -619,7 +678,7 @@ impl Triangulation {
         let mut trs: Vec<Triangle> = Vec::new();
         for (i, star) in self.stars.iter().enumerate() {
             //-- reconstruct triangles
-            for (j, value) in star.link.l.iter().enumerate() {
+            for (j, value) in star.link.iter().enumerate() {
                 if i < *value {
                     // let k = star.l[self.nexti(star.link.len(), j)];
                     let k = star.link[star.link.next_index(j)];
