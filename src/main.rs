@@ -77,13 +77,19 @@ fn main() {
     // }
 
     let trs = dt.get_incident_triangles(66);
-    for tr in trs {
-        println!("{}", tr);
+    for tr in trs.iter() {
+        println!("incident: {}", *tr);
         // println!("is_triangle? {}", dt.is_triangle(&tr));
     }
 
-    let stats = dt.stats_degree();
-    println!("stats: {}--{}--{}", stats.0, stats.1, stats.2);
+    let adjtr = dt.get_adjacent_triangles(&trs[0]);
+    for tr in adjtr.iter() {
+        println!("adj: {}", tr);
+        // println!("is_triangle? {}", dt.is_triangle(&tr));
+    }
+
+    // let stats = dt.stats_degree();
+    // println!("stats: {}--{}--{}", stats.0, stats.1, stats.2);
 
     // dt.write_obj("/Users/hugo/temp/out.obj".to_string(), false)
     //     .unwrap();

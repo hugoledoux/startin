@@ -443,7 +443,37 @@ impl Triangulation {
         self.stars[v].pt.to_vec()
     }
 
-    // TODO: get_adjacent_triangles(&self, tr: Triangle)
+    pub fn get_adjacent_triangles(&self, tr: &Triangle) -> Vec<Triangle> {
+        let mut trs: Vec<Triangle> = Vec::new();
+        if self.is_triangle(&tr) == false || tr.is_infinite() == true {
+            return trs;
+        }
+        let mut opp = self.stars[tr.tr2].link.get_next_vertex(tr.tr1).unwrap();
+        if opp != 0 {
+            trs.push(Triangle {
+                tr0: tr.tr1,
+                tr1: opp,
+                tr2: tr.tr2,
+            });
+        }
+        opp = self.stars[tr.tr0].link.get_next_vertex(tr.tr2).unwrap();
+        if opp != 0 {
+            trs.push(Triangle {
+                tr0: tr.tr2,
+                tr1: opp,
+                tr2: tr.tr0,
+            });
+        }
+        opp = self.stars[tr.tr1].link.get_next_vertex(tr.tr0).unwrap();
+        if opp != 0 {
+            trs.push(Triangle {
+                tr0: tr.tr0,
+                tr1: opp,
+                tr2: tr.tr1,
+            });
+        }
+        trs
+    }
 
     pub fn get_incident_triangles(&self, v: usize) -> Vec<Triangle> {
         let mut trs: Vec<Triangle> = Vec::new();
