@@ -1,4 +1,4 @@
-//! # rustin
+//! # startin
 //!
 //! A Delaunay triangulator where the input are 2.5D points, the DT is computed in 2D but the elevation of the vertices are kept.
 //! This is used mostly for the modelling of terrains.
@@ -13,10 +13,10 @@
 //! # Usage
 //!
 //! ```rust
-//! extern crate rustin;
+//! extern crate startin;
 //!
 //! fn main() {
-//!     let mut dt = rustin::Triangulation::new();
+//!     let mut dt = startin::Triangulation::new();
 //!
 //!     //-- insert 5 points
 //!     dt.insert_one_pt(20.0,  30.0,  2.0).unwrap();

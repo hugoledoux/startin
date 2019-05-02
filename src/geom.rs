@@ -2,7 +2,7 @@
 //!
 //! Geometric predicates functions are declared here.
 //! Notice that [Shewchuk's predicates](https://www.cs.cmu.edu/~quake/robust.html)
-//! are used (activated by default by rustin), but also possible to rely on floating-point
+//! are used (activated by default by startin), but also possible to rely on floating-point
 //! arithmetic (not recommended).
 
 extern crate libc;

@@ -1,7 +1,7 @@
-extern crate rustin;
+extern crate startin;
 
 fn main() {
-    let mut dt = rustin::Triangulation::new();
+    let mut dt = startin::Triangulation::new();
 
     //-- insert 5 points
     dt.insert_one_pt(20.0, 30.0, 2.0).unwrap();

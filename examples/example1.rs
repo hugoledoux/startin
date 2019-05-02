@@ -1,11 +1,11 @@
 // To run:
-// $ ./rustin < ../../data/samples2.xyz
+// $ ./example1 < ../../data/samples2.xyz
 
 #![allow(dead_code)]
 
 extern crate csv;
-extern crate rustin;
 extern crate serde;
+extern crate startin;
 #[macro_use]
 extern crate serde_derive;
 
@@ -26,7 +26,7 @@ fn main() {
         Err(error) => panic!("Problem with the file {:?}", error),
     };
 
-    let mut dt = rustin::Triangulation::new();
+    let mut dt = startin::Triangulation::new();
     // dt.set_snap_tolerance(0.1);
     dt.set_jump_and_walk(false);
     dt.use_robust_predicates(true);
