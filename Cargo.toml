@@ -1,10 +1,12 @@
 
 [package]
 name = "rustin"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Hugo Ledoux <h.ledoux@tudelft.nl>"]
 edition = "2018"
 build = "build.rs"
+license = "MIT"
+description = "A Delaunay triangulator for terrain data."
 
 [dependencies]
 rand = "0.6"
@@ -15,7 +17,6 @@ serde_derive = "1.0"
 
 [build-dependencies]
 cc = "1.0"
-
 
 [[example]]
 name = "example1"
