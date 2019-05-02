@@ -1,3 +1,6 @@
+// To run:
+// $ ./rustin < ../../data/samples2.xyz
+
 #![allow(dead_code)]
 
 extern crate csv;
@@ -8,9 +11,6 @@ extern crate serde_derive;
 
 use std::error::Error;
 use std::io;
-
-// To run:
-// $ ./rustin < ../../data/samples2.xyz
 
 #[derive(Debug, Deserialize)]
 pub struct CSVPoint {
