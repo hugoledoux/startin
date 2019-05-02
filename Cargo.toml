@@ -7,14 +7,16 @@ edition = "2018"
 build = "build.rs"
 
 [dependencies]
+rand = "0.6"
+libc = "0.2"
 csv = "1"
 serde = "1.0"
 serde_derive = "1.0"
-rand = "0.6"
-libc = "0.2"
 
 [build-dependencies]
 cc = "1.0"
 
+
 [[example]]
-name = "main"
+name = "example1"
+

@@ -48,9 +48,9 @@ fn main() {
         println!("Duplicates? none.\n");
     }
 
-    println!("****** is Delaunay? ******");
-    println!("{}", dt.is_valid());
-    println!("**************************");
+    // println!("****** is Delaunay? ******");
+    // println!("{}", dt.is_valid());
+    // println!("**************************");
 
     // println!("Number of points in DT: {}", dt.number_of_vertices());
     // println!("Number of trianges in DT: {}", dt.number_of_triangles());
