@@ -1,5 +1,7 @@
 # startin
 
+https://img.shields.io/crates/v/startin.svg
+
 A Delaunay triangulator where the input are 2.5D points, the DT is computed in 2D but the elevation of the vertices are kept.
 This is used mostly for the modelling of terrains.
 
