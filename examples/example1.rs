@@ -53,10 +53,10 @@ fn main() {
     // println!("**************************");
 
     // println!("Number of points in DT: {}", dt.number_of_vertices());
-    // println!("Number of trianges in DT: {}", dt.number_of_triangles());
+    // println!("Number of triangles in DT: {}", dt.number_of_triangles());
     // println!("{:?}", dt);
     println!("{}", dt);
-    // let ch = dt.get_convex_hull();
+    // let ch = dt.convex_hull();
     // println!("{:?}", ch);
 
     let pts = dt.all_vertices();
