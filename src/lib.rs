@@ -1,3 +1,37 @@
+//! # rustin
+//!
+//! A Delaunay triangulator where the input are 2.5D points, the DT is
+//! computed in 2D but the elevation of the vertices are kept.
+//!
+//! ## Usage
+//!
+//! Add the rtriangulate dependency to `Cargo.toml`:
+//!
+//! ```toml
+//! [dependencies]
+//! rustin = "0.3"
+//! ```
+//!
+//! And use the crate as such:
+//!
+//! ```rust
+//! extern crate rtriangulate;
+//!
+//! use rtriangulate::{TriangulationPoint, Triangle, triangulate};
+//!
+//! # fn main() {
+//! // A list of points (which has to be sorted on x).
+//! let points = [
+//!     TriangulationPoint::new(10.0, 50.0),
+//!     TriangulationPoint::new(25.0, 40.0),
+//!     TriangulationPoint::new(30.0, 40.0)
+//! ];
+//! let triangles = triangulate(&points).unwrap();
+//!
+//! assert_eq!(triangles, [Triangle(1, 0, 2)]);
+//! # }
+//! ```
+
 mod geom;
 
 use rand::prelude::thread_rng;
@@ -9,7 +43,7 @@ use std::mem;
 
 extern crate rand;
 
-//----------------------
+/// A Triangle is a triplet of indices
 pub struct Triangle {
     pub tr0: usize,
     pub tr1: usize,
@@ -17,6 +51,8 @@ pub struct Triangle {
 }
 
 impl Triangle {
+    /// Checks whether a Triangle is "infinite",
+    /// ie if one its vertices is the infinite vertex
     fn is_infinite(&self) -> bool {
         if self.tr0 == 0 || self.tr1 == 0 || self.tr2 == 0 {
             return true;
@@ -177,7 +213,8 @@ impl std::ops::Index<usize> for Link {
     }
 }
 
-//----------------------
+/// A triangulation is a collection of Stars, each Star has is (x,y,z)
+/// and a Link (an array of adjacent vertices, ordered)
 pub struct Star {
     pub pt: [f64; 3],
     pub link: Link,
@@ -290,6 +327,10 @@ impl Triangulation {
         Ok(self.cur)
     }
 
+    /// Set a snap tolerance when inserting new points: if the newly inserted
+    /// one is closer than snap_tolerance to another one, then it is not inserted.
+    /// Avoids having very close vertices (like at 0.00007mm)
+    /// Default is 0.001unit (thus 1mm for most datasets).
     pub fn set_snap_tolerance(&mut self, snaptol: f64) -> f64 {
         if snaptol > 0.0 {
             self.snaptol = snaptol;
@@ -301,6 +342,8 @@ impl Triangulation {
         self.snaptol
     }
 
+    /// Activate/deactive the jump-and-walk strategy for locate().
+    /// If deactivated, then the walk starts from the last inserted triangle.
     pub fn set_jump_and_walk(&mut self, b: bool) {
         self.jump_and_walk = b;
     }
@@ -448,6 +491,7 @@ impl Triangulation {
         self.stars[pi].link.infinite_first();
     }
 
+    /// Returns the coordinates of the vertex v in a Vec [x,y,z]
     pub fn get_point(&self, v: usize) -> Vec<f64> {
         self.stars[v].pt.to_vec()
     }
@@ -484,6 +528,8 @@ impl Triangulation {
         trs
     }
 
+    // Returns a Vec of Triangles (finite + infinite) to the vertex v.
+    // If v doesn't exist, then an empty Vec is returned.
     pub fn incident_triangles_to_vertex(&self, v: usize) -> Vec<Triangle> {
         let mut trs: Vec<Triangle> = Vec::new();
         if v >= self.stars.len() {
@@ -500,8 +546,8 @@ impl Triangulation {
         trs
     }
 
-    // TODO: should infinite vertex be returned here? I guess not?
     pub fn adjacent_vertices_to_vertex(&self, v: usize) -> Vec<usize> {
+        // TODO: should infinite vertex be returned here? I guess not?
         let mut adjs: Vec<usize> = Vec::new();
         if v >= self.stars.len() {
             return adjs;
@@ -512,8 +558,9 @@ impl Triangulation {
         adjs
     }
 
-    // TODO: what about infinite triangles?
+    /// Returns whether a triplet of indices is a Triangle in the triangulation.
     pub fn is_triangle(&self, tr: &Triangle) -> bool {
+        // TODO: what about infinite triangles?
         let re = self.stars[tr.tr0].link.get_next_vertex(tr.tr1);
         if re.is_none() {
             return false;
@@ -543,11 +590,13 @@ impl Triangulation {
         return (total, min, max);
     }
 
+    /// Returns number of finite vertices in the triangulation.
     pub fn number_of_vertices(&self) -> usize {
         //-- number of finite vertices
         (self.stars.len() - 1)
     }
 
+    /// Returns number of finite triangles in the triangulation.
     pub fn number_of_triangles(&self) -> usize {
         //-- number of finite triangles
         let mut count: usize = 0;
@@ -571,8 +620,8 @@ impl Triangulation {
         count
     }
 
-    // Get convex hull, oriented CCW
-    // as a list of vertices (first != last)
+    /// Returns the convex hull of the dataset, oriented CCW.
+    /// It is a list of vertex indices (first != last)
     pub fn convex_hull(&self) -> Vec<usize> {
         let mut re: Vec<usize> = Vec::new();
         for x in self.stars[0].link.iter() {
@@ -582,6 +631,7 @@ impl Triangulation {
         re
     }
 
+    /// Returns size of the convex hull of the dataset
     pub fn number_of_vertices_on_convex_hull(&self) -> usize {
         //-- number of finite vertices on the boundary of the convex hull
         if self.is_init == false {
@@ -590,6 +640,8 @@ impl Triangulation {
         return self.stars[0].link.len();
     }
 
+    /// Returns true if the vertex v is part of the boundary of the convex
+    /// hull of the dataset. False otherwise.
     pub fn is_vertex_convex_hull(&self, v: usize) -> bool {
         if v == 0 {
             return false;
@@ -600,6 +652,8 @@ impl Triangulation {
         self.stars[v].link.contains_infinite_vertex()
     }
 
+    /// Returns, if it exists, the Triangle containing (px,py).
+    /// If it is direction on a vertex/edge, then one is randomly chosen.
     pub fn locate(&self, px: f64, py: f64) -> Option<Triangle> {
         let p: [f64; 3] = [px, py, 0.0];
         let re = self.walk(&p);
@@ -731,6 +785,7 @@ impl Triangulation {
         self.stars[tr.tr2].link.get_next_vertex(tr.tr1).unwrap()
     }
 
+    /// Returns a Vec<Vec<f64>> of all the finite vertices
     pub fn all_vertices(&self) -> Vec<Vec<f64>> {
         let mut pts: Vec<Vec<f64>> = Vec::with_capacity(self.stars.len() - 1);
         for i in 1..self.stars.len() {
