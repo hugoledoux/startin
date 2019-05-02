@@ -73,6 +73,15 @@ impl Link {
         }
     }
 
+    fn contains_infinite_vertex(&self) -> bool {
+        let pos = self.0.iter().position(|&x| x == 0);
+        if pos == None {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
     fn next_index(&self, i: usize) -> usize {
         if i == (self.0.len() - 1) {
             0
@@ -296,11 +305,11 @@ impl Triangulation {
         self.jump_and_walk = b;
     }
 
-    pub fn get_robust_predicates(&self) -> bool {
+    pub fn is_using_robust_predicates(&self) -> bool {
         self.robust_predicates
     }
 
-    pub fn set_robust_predicates(&mut self, b: bool) {
+    pub fn use_robust_predicates(&mut self, b: bool) {
         self.robust_predicates = b;
     }
 
@@ -443,7 +452,7 @@ impl Triangulation {
         self.stars[v].pt.to_vec()
     }
 
-    pub fn get_adjacent_triangles(&self, tr: &Triangle) -> Vec<Triangle> {
+    pub fn adjacent_triangles_to_triangle(&self, tr: &Triangle) -> Vec<Triangle> {
         let mut trs: Vec<Triangle> = Vec::new();
         if self.is_triangle(&tr) == false || tr.is_infinite() == true {
             return trs;
@@ -475,8 +484,11 @@ impl Triangulation {
         trs
     }
 
-    pub fn get_incident_triangles(&self, v: usize) -> Vec<Triangle> {
+    pub fn incident_triangles_to_vertex(&self, v: usize) -> Vec<Triangle> {
         let mut trs: Vec<Triangle> = Vec::new();
+        if v >= self.stars.len() {
+            return trs;
+        }
         for (i, each) in self.stars[v].link.iter().enumerate() {
             let j = self.stars[v].link.next_index(i);
             trs.push(Triangle {
@@ -488,6 +500,19 @@ impl Triangulation {
         trs
     }
 
+    // TODO: should infinite vertex be returned here? I guess not?
+    pub fn adjacent_vertices_to_vertex(&self, v: usize) -> Vec<usize> {
+        let mut adjs: Vec<usize> = Vec::new();
+        if v >= self.stars.len() {
+            return adjs;
+        }
+        for each in self.stars[v].link.iter() {
+            adjs.push(*each);
+        }
+        adjs
+    }
+
+    // TODO: what about infinite triangles?
     pub fn is_triangle(&self, tr: &Triangle) -> bool {
         let re = self.stars[tr.tr0].link.get_next_vertex(tr.tr1);
         if re.is_none() {
@@ -501,7 +526,7 @@ impl Triangulation {
         }
     }
 
-    pub fn stats_degree(&self) -> (f64, usize, usize) {
+    pub fn statistics_degree(&self) -> (f64, usize, usize) {
         let mut total: f64 = 0.0;
         let mut min: usize = usize::max_value();
         let mut max: usize = usize::min_value();
@@ -548,7 +573,7 @@ impl Triangulation {
 
     // Get convex hull, oriented CCW
     // as a list of vertices (first != last)
-    pub fn get_convex_hull(&self) -> Vec<usize> {
+    pub fn convex_hull(&self) -> Vec<usize> {
         let mut re: Vec<usize> = Vec::new();
         for x in self.stars[0].link.iter() {
             re.push(*x);
@@ -563,6 +588,16 @@ impl Triangulation {
             return 0;
         }
         return self.stars[0].link.len();
+    }
+
+    pub fn is_vertex_convex_hull(&self, v: usize) -> bool {
+        if v == 0 {
+            return false;
+        }
+        if v >= self.stars.len() {
+            return false;
+        }
+        self.stars[v].link.contains_infinite_vertex()
     }
 
     pub fn locate(&self, px: f64, py: f64) -> Option<Triangle> {
@@ -696,7 +731,7 @@ impl Triangulation {
         self.stars[tr.tr2].link.get_next_vertex(tr.tr1).unwrap()
     }
 
-    pub fn get_vertices(&self) -> Vec<Vec<f64>> {
+    pub fn all_vertices(&self) -> Vec<Vec<f64>> {
         let mut pts: Vec<Vec<f64>> = Vec::with_capacity(self.stars.len() - 1);
         for i in 1..self.stars.len() {
             pts.push(self.stars[i].pt.to_vec());
@@ -704,7 +739,7 @@ impl Triangulation {
         pts
     }
 
-    fn get_triangles(&self) -> Vec<Triangle> {
+    fn all_triangles(&self) -> Vec<Triangle> {
         let mut trs: Vec<Triangle> = Vec::new();
         for (i, star) in self.stars.iter().enumerate() {
             //-- reconstruct triangles
@@ -729,9 +764,9 @@ impl Triangulation {
         trs
     }
 
-    pub fn is_delaunay(&self) -> bool {
+    pub fn is_valid(&self) -> bool {
         let mut re = true;
-        let trs = self.get_triangles();
+        let trs = self.all_triangles();
         for tr in trs.iter() {
             for i in 1..self.stars.len() {
                 if geom::incircle(
@@ -751,7 +786,7 @@ impl Triangulation {
     }
 
     pub fn write_obj(&self, path: String, twod: bool) -> std::io::Result<()> {
-        let trs = self.get_triangles();
+        let trs = self.all_triangles();
         let mut f = File::create(path)?;
         for i in 1..self.stars.len() {
             if twod == true {

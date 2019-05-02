@@ -1,4 +1,5 @@
-// #[allow(dead_code)]
+#![allow(dead_code)]
+
 extern crate csv;
 extern crate rustin;
 extern crate serde;
@@ -28,7 +29,7 @@ fn main() {
     let mut dt = rustin::Triangulation::new();
     // dt.set_snap_tolerance(0.1);
     dt.set_jump_and_walk(false);
-    // dt.set_robust_predicates(false);
+    dt.use_robust_predicates(true);
 
     let mut duplicates = 0;
     for p in vec.into_iter() {
@@ -47,9 +48,9 @@ fn main() {
         println!("Duplicates? none.\n");
     }
 
-    // println!("****** is Delaunay? ******");
-    // println!("{}", dt.is_delaunay());
-    // println!("**************************");
+    println!("****** is Delaunay? ******");
+    println!("{}", dt.is_valid());
+    println!("**************************");
 
     // println!("Number of points in DT: {}", dt.number_of_vertices());
     // println!("Number of trianges in DT: {}", dt.number_of_triangles());
@@ -58,8 +59,10 @@ fn main() {
     // let ch = dt.get_convex_hull();
     // println!("{:?}", ch);
 
-    // let pts = dt.get_vertices();
-    // println!("Size pts: {}", pts.len());
+    let pts = dt.all_vertices();
+    println!("Size pts: {}", pts.len());
+
+    println!("Vertex CH: {}", dt.is_vertex_convex_hull(0));
 
     // //-- fetch triangle containing (x, y)
     // let re = dt.locate(50.0, 50.0);
@@ -76,19 +79,28 @@ fn main() {
     //     println!("Outside convex hull");
     // }
 
-    let trs = dt.get_incident_triangles(66);
-    for tr in trs.iter() {
-        println!("incident: {}", *tr);
-        // println!("is_triangle? {}", dt.is_triangle(&tr));
+    let vadjs = dt.adjacent_vertices_to_vertex(66);
+    for each in vadjs {
+        println!("Adjacent vertex {}", each);
     }
 
-    let adjtr = dt.get_adjacent_triangles(&trs[0]);
+    let trs = dt.incident_triangles_to_vertex(66);
+    // if trs.len() == 0 {
+    //     println!("No incident triangles");
+    // }
+    // for tr in trs.iter() {
+    //     println!("incident: {}", *tr);
+    //     println!("is_triangle? {}", dt.is_triangle(&tr));
+    // }
+
+    let adjtr = dt.adjacent_triangles_to_triangle(&trs[0]);
+    println!("Adjacent to: {}", &trs[0]);
     for tr in adjtr.iter() {
         println!("adj: {}", tr);
         // println!("is_triangle? {}", dt.is_triangle(&tr));
     }
 
-    // let stats = dt.stats_degree();
+    // let stats = dt.statistics_degree();
     // println!("stats: {}--{}--{}", stats.0, stats.1, stats.2);
 
     // dt.write_obj("/Users/hugo/temp/out.obj".to_string(), false)
