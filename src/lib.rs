@@ -16,33 +16,36 @@
 //! extern crate startin;
 //!
 //! fn main() {
+//!     let mut pts: Vec<Vec<f64>> = Vec::new();
+//!     pts.push(vec![20.0, 30.0, 2.0]);
+//!     pts.push(vec![120.0, 33.0, 12.5]);
+//!     pts.push(vec![124.0, 222.0, 7.65]);
+//!     pts.push(vec![20.0, 133.0, 21.0]);
+//!     pts.push(vec![60.0, 60.0, 33.0]);
+//!
 //!     let mut dt = startin::Triangulation::new();
+//!     dt.insert(&pts);
 //!
-//!     //-- insert 5 points
-//!     dt.insert_one_pt(20.0,  30.0,  2.0).unwrap();
-//!     dt.insert_one_pt(120.0, 33.0,  12.5).unwrap();
-//!     dt.insert_one_pt(124.0, 222.0, 7.65).unwrap();
-//!     dt.insert_one_pt(20.0,  133.0, 21.0).unwrap();
-//!     dt.insert_one_pt(60.0,  60.0,  33.0).unwrap();
+//!     let re = dt.insert_one_pt(20.0, 30.0, 2.0);
+//!     match re {
+//!         Ok(_v) => println!("Inserted new point"),
+//!         Err(v) => println!("Duplicate of vertex #{}, not inserted", v),
+//!     }
 //!
+//!     println!("*****");
 //!     println!("Number of points in DT: {}", dt.number_of_vertices());
 //!     println!("Number of triangles in DT: {}", dt.number_of_triangles());
 //!
 //!     //-- print all the vertices
 //!     for (i, each) in dt.all_vertices().iter().enumerate() {
-//!         println!(
-//!             "#{}: ({:.3}, {:.3}, {:.3})",
-//!             (i + 1),
-//!             each[0],
-//!             each[1],
-//!             each[2]
-//!         );
+//!         // skip the first one, the infinite vertex
+//!         if i > 0 {
+//!             println!("#{}: ({:.3}, {:.3}, {:.3})", i, each[0], each[1], each[2]);
+//!         }
 //!     }
-//!
 //!     //-- get the convex hull
 //!     let ch = dt.convex_hull();
 //!     println!("Convex hull: {:?}", ch);
-//!
 //!     //-- fetch triangle containing (x, y)
 //!     let re = dt.locate(50.0, 50.0);
 //!     if re.is_some() {
@@ -270,7 +273,7 @@ impl Triangulation {
     pub fn new() -> Triangulation {
         let mut l: Vec<Star> = Vec::with_capacity(100000);
         // let mut l: Vec<Star> = Vec::new();
-        l.push(Star::new(0.0, 0.0, 0.0));
+        l.push(Star::new(-999.9, -999.9, -999.9));
         unsafe {
             geom::shewchuk::exactinit();
         }
@@ -377,6 +380,17 @@ impl Triangulation {
 
     pub fn use_robust_predicates(&mut self, b: bool) {
         self.robust_predicates = b;
+    }
+
+    pub fn insert(&mut self, pts: &Vec<Vec<f64>>) {
+        let mut duplicates = 0;
+        for each in pts {
+            let re = self.insert_one_pt(each[0], each[1], each[2]);
+            match re {
+                Ok(_x) => continue,
+                Err(_e) => duplicates = duplicates + 1,
+            };
+        }
     }
 
     //-- insert_one_pt
@@ -808,16 +822,16 @@ impl Triangulation {
         self.stars[tr.tr2].link.get_next_vertex(tr.tr1).unwrap()
     }
 
-    /// Returns a Vec<Vec<f64>> of all the finite vertices
+    /// Returns a Vec<Vec<f64>> of all the vertices (including the infinite one)
     pub fn all_vertices(&self) -> Vec<Vec<f64>> {
         let mut pts: Vec<Vec<f64>> = Vec::with_capacity(self.stars.len() - 1);
-        for i in 1..self.stars.len() {
+        for i in 0..self.stars.len() {
             pts.push(self.stars[i].pt.to_vec());
         }
         pts
     }
 
-    fn all_triangles(&self) -> Vec<Triangle> {
+    pub fn all_triangles(&self) -> Vec<Triangle> {
         let mut trs: Vec<Triangle> = Vec::new();
         for (i, star) in self.stars.iter().enumerate() {
             //-- reconstruct triangles

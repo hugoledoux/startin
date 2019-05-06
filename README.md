@@ -18,27 +18,32 @@ I made this in Rust because I wanted to learn Rust.
 extern crate startin;
 
 fn main() {
+    let mut pts: Vec<Vec<f64>> = Vec::new();
+    pts.push(vec![20.0, 30.0, 2.0]);
+    pts.push(vec![120.0, 33.0, 12.5]);
+    pts.push(vec![124.0, 222.0, 7.65]);
+    pts.push(vec![20.0, 133.0, 21.0]);
+    pts.push(vec![60.0, 60.0, 33.0]);
+
     let mut dt = startin::Triangulation::new();
+    dt.insert(&pts);
 
-    //-- insert 5 points
-    dt.insert_one_pt(20.0,  30.0,  2.0).unwrap();
-    dt.insert_one_pt(120.0, 33.0,  12.5).unwrap();
-    dt.insert_one_pt(124.0, 222.0, 7.65).unwrap();
-    dt.insert_one_pt(20.0,  133.0, 21.0).unwrap();
-    dt.insert_one_pt(60.0,  60.0,  33.0).unwrap();
+    let re = dt.insert_one_pt(20.0, 30.0, 2.0);
+    match re {
+        Ok(_v) => println!("Inserted new point"),
+        Err(v) => println!("Duplicate of vertex #{}, not inserted", v),
+    }
 
+    println!("*****");
     println!("Number of points in DT: {}", dt.number_of_vertices());
     println!("Number of triangles in DT: {}", dt.number_of_triangles());
 
     //-- print all the vertices
     for (i, each) in dt.all_vertices().iter().enumerate() {
-        println!(
-            "#{}: ({:.3}, {:.3}, {:.3})",
-            (i + 1),
-            each[0],
-            each[1],
-            each[2]
-        );
+        // skip the first one, the infinite vertex
+        if i > 0 {
+            println!("#{}: ({:.3}, {:.3}, {:.3})", i, each[0], each[1], each[2]);
+        }
     }
 
     //-- get the convex hull
