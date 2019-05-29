@@ -2,16 +2,19 @@ extern crate startin;
 
 fn main() {
     let mut pts: Vec<Vec<f64>> = Vec::new();
-    pts.push(vec![20.0, 30.0, 2.0]);
-    pts.push(vec![120.0, 33.0, 12.5]);
-    pts.push(vec![124.0, 222.0, 7.65]);
-    pts.push(vec![20.0, 133.0, 21.0]);
-    pts.push(vec![60.0, 60.0, 33.0]);
+    pts.push(vec![2.0, 2.0, 2.0]);
+    pts.push(vec![4.0, 2.0, 12.5]);
+    pts.push(vec![4.0, 5.0, 7.65]);
+    pts.push(vec![2.0, 4.0, 21.0]);
+    pts.push(vec![2.5, 2.5, 33.0]);
+    pts.push(vec![3.0, 3.0, 33.0]);
 
     let mut dt = startin::Triangulation::new();
     dt.insert(&pts);
 
-    dt.remove(4);
+    println!("{}", dt);
+    dt.remove(5);
+    println!("{}", dt);
 
     // let re = dt.insert_one_pt(20.0, 30.0, 2.0);
     // match re {

@@ -478,7 +478,7 @@ impl Triangulation {
                 // println!("TODO: INCIRCLE FOR INFINITY {}", a);
                 if a > 0 {
                     // println!("FLIPPED0 {} {}", tr, opposite);
-                    let (ret0, ret1) = self.flip(&tr, opposite);
+                    let (ret0, ret1) = self.flip22(&tr, opposite);
                     mystack.push(ret0);
                     mystack.push(ret1);
                 }
@@ -494,7 +494,7 @@ impl Triangulation {
                     ) == 0
                     {
                         // println!("FLIPPED1 {} {}", tr, 0);
-                        let (ret0, ret1) = self.flip(&tr, 0);
+                        let (ret0, ret1) = self.flip22(&tr, 0);
                         mystack.push(ret0);
                         mystack.push(ret1);
                     }
@@ -508,7 +508,7 @@ impl Triangulation {
                     ) > 0
                     {
                         // println!("FLIPPED2 {} {}", tr, opposite);
-                        let (ret0, ret1) = self.flip(&tr, opposite);
+                        let (ret0, ret1) = self.flip22(&tr, opposite);
                         mystack.push(ret0);
                         mystack.push(ret1);
                     }
@@ -526,6 +526,18 @@ impl Triangulation {
         self.stars[tr.tr2].link.insert_after_v(pi, tr.tr0);
         //-- put infinite vertex first in list
         self.stars[pi].link.infinite_first();
+    }
+
+    fn flip31(&mut self, v: usize) {
+        println!("FLIP31");
+        let mut ns: Vec<usize> = Vec::new();
+        for each in self.stars[v].link.iter() {
+            ns.push(*each);
+        }
+        for n in ns {
+            self.stars[n].link.delete(v);
+        }
+        self.stars.remove(v);
     }
 
     /// Returns the coordinates of the vertex v in a Vec [x,y,z]
@@ -795,7 +807,7 @@ impl Triangulation {
         return tr;
     }
 
-    fn flip(&mut self, tr: &Triangle, opposite: usize) -> (Triangle, Triangle) {
+    fn flip22(&mut self, tr: &Triangle, opposite: usize) -> (Triangle, Triangle) {
         //-- step 1.
         self.stars[tr.tr0].link.insert_after_v(opposite, tr.tr1);
         //-- step 2.
@@ -877,13 +889,69 @@ impl Triangulation {
         re
     }
 
-    pub fn remove(&self, v: usize) -> bool {
-        if v >= self.stars.len() {
+    pub fn remove(&mut self, v: usize) -> bool {
+        println!("remove() -> {}", v);
+        if (v == 0) || (v >= self.stars.len()) {
             return false;
         }
+        let mut adjs: Vec<usize> = Vec::new();
         for each in self.stars[v].link.iter() {
-            println!("adjv: {}", each);
+            adjs.push(*each);
         }
+        println!("adjs: {:?}", adjs);
+
+        let mut cur: usize = 0;
+        while adjs.len() > 3 {
+            let a = cur % adjs.len();
+            let b = (cur + 1) % adjs.len();
+            let c = (cur + 2) % adjs.len();
+            println!("{:?} {}/{}/{}", adjs, a, b, c);
+            if (geom::orient2d(
+                &self.stars[adjs[a]].pt,
+                &self.stars[adjs[b]].pt,
+                &self.stars[adjs[c]].pt,
+                self.robust_predicates,
+            ) == 1)
+                && (geom::orient2d(
+                    &self.stars[adjs[a]].pt,
+                    &self.stars[adjs[c]].pt,
+                    &self.stars[v].pt,
+                    self.robust_predicates,
+                ) >= 0)
+            {
+                println!("ear {}-{}-{}", adjs[a], adjs[b], adjs[c]);
+                //-- test incircle with all other vertices in the "hole"
+                let cur2 = cur + 3;
+                let mut isdel = true;
+                for i in 0..adjs.len() - 3 {
+                    println!("test ear with {}", cur2 % adjs.len());
+                    if geom::incircle(
+                        &self.stars[adjs[a]].pt,
+                        &self.stars[adjs[b]].pt,
+                        &self.stars[adjs[c]].pt,
+                        &self.stars[adjs[(cur2 + i) % adjs.len()]].pt,
+                        self.robust_predicates,
+                    ) > 0
+                    {
+                        isdel = false;
+                        break;
+                    }
+                }
+                if isdel == true {
+                    println!("flip22");
+                    let t = Triangle {
+                        tr0: adjs[a],
+                        tr1: adjs[b],
+                        tr2: v,
+                    };
+                    self.flip22(&t, adjs[c]);
+                    adjs.remove(cur);
+                }
+            }
+            cur = cur + 1;
+        }
+        //-- flip31 to remove the vertex
+        self.flip31(v);
         return true;
     }
 
