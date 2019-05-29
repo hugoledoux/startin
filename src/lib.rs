@@ -877,6 +877,16 @@ impl Triangulation {
         re
     }
 
+    pub fn remove(&self, v: usize) -> bool {
+        if v >= self.stars.len() {
+            return false;
+        }
+        for each in self.stars[v].link.iter() {
+            println!("adjv: {}", each);
+        }
+        return true;
+    }
+
     pub fn write_obj(&self, path: String, twod: bool) -> std::io::Result<()> {
         let trs = self.all_triangles();
         let mut f = File::create(path)?;
