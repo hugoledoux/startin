@@ -400,7 +400,6 @@ impl Triangulation {
             return self.insert_one_pt_init_phase(px, py, pz);
         }
         //-- walk
-        // println!("Walking");
         let p: [f64; 3] = [px, py, pz];
         let tr = self.walk(&p);
         // println!("STARTING TR: {}", tr);
@@ -538,6 +537,7 @@ impl Triangulation {
             self.stars[n].link.delete(v);
         }
         self.stars.remove(v);
+        self.cur = 0;
     }
 
     /// Returns the coordinates of the vertex v in a Vec [x,y,z]
@@ -891,7 +891,7 @@ impl Triangulation {
 
     pub fn remove(&mut self, v: usize) -> bool {
         println!("remove() -> {}", v);
-        if (v == 0) || (v >= self.stars.len()) {
+        if (v == 0) || (v >= self.stars.len() || self.is_vertex_convex_hull(v) == true) {
             return false;
         }
         let mut adjs: Vec<usize> = Vec::new();
@@ -899,7 +899,6 @@ impl Triangulation {
             adjs.push(*each);
         }
         println!("adjs: {:?}", adjs);
-
         let mut cur: usize = 0;
         while adjs.len() > 3 {
             let a = cur % adjs.len();
@@ -979,6 +978,21 @@ impl Triangulation {
             write!(f, "f {} {} {}\n", tr.tr0, tr.tr1, tr.tr2).unwrap();
         }
         Ok(())
+    }
+
+    pub fn printme(&self) -> String {
+        let mut s = String::from("**********\n");
+        // s.push_str(&format!("#pts: {}\n", self.number_pts()));
+        for (i, p) in self.stars.iter().enumerate() {
+            // s.push_str(&format!("{}: {}\n", i, self.stars[i].link));
+            s.push_str(&format!("{}: [", i));
+            for each in p.link.iter() {
+                s.push_str(&format!("{} - ", each));
+            }
+            s.push_str(&format!("]\n"));
+        }
+        s.push_str("**********\n");
+        s
     }
 }
 
