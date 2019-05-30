@@ -134,6 +134,9 @@ impl Link {
             self.0 = newstar;
         }
     }
+    fn clear(&mut self) {
+        self.0.clear();
+    }
 
     fn contains_infinite_vertex(&self) -> bool {
         let pos = self.0.iter().position(|&x| x == 0);
@@ -266,6 +269,7 @@ pub struct Triangulation {
     is_init: bool,
     jump_and_walk: bool,
     robust_predicates: bool,
+    freespots: Vec<usize>,
 }
 
 impl Triangulation {
@@ -274,6 +278,7 @@ impl Triangulation {
         let mut l: Vec<Star> = Vec::with_capacity(100000);
         // let mut l: Vec<Star> = Vec::new();
         l.push(Star::new(-999.9, -999.9, -999.9));
+        let mut es: Vec<usize> = Vec::new();
         unsafe {
             geom::shewchuk::exactinit();
         }
@@ -284,6 +289,7 @@ impl Triangulation {
             is_init: false,
             jump_and_walk: true,
             robust_predicates: true,
+            freespots: es,
         }
     }
 
@@ -536,8 +542,13 @@ impl Triangulation {
         for n in ns {
             self.stars[n].link.delete(v);
         }
-        self.stars.remove(v);
-        self.cur = 0;
+        // self.stars.remove(v);
+        self.stars[v].link.clear();
+        self.stars[v].pt[0] = -999.9;
+        self.stars[v].pt[1] = -999.9;
+        self.stars[v].pt[2] = -999.9;
+
+        // self.cur = 0; // TODO: find a proper cur after deletion
     }
 
     /// Returns the coordinates of the vertex v in a Vec [x,y,z]
@@ -990,6 +1001,7 @@ impl Triangulation {
                 s.push_str(&format!("{} - ", each));
             }
             s.push_str(&format!("]\n"));
+            // s.push_str(&format!("\t{:?}\n", self.stars[i].pt));
         }
         s.push_str("**********\n");
         s
