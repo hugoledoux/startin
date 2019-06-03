@@ -912,10 +912,16 @@ impl Triangulation {
         re
     }
 
-    pub fn remove(&mut self, v: usize) -> bool {
-        println!("remove() -> {}", v);
-        if (v == 0) || (v >= self.stars.len() || self.is_vertex_convex_hull(v) == true) {
-            return false;
+    pub fn remove(&mut self, v: usize) -> Result<usize, &'static str> {
+        println!("REMOVE vertex {}", v);
+        if v == 0 {
+            return Err("Cannot remove the infinite vertex");
+        }
+        if (self.stars[v].link.len() == 0) || (v >= self.stars.len()) {
+            return Err("Vertex does not exist");
+        }
+        if self.is_vertex_convex_hull(v) {
+            return Err("Vertex on boundary of convex hull cannot be removed");
         }
         let mut adjs: Vec<usize> = Vec::new();
         for each in self.stars[v].link.iter() {
@@ -974,7 +980,7 @@ impl Triangulation {
         }
         //-- flip31 to remove the vertex
         self.flip31(v);
-        return true;
+        return Ok(self.stars.len() - 1);
     }
 
     pub fn write_obj(&self, path: String, twod: bool) -> std::io::Result<()> {
