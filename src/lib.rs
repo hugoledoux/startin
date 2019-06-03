@@ -665,7 +665,7 @@ impl Triangulation {
     /// Returns number of finite vertices in the triangulation.
     pub fn number_of_vertices(&self) -> usize {
         //-- number of finite vertices
-        (self.stars.len() - 1)
+        (self.stars.len() - 1 - self.free_indices.len())
     }
 
     /// Returns number of finite triangles in the triangulation.
