@@ -973,7 +973,7 @@ impl Triangulation {
                         tr2: v,
                     };
                     self.flip22(&t, adjs[c]);
-                    adjs.remove(cur);
+                    adjs.remove(cur + 1);
                 }
             }
             cur = cur + 1;
