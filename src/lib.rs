@@ -933,7 +933,7 @@ impl Triangulation {
             let a = cur % adjs.len();
             let b = (cur + 1) % adjs.len();
             let c = (cur + 2) % adjs.len();
-            println!("{:?} {}/{}/{}", adjs, a, b, c);
+            println!("cur ear--> {:?} {}/{}/{}", adjs, a, b, c);
             if (geom::orient2d(
                 &self.stars[adjs[a]].pt,
                 &self.stars[adjs[b]].pt,
@@ -952,7 +952,7 @@ impl Triangulation {
                 let cur2 = cur + 3;
                 let mut isdel = true;
                 for i in 0..adjs.len() - 3 {
-                    println!("test ear with {}", (cur2 + i) % adjs.len());
+                    println!("test ear with {}", adjs[(cur2 + i) % adjs.len()]);
                     if geom::incircle(
                         &self.stars[adjs[a]].pt,
                         &self.stars[adjs[b]].pt,
@@ -973,7 +973,7 @@ impl Triangulation {
                         tr2: v,
                     };
                     self.flip22(&t, adjs[c]);
-                    adjs.remove(cur + 1);
+                    adjs.remove((cur + 1) % adjs.len());
                 }
             }
             cur = cur + 1;
