@@ -917,7 +917,7 @@ impl Triangulation {
         if v == 0 {
             return Err("Cannot remove the infinite vertex");
         }
-        if (self.stars[v].link.len() == 0) || (v >= self.stars.len()) {
+        if (v >= self.stars.len()) || (self.stars[v].link.len() == 0) {
             return Err("Vertex does not exist");
         }
         if self.is_vertex_convex_hull(v) {
