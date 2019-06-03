@@ -1009,7 +1009,7 @@ impl Triangulation {
         Ok(())
     }
 
-    pub fn printme(&self) -> String {
+    pub fn printme(&self, withxyz: bool) -> String {
         let mut s = String::from("**********\n");
         // s.push_str(&format!("#pts: {}\n", self.number_pts()));
         for (i, p) in self.stars.iter().enumerate() {
@@ -1019,7 +1019,9 @@ impl Triangulation {
                 s.push_str(&format!("{} - ", each));
             }
             s.push_str(&format!("]\n"));
-            s.push_str(&format!("\t{:?}\n", self.stars[i].pt));
+            if withxyz == true {
+                s.push_str(&format!("\t{:?}\n", self.stars[i].pt));
+            }
         }
         s.push_str("**********\n");
         s

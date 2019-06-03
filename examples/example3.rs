@@ -18,13 +18,13 @@ fn main() {
     let mut dt = startin::Triangulation::new();
     dt.set_jump_and_walk(false);
     dt.insert(&pts);
-    println!("{}", dt.printme());
+    println!("{}", dt.printme(true));
 
     let re = dt.remove(7);
     if re.is_err() == true {
         println!("!!!Error: {:?}", re.unwrap_err());
     }
-    println!("{}", dt.printme());
+    println!("{}", dt.printme(true));
 
     println!("Is Delaunay?: {}", dt.is_valid());
     println!("# vertices {}", dt.number_of_vertices());
