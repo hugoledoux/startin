@@ -7,14 +7,25 @@ fn main() {
     pts.push(vec![4.0, 5.0, 7.65]);
     pts.push(vec![2.0, 4.0, 21.0]);
     pts.push(vec![2.5, 2.5, 33.0]);
-    pts.push(vec![3.0, 3.0, 33.0]);
+    pts.push(vec![3.0, 3.1, 33.0]);
 
     let mut dt = startin::Triangulation::new();
     dt.insert(&pts);
+    println!("{}", dt.printme());
 
-    println!("{}", dt);
+    // println!("{}", dt);
     dt.remove(5);
-    println!("{}", dt);
+    println!("{}", dt.printme());
+    // println!("{}", dt);
+    dt.remove(6);
+    println!("{}", dt.printme());
+
+    let re = dt.insert_one_pt(3.3, 3.2, 2.0);
+    let re = dt.insert_one_pt(2.3, 2.2, 22.0);
+    println!("{}", dt.printme());
+
+
+    println!("Is Delaunay?: {}", dt.is_valid());
 
     // let re = dt.insert_one_pt(20.0, 30.0, 2.0);
     // match re {

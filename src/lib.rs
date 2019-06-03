@@ -269,14 +269,15 @@ pub struct Triangulation {
     is_init: bool,
     jump_and_walk: bool,
     robust_predicates: bool,
-    freespots: Vec<usize>,
+    free_indices: Vec<usize>,
 }
 
 impl Triangulation {
     //-- new
     pub fn new() -> Triangulation {
-        let mut l: Vec<Star> = Vec::with_capacity(100000);
-        // let mut l: Vec<Star> = Vec::new();
+        // TODO: allocate a certain number?
+        // let mut l: Vec<Star> = Vec::with_capacity(100000);
+        let mut l: Vec<Star> = Vec::new();
         l.push(Star::new(-999.9, -999.9, -999.9));
         let mut es: Vec<usize> = Vec::new();
         unsafe {
@@ -289,7 +290,7 @@ impl Triangulation {
             is_init: false,
             jump_and_walk: true,
             robust_predicates: true,
-            freespots: es,
+            free_indices: es,
         }
     }
 
@@ -418,15 +419,25 @@ impl Triangulation {
         if geom::distance2d_squared(&self.stars[tr.tr2].pt, &p) <= (self.snaptol * self.snaptol) {
             return Err(tr.tr2);
         }
-        self.stars.push(Star::new(px, py, pz));
-        let pi: usize = self.stars.len() - 1;
+        //-- ok we now insert the point in the data structure
+        let pi: usize;
+        if self.free_indices.is_empty() == true {
+            self.stars.push(Star::new(px, py, pz));
+            pi = self.stars.len() - 1;
+        } else {
+            // self.stars.push(Star::new(px, py, pz));
+            pi = self.free_indices.pop().unwrap();
+            self.stars[pi].pt[0] = px;
+            self.stars[pi].pt[1] = py;
+            self.stars[pi].pt[2] = pz;
+        }
         //-- flip13()
         self.flip13(pi, &tr);
         //-- update_dt()
         self.update_dt(pi);
 
-        self.cur = self.stars.len() - 1;
-        Ok(self.stars.len() - 1)
+        self.cur = pi;
+        Ok(pi)
     }
 
     fn update_dt(&mut self, pi: usize) {
@@ -547,8 +558,9 @@ impl Triangulation {
         self.stars[v].pt[0] = -999.9;
         self.stars[v].pt[1] = -999.9;
         self.stars[v].pt[2] = -999.9;
-
-        // self.cur = 0; // TODO: find a proper cur after deletion
+        self.free_indices.push(v);
+        // self.cur = 0;
+        // TODO: find a proper cur after deletion
     }
 
     /// Returns the coordinates of the vertex v in a Vec [x,y,z]
@@ -1001,7 +1013,7 @@ impl Triangulation {
                 s.push_str(&format!("{} - ", each));
             }
             s.push_str(&format!("]\n"));
-            // s.push_str(&format!("\t{:?}\n", self.stars[i].pt));
+            s.push_str(&format!("\t{:?}\n", self.stars[i].pt));
         }
         s.push_str("**********\n");
         s
