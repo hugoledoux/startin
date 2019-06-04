@@ -115,6 +115,24 @@
       "args": [],
       "cwd": "${workspaceFolder}"
     },
+        {
+          "type": "lldb",
+          "request": "launch",
+          "name": "Debug example 'example5'",
+          "cargo": {
+            "args": [
+              "build",
+              "--example=example5",
+              "--package=startin"
+            ],
+            "filter": {
+              "name": "example5",
+              "kind": "example"
+            }
+          },
+          "args": [],
+          "cwd": "${workspaceFolder}"
+        },
     {
       "type": "lldb",
       "request": "launch",
