@@ -16,22 +16,29 @@ fn main() {
     dt.insert(&pts);
     println!("{}", dt.printme(false));
 
-    //-- delete 50 vertices randomly
-    for _i in 0..50 {
+    //-- delete 5 vertices on convex hull
+    let mut total: usize = 0;
+    loop {
         let j: usize = rng.gen_range(1, 99);
-        let re = dt.remove(j);
-        if re.is_err() == true {
-            println!("!!!Error: {:?}", re.unwrap_err());
+        if dt.is_vertex_convex_hull(j) == true {
+            let re = dt.remove(j);
+            if re.is_err() == true {
+                println!("!!!Error: {:?}", re.unwrap_err());
+            }
+            total = total + 1;
+            if total == 5 {
+                break;
+            }
         }
     }
 
-    //-- insert 50 vertices randomly
-    for _i in 0..50 {
-        let x: f64 = rng.gen();
-        let y: f64 = rng.gen();
-        let _re = dt.insert_one_pt(x, y, 1.1);
-    }
-    println!("{}", dt.printme(false));
+    // //-- insert 50 vertices randomly
+    // for _i in 0..50 {
+    //     let x: f64 = rng.gen();
+    //     let y: f64 = rng.gen();
+    //     let _re = dt.insert_one_pt(x, y, 1.1);
+    // }
+    // println!("{}", dt.printme(false));
 
     println!("Is Delaunay?: {}", dt.is_valid());
     println!("# vertices {}", dt.number_of_vertices());
