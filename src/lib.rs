@@ -103,6 +103,13 @@ impl Link {
     fn len(&self) -> usize {
         self.0.len()
     }
+    fn is_empty(&self) -> bool {
+        if self.0.len() == 0 {
+            true
+        } else {
+            false
+        }
+    }
     fn add(&mut self, v: usize) {
         self.0.push(v);
     }
@@ -747,6 +754,9 @@ impl Triangulation {
             for _i in 0..n as i32 {
                 let re: usize = rng.gen_range(1, self.stars.len());
                 // let dtemp = x.square_2d_distance(&self.stars[re].pt);
+                if self.stars[re].link.is_empty() == true {
+                    continue;
+                }
                 let dtemp = geom::distance2d_squared(&self.stars[re].pt, &x);
                 if dtemp < d {
                     cur = re;
