@@ -934,25 +934,8 @@ impl Triangulation {
             let a = cur % adjs.len();
             let b = (cur + 1) % adjs.len();
             let c = (cur + 2) % adjs.len();
-            if a == 0 || b == 0 || c == 0 {
-                cur = cur + 1;
-                continue;
-            }
-            println!("cur ear--> {:?} {}/{}/{}", adjs, a, b, c);
-            if (geom::orient2d(
-                &self.stars[adjs[a]].pt,
-                &self.stars[adjs[b]].pt,
-                &self.stars[adjs[c]].pt,
-                self.robust_predicates,
-            ) == 1)
-                && (geom::orient2d(
-                    &self.stars[adjs[a]].pt,
-                    &self.stars[adjs[c]].pt,
-                    &self.stars[v].pt,
-                    self.robust_predicates,
-                ) >= 0)
-            {
-                println!("ear {}-{}-{}", adjs[a], adjs[b], adjs[c]);
+            if a == 0 {
+                println!("a: ear {}-{}-{}", adjs[a], adjs[b], adjs[c]);
                 //-- test incircle with all other vertices in the "hole"
                 let cur2 = cur + 3;
                 let mut isdel = true;
@@ -961,10 +944,71 @@ impl Triangulation {
                     if adjs[(cur2 + i) % adjs.len()] == 0 {
                         continue;
                     }
-                    if geom::incircle(
-                        &self.stars[adjs[a]].pt,
+                    if geom::orient2d(
+                        &self.stars[adjs[(cur2 + i) % adjs.len()]].pt,
                         &self.stars[adjs[b]].pt,
                         &self.stars[adjs[c]].pt,
+                        self.robust_predicates,
+                    ) > 0
+                    {
+                        isdel = false;
+                        break;
+                    }
+                }
+                if isdel == true {
+                    println!("flip22");
+                    let t = Triangle {
+                        tr0: adjs[a],
+                        tr1: adjs[b],
+                        tr2: v,
+                    };
+                    self.flip22(&t, adjs[c]);
+                    adjs.remove((cur + 1) % adjs.len());
+                }
+            } else if b == 0 {
+                println!("b: ear {}-{}-{}", adjs[a], adjs[b], adjs[c]);
+                //-- test incircle with all other vertices in the "hole"
+                let cur2 = cur + 3;
+                let mut isdel = true;
+                for i in 0..adjs.len() - 3 {
+                    println!("test ear with {}", adjs[(cur2 + i) % adjs.len()]);
+                    if adjs[(cur2 + i) % adjs.len()] == 0 {
+                        continue;
+                    }
+                    if geom::orient2d(
+                        &self.stars[adjs[a]].pt,
+                        &self.stars[adjs[(cur2 + i) % adjs.len()]].pt,
+                        &self.stars[adjs[c]].pt,
+                        self.robust_predicates,
+                    ) > 0
+                    {
+                        isdel = false;
+                        break;
+                    }
+                }
+                if isdel == true {
+                    println!("flip22");
+                    let t = Triangle {
+                        tr0: adjs[a],
+                        tr1: adjs[b],
+                        tr2: v,
+                    };
+                    self.flip22(&t, adjs[c]);
+                    adjs.remove((cur + 1) % adjs.len());
+                }
+            } else if c == 0 {
+                println!("c: ear {}-{}-{}", adjs[a], adjs[b], adjs[c]);
+                //-- test incircle with all other vertices in the "hole"
+                let cur2 = cur + 3;
+                let mut isdel = true;
+                for i in 0..adjs.len() - 3 {
+                    println!("test ear with {}", adjs[(cur2 + i) % adjs.len()]);
+                    if adjs[(cur2 + i) % adjs.len()] == 0 {
+                        continue;
+                    }
+                    if geom::orient2d(
+                        &self.stars[adjs[a]].pt,
+                        &self.stars[adjs[b]].pt,
                         &self.stars[adjs[(cur2 + i) % adjs.len()]].pt,
                         self.robust_predicates,
                     ) > 0
@@ -982,6 +1026,53 @@ impl Triangulation {
                     };
                     self.flip22(&t, adjs[c]);
                     adjs.remove((cur + 1) % adjs.len());
+                }
+            } else {
+                println!("normal ear--> {:?} {}/{}/{}", adjs, a, b, c);
+                if (geom::orient2d(
+                    &self.stars[adjs[a]].pt,
+                    &self.stars[adjs[b]].pt,
+                    &self.stars[adjs[c]].pt,
+                    self.robust_predicates,
+                ) == 1)
+                    && (geom::orient2d(
+                        &self.stars[adjs[a]].pt,
+                        &self.stars[adjs[c]].pt,
+                        &self.stars[v].pt,
+                        self.robust_predicates,
+                    ) >= 0)
+                {
+                    println!("ear {}-{}-{}", adjs[a], adjs[b], adjs[c]);
+                    //-- test incircle with all other vertices in the "hole"
+                    let cur2 = cur + 3;
+                    let mut isdel = true;
+                    for i in 0..adjs.len() - 3 {
+                        println!("test ear with {}", adjs[(cur2 + i) % adjs.len()]);
+                        if adjs[(cur2 + i) % adjs.len()] == 0 {
+                            continue;
+                        }
+                        if geom::incircle(
+                            &self.stars[adjs[a]].pt,
+                            &self.stars[adjs[b]].pt,
+                            &self.stars[adjs[c]].pt,
+                            &self.stars[adjs[(cur2 + i) % adjs.len()]].pt,
+                            self.robust_predicates,
+                        ) > 0
+                        {
+                            isdel = false;
+                            break;
+                        }
+                    }
+                    if isdel == true {
+                        println!("flip22");
+                        let t = Triangle {
+                            tr0: adjs[a],
+                            tr1: adjs[b],
+                            tr2: v,
+                        };
+                        self.flip22(&t, adjs[c]);
+                        adjs.remove((cur + 1) % adjs.len());
+                    }
                 }
             }
             cur = cur + 1;
