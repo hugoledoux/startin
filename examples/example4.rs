@@ -9,7 +9,7 @@ fn main() {
     for _i in 0..num_pts {
         let x: f64 = rng.gen();
         let y: f64 = rng.gen();
-        pts.push(vec![x, y, 2.0]);
+        pts.push(vec![x * 100.0, y * 100.0, 2.0]);
     }
 
     let mut dt = startin::Triangulation::new();
@@ -27,7 +27,7 @@ fn main() {
                 println!("!!!Error: {:?}", re.unwrap_err());
             }
             total = total + 1;
-            if total == 100 {
+            if total == 10 {
                 break;
             }
         }
