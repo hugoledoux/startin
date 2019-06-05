@@ -273,6 +273,9 @@ impl Star {
             link: l,
         }
     }
+    pub fn is_deleted(&self) -> bool {
+        self.link.is_empty()
+    }
 }
 
 //----------------------
@@ -761,7 +764,7 @@ impl Triangulation {
             for _i in 0..n as i32 {
                 let re: usize = rng.gen_range(1, self.stars.len());
                 // let dtemp = x.square_2d_distance(&self.stars[re].pt);
-                if self.stars[re].link.is_empty() == true {
+                if self.stars[re].is_deleted() == true {
                     continue;
                 }
                 let dtemp = geom::distance2d_squared(&self.stars[re].pt, &x);
@@ -917,15 +920,17 @@ impl Triangulation {
         let trs = self.all_triangles();
         for tr in trs.iter() {
             for i in 1..self.stars.len() {
-                if geom::incircle(
-                    &self.stars[tr.tr0].pt,
-                    &self.stars[tr.tr1].pt,
-                    &self.stars[tr.tr2].pt,
-                    &self.stars[i].pt,
-                    self.robust_predicates,
-                ) > 0
+                if self.stars[i].is_deleted() == false
+                    && geom::incircle(
+                        &self.stars[tr.tr0].pt,
+                        &self.stars[tr.tr1].pt,
+                        &self.stars[tr.tr2].pt,
+                        &self.stars[i].pt,
+                        self.robust_predicates,
+                    ) > 0
                 {
-                    // println!("NOT DELAUNAY FFS!");
+                    println!("NOT DELAUNAY FFS!");
+                    println!("{} with {}", tr, i);
                     re = false
                 }
             }
@@ -959,7 +964,7 @@ impl Triangulation {
         }
         println!("adjs: {:?}", adjs);
         let mut cur: usize = 0;
-        let maxloops = adjs.len() * 2;
+        let maxloops = adjs.len() * 3;
         //-- 1. try to find finite triangles only
         while adjs.len() > 3 && cur <= maxloops {
             let a = cur % adjs.len();
@@ -989,13 +994,14 @@ impl Triangulation {
                 let mut isdel = true;
                 for i in 0..adjs.len() - 3 {
                     println!("test ear with {}", adjs[(cur2 + i) % adjs.len()]);
-                    if geom::incircle(
-                        &self.stars[adjs[a]].pt,
-                        &self.stars[adjs[b]].pt,
-                        &self.stars[adjs[c]].pt,
-                        &self.stars[adjs[(cur2 + i) % adjs.len()]].pt,
-                        self.robust_predicates,
-                    ) > 0
+                    if adjs[(cur2 + i) % adjs.len()] != 0
+                        && geom::incircle(
+                            &self.stars[adjs[a]].pt,
+                            &self.stars[adjs[b]].pt,
+                            &self.stars[adjs[c]].pt,
+                            &self.stars[adjs[(cur2 + i) % adjs.len()]].pt,
+                            self.robust_predicates,
+                        ) > 0
                     {
                         isdel = false;
                         break;
