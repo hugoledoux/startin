@@ -953,6 +953,9 @@ impl Triangulation {
                 break;
             }
         }
+        if re == false {
+            println!("CONVEX NOT CONVEX");
+        }
         return re;
     }
 
