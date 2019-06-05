@@ -1020,16 +1020,27 @@ impl Triangulation {
             return Ok(self.stars.len() - 1);
         } else {
             println!("FLIP-FOR-CH");
+            println!("{:?}", adjs);
             assert!(adjs[0] == 0);
+            println!("lats: {:?}", adjs.last());
 
-            self.stars[adjs[0]].link.delete(v);
+            // self.stars[adjs[0]].link.delete(v);
             self.stars[adjs[1]].link.delete(v);
             self.stars[*(adjs.last().unwrap())].link.delete(v);
 
             for i in 2..(adjs.len() - 1) {
                 self.stars[adjs[i]].link.replace(v, 0);
+                self.stars[adjs[i]].link.infinite_first();
             }
-            // self.stars.remove(v);
+
+            println!("here");
+            let mut prev = v;
+            for i in 2..(adjs.len() - 1) {
+                self.stars[0].link.insert_after_v(adjs[i], prev);
+                prev = adjs[i];
+            }
+            self.stars[adjs[0]].link.delete(v);
+
             self.stars[v].link.clear();
             self.stars[v].pt[0] = -999.9;
             self.stars[v].pt[1] = -999.9;
