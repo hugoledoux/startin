@@ -902,6 +902,10 @@ impl Triangulation {
     }
 
     pub fn is_valid(&self) -> bool {
+        self.is_valid_ch_convex() && self.is_valid_circumcircle()
+    }
+
+    fn is_valid_circumcircle(&self) -> bool {
         let mut re = true;
         let trs = self.all_triangles();
         for tr in trs.iter() {
@@ -922,6 +926,23 @@ impl Triangulation {
         re
     }
 
+    fn is_valid_ch_convex(&self) -> bool {
+        let mut re = true;
+        let ch = self.convex_hull();
+        for i in 0..ch.len() {
+            if geom::orient2d(
+                &self.stars[ch[i % ch.len()]].pt,
+                &self.stars[ch[(i + 1) % ch.len()]].pt,
+                &self.stars[ch[(i + 2) % ch.len()]].pt,
+                self.robust_predicates,
+            ) == -1
+            {
+                re = false;
+                break;
+            }
+        }
+        return re;
+    }
     pub fn remove_on_convex_hull(&mut self, v: usize) -> Result<usize, &'static str> {
         println!("!!! REMOVE ON CONVEX HULL");
         let mut adjs: Vec<usize> = Vec::new();
