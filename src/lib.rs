@@ -562,7 +562,7 @@ impl Triangulation {
     }
 
     fn flip31(&mut self, v: usize) {
-        println!("FLIP31");
+        // println!("FLIP31");
         let mut ns: Vec<usize> = Vec::new();
         for each in self.stars[v].link.iter() {
             ns.push(*each);
@@ -570,7 +570,6 @@ impl Triangulation {
         for n in ns {
             self.stars[n].link.delete(v);
         }
-        // self.stars.remove(v);
         self.stars[v].link.clear();
         self.stars[v].pt[0] = -999.9;
         self.stars[v].pt[1] = -999.9;
@@ -960,24 +959,19 @@ impl Triangulation {
     }
 
     pub fn remove_on_convex_hull(&mut self, v: usize) -> Result<usize, &'static str> {
-        println!("!!! REMOVE ON CONVEX HULL");
+        // println!("!!! REMOVE ON CONVEX HULL");
         let mut adjs: Vec<usize> = Vec::new();
         for each in self.stars[v].link.iter() {
             adjs.push(*each);
         }
-        println!("adjs: {:?}", adjs);
+        // println!("adjs: {:?}", adjs);
         let mut cur: usize = 0;
-        // let maxloops = adjs.len() * 10;
-        //-- 1. try to find finite triangles only
-
-        //-- TODO: COUNT NUMBER OF ITERATIONS BEFORE adjs gets -1 elements, if > adjs.len() then we're stuck
-
+        //-- 1. find and create finite triangles only
         let mut nadjs = adjs.len();
         let mut steps = 0;
-
-        // while adjs.len() > 3 && cur <= maxloops {
         while adjs.len() > 3 {
-            // //-- control the loops to avoid infinite loop
+            //-- control the loops to avoid infinite loop, when all options in a temp
+            //-- star have been tried it's because we're stuck (and done actually)
             if steps == nadjs {
                 break;
             }
@@ -987,13 +981,13 @@ impl Triangulation {
                 nadjs = adjs.len();
                 steps = 0;
             }
-
-            //-- starts here
+            //-- define the ear
             let a = cur % adjs.len();
             let b = (cur + 1) % adjs.len();
             let c = (cur + 2) % adjs.len();
-            println!("cur ear--> {:?} {}/{}/{}", adjs, a, b, c);
+            // println!("cur ear--> {:?} {}/{}/{}", adjs, a, b, c);
             if adjs[a] == 0 || adjs[b] == 0 || adjs[c] == 0 {
+                //-- do not process infinite ear
                 cur += 1;
                 continue;
             }
@@ -1010,12 +1004,12 @@ impl Triangulation {
                     self.robust_predicates,
                 ) >= 0)
             {
-                println!("ear {}-{}-{}", adjs[a], adjs[b], adjs[c]);
+                // println!("ear {}-{}-{}", adjs[a], adjs[b], adjs[c]);
                 //-- test incircle with all other vertices in the "hole"
                 let cur2 = cur + 3;
                 let mut isdel = true;
                 for i in 0..adjs.len() - 3 {
-                    println!("test ear with {}", adjs[(cur2 + i) % adjs.len()]);
+                    // println!("test ear with {}", adjs[(cur2 + i) % adjs.len()]);
                     if adjs[(cur2 + i) % adjs.len()] != 0
                         && geom::incircle(
                             &self.stars[adjs[a]].pt,
@@ -1030,7 +1024,7 @@ impl Triangulation {
                     }
                 }
                 if isdel == true {
-                    println!("flip22");
+                    // println!("flip22");
                     let t = Triangle {
                         tr0: adjs[a],
                         tr1: adjs[b],
@@ -1047,28 +1041,20 @@ impl Triangulation {
             self.flip31(v);
             return Ok(self.stars.len() - 1);
         } else {
-            println!("FLIP-FOR-CH");
-            println!("{:?}", adjs);
-            assert!(adjs[0] == 0);
-            println!("lats: {:?}", adjs.last());
-
-            // self.stars[adjs[0]].link.delete(v);
+            //-- we got "stuck" and we need to apply a special "flip"
+            // println!("FLIP-FOR-CH");
             self.stars[adjs[1]].link.delete(v);
             self.stars[*(adjs.last().unwrap())].link.delete(v);
-
             for i in 2..(adjs.len() - 1) {
                 self.stars[adjs[i]].link.replace(v, 0);
                 self.stars[adjs[i]].link.infinite_first();
             }
-
-            println!("here");
             let mut prev = v;
             for i in 2..(adjs.len() - 1) {
                 self.stars[0].link.insert_after_v(adjs[i], prev);
                 prev = adjs[i];
             }
             self.stars[adjs[0]].link.delete(v);
-
             self.stars[v].link.clear();
             self.stars[v].pt[0] = -999.9;
             self.stars[v].pt[1] = -999.9;
@@ -1078,141 +1064,8 @@ impl Triangulation {
         }
     }
 
-    //     //-- 2. allow 'inner' vertices to become boundary of CH
-    //     let mut cur: usize = 0;
-    //     while adjs.len() > 3 {
-    //         let a = cur % adjs.len();
-    //         let b = (cur + 1) % adjs.len();
-    //         let c = (cur + 2) % adjs.len();
-    //         if adjs[a] == 0 || adjs[b] == 0 || adjs[c] == 0 {
-    //             let cur2 = cur + 3;
-    //             let mut isdel = true;
-    //             if adjs[a] == 0 {
-    //                 println!("a: ear {}-{}-{}", adjs[a], adjs[b], adjs[c]);
-    //                 //-- test incircle with all other vertices in the "hole"
-    //                 for i in 0..adjs.len() - 3 {
-    //                     println!("test ear with {}", adjs[(cur2 + i) % adjs.len()]);
-    //                     if adjs[(cur2 + i) % adjs.len()] == 0 {
-    //                         continue;
-    //                     }
-    //                     if geom::orient2d(
-    //                         &self.stars[adjs[(cur2 + i) % adjs.len()]].pt,
-    //                         &self.stars[adjs[b]].pt,
-    //                         &self.stars[adjs[c]].pt,
-    //                         self.robust_predicates,
-    //                     ) > 0
-    //                     {
-    //                         isdel = false;
-    //                         break;
-    //                     }
-    //                 }
-    //             } else if adjs[b] == 0 {
-    //                 println!("b: ear {}-{}-{}", adjs[a], adjs[b], adjs[c]);
-    //                 //-- test incircle with all other vertices in the "hole"
-    //                 for i in 0..adjs.len() - 3 {
-    //                     println!("test ear with {}", adjs[(cur2 + i) % adjs.len()]);
-    //                     if adjs[(cur2 + i) % adjs.len()] == 0 {
-    //                         continue;
-    //                     }
-    //                     if geom::orient2d(
-    //                         &self.stars[adjs[a]].pt,
-    //                         &self.stars[adjs[(cur2 + i) % adjs.len()]].pt,
-    //                         &self.stars[adjs[c]].pt,
-    //                         self.robust_predicates,
-    //                     ) > 0
-    //                     {
-    //                         isdel = false;
-    //                         break;
-    //                     }
-    //                 }
-    //             } else {
-    //                 // c == 0
-    //                 println!("c: ear {}-{}-{}", adjs[a], adjs[b], adjs[c]);
-    //                 //-- test incircle with all other vertices in the "hole"
-    //                 for i in 0..adjs.len() - 3 {
-    //                     println!("test ear with {}", adjs[(cur2 + i) % adjs.len()]);
-    //                     if adjs[(cur2 + i) % adjs.len()] == 0 {
-    //                         continue;
-    //                     }
-    //                     if geom::orient2d(
-    //                         &self.stars[adjs[a]].pt,
-    //                         &self.stars[adjs[b]].pt,
-    //                         &self.stars[adjs[(cur2 + i) % adjs.len()]].pt,
-    //                         self.robust_predicates,
-    //                     ) > 0
-    //                     {
-    //                         isdel = false;
-    //                         break;
-    //                     }
-    //                 }
-    //             }
-    //             if isdel == true {
-    //                 println!("flip22");
-    //                 let t = Triangle {
-    //                     tr0: adjs[a],
-    //                     tr1: adjs[b],
-    //                     tr2: v,
-    //                 };
-    //                 self.flip22(&t, adjs[c]);
-    //                 adjs.remove((cur + 1) % adjs.len());
-    //             }
-    //         } else {
-    //             println!("normal ear--> {:?} {}/{}/{}", adjs, a, b, c);
-    //             if (geom::orient2d(
-    //                 &self.stars[adjs[a]].pt,
-    //                 &self.stars[adjs[b]].pt,
-    //                 &self.stars[adjs[c]].pt,
-    //                 self.robust_predicates,
-    //             ) == 1)
-    //                 && (geom::orient2d(
-    //                     &self.stars[adjs[a]].pt,
-    //                     &self.stars[adjs[c]].pt,
-    //                     &self.stars[v].pt,
-    //                     self.robust_predicates,
-    //                 ) >= 0)
-    //             {
-    //                 println!("ear {}-{}-{}", adjs[a], adjs[b], adjs[c]);
-    //                 //-- test incircle with all other vertices in the "hole"
-    //                 let cur2 = cur + 3;
-    //                 let mut isdel = true;
-    //                 for i in 0..adjs.len() - 3 {
-    //                     println!("test ear with {}", adjs[(cur2 + i) % adjs.len()]);
-    //                     if adjs[(cur2 + i) % adjs.len()] == 0 {
-    //                         continue;
-    //                     }
-    //                     if geom::incircle(
-    //                         &self.stars[adjs[a]].pt,
-    //                         &self.stars[adjs[b]].pt,
-    //                         &self.stars[adjs[c]].pt,
-    //                         &self.stars[adjs[(cur2 + i) % adjs.len()]].pt,
-    //                         self.robust_predicates,
-    //                     ) > 0
-    //                     {
-    //                         isdel = false;
-    //                         break;
-    //                     }
-    //                 }
-    //                 if isdel == true {
-    //                     println!("flip22");
-    //                     let t = Triangle {
-    //                         tr0: adjs[a],
-    //                         tr1: adjs[b],
-    //                         tr2: v,
-    //                     };
-    //                     self.flip22(&t, adjs[c]);
-    //                     adjs.remove((cur + 1) % adjs.len());
-    //                 }
-    //             }
-    //         }
-    //         cur = cur + 1;
-    //     }
-    //     //-- flip31 to remove the vertex
-    //     self.flip31(v);
-    //     return Ok(self.stars.len() - 1);
-    // }
-
     pub fn remove(&mut self, v: usize) -> Result<usize, &'static str> {
-        println!("REMOVE vertex {}", v);
+        // println!("REMOVE vertex {}", v);
         if v == 0 {
             return Err("Cannot remove the infinite vertex");
         }
@@ -1220,20 +1073,19 @@ impl Triangulation {
             return Err("Vertex does not exist");
         }
         if self.is_vertex_convex_hull(v) {
-            // return Err("Vertex on boundary of convex hull cannot be removed");
             return self.remove_on_convex_hull(v);
         }
         let mut adjs: Vec<usize> = Vec::new();
         for each in self.stars[v].link.iter() {
             adjs.push(*each);
         }
-        println!("adjs: {:?}", adjs);
+        // println!("adjs: {:?}", adjs);
         let mut cur: usize = 0;
         while adjs.len() > 3 {
             let a = cur % adjs.len();
             let b = (cur + 1) % adjs.len();
             let c = (cur + 2) % adjs.len();
-            println!("cur ear--> {:?} {}/{}/{}", adjs, a, b, c);
+            // println!("cur ear--> {:?} {}/{}/{}", adjs, a, b, c);
             if (geom::orient2d(
                 &self.stars[adjs[a]].pt,
                 &self.stars[adjs[b]].pt,
@@ -1247,12 +1099,12 @@ impl Triangulation {
                     self.robust_predicates,
                 ) >= 0)
             {
-                println!("ear {}-{}-{}", adjs[a], adjs[b], adjs[c]);
+                // println!("ear {}-{}-{}", adjs[a], adjs[b], adjs[c]);
                 //-- test incircle with all other vertices in the "hole"
                 let cur2 = cur + 3;
                 let mut isdel = true;
                 for i in 0..adjs.len() - 3 {
-                    println!("test ear with {}", adjs[(cur2 + i) % adjs.len()]);
+                    // println!("test ear with {}", adjs[(cur2 + i) % adjs.len()]);
                     if geom::incircle(
                         &self.stars[adjs[a]].pt,
                         &self.stars[adjs[b]].pt,
@@ -1266,7 +1118,7 @@ impl Triangulation {
                     }
                 }
                 if isdel == true {
-                    println!("flip22");
+                    // println!("flip22");
                     let t = Triangle {
                         tr0: adjs[a],
                         tr1: adjs[b],
