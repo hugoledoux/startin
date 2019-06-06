@@ -28,3 +28,14 @@ fn duplicates() {
     assert_eq!(2, dt.number_of_vertices());
     assert_eq!(0, dt.number_of_triangles());
 }
+
+#[test]
+fn grid() {
+    let mut dt = startin::Triangulation::new();
+    for i in 0..10 {
+        for j in 0..10 {
+            let _re = dt.insert_one_pt(i as f64, j as f64, 1.0);
+        }
+    }
+    assert!(dt.is_valid());
+}

@@ -42,6 +42,28 @@ fn insert_delete() {
 }
 
 #[test]
+fn insert_delete_them_all() {
+    let mut pts: Vec<Vec<f64>> = Vec::new();
+    let mut rng = rand::thread_rng();
+    let size = 10.0_f64;
+    for _i in 0..10 {
+        let x: f64 = rng.gen();
+        let y: f64 = rng.gen();
+        pts.push(vec![x * size, y * size, 2.0]);
+    }
+    let mut dt = startin::Triangulation::new();
+    dt.set_jump_and_walk(false);
+    dt.insert(&pts);
+    for i in 0..10 {
+        let _re = dt.remove(i);
+    }
+    assert_eq!(1, dt.number_of_vertices());
+    assert_eq!(0, dt.number_of_triangles());
+
+    assert!(dt.is_valid());
+}
+
+#[test]
 fn collinear() {
     let mut pts: Vec<Vec<f64>> = Vec::new();
     pts.push(vec![0.0, 0.0, 12.5]);
@@ -105,10 +127,36 @@ fn deletion_impossible() {
     dt.insert(&pts);
     assert_eq!(Err("Cannot remove the infinite vertex"), dt.remove(0));
     assert_eq!(Err("Vertex does not exist"), dt.remove(7));
-    // assert_eq!(
-    //     Err("Vertex on boundary of convex hull cannot be removed"),
-    //     dt.remove(1)
-    // );
     let _re = dt.remove(5);
     assert_eq!(Err("Vertex does not exist"), dt.remove(5));
+}
+
+#[test]
+fn grid() {
+    let mut dt = startin::Triangulation::new();
+    for i in 0..10 {
+        for j in 0..10 {
+            let _re = dt.insert_one_pt(i as f64, j as f64, 1.0);
+        }
+    }
+    let _re = dt.remove(1);
+    let _re = dt.remove(10);
+    let _re = dt.remove(77);
+    assert!(dt.is_valid());
+}
+
+#[test]
+fn simple_grid() {
+    let mut pts: Vec<Vec<f64>> = Vec::new();
+    pts.push(vec![0.0, 0.0, 12.5]);
+    pts.push(vec![1.0, 0.0, 7.65]);
+    pts.push(vec![1.0, 1.0, 33.0]);
+    pts.push(vec![0.0, 1.0, 21.0]);
+    let mut dt = startin::Triangulation::new();
+    dt.set_jump_and_walk(false);
+    dt.insert(&pts);
+    let _re = dt.remove(1);
+    let _re = dt.remove(3);
+    assert_eq!(2, dt.number_of_vertices());
+    assert_eq!(0, dt.number_of_triangles());
 }
