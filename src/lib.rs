@@ -967,9 +967,28 @@ impl Triangulation {
         }
         println!("adjs: {:?}", adjs);
         let mut cur: usize = 0;
-        let maxloops = adjs.len() * 3;
+        // let maxloops = adjs.len() * 10;
         //-- 1. try to find finite triangles only
-        while adjs.len() > 3 && cur <= maxloops {
+
+        //-- TODO: COUNT NUMBER OF ITERATIONS BEFORE adjs gets -1 elements, if > adjs.len() then we're stuck
+
+        let mut nadjs = adjs.len();
+        let mut steps = 0;
+
+        // while adjs.len() > 3 && cur <= maxloops {
+        while adjs.len() > 3 {
+            // //-- control the loops to avoid infinite loop
+            if steps == nadjs {
+                break;
+            }
+            if adjs.len() == nadjs {
+                steps += 1;
+            } else {
+                nadjs = adjs.len();
+                steps = 0;
+            }
+
+            //-- starts here
             let a = cur % adjs.len();
             let b = (cur + 1) % adjs.len();
             let c = (cur + 2) % adjs.len();
