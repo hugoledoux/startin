@@ -2,13 +2,14 @@ extern crate startin;
 use rand::prelude::*;
 
 fn main() {
+    let num_pts = 1000;
     let mut pts: Vec<Vec<f64>> = Vec::new();
 
     let mut rng = rand::thread_rng();
-    for _i in 0..100 {
+    for _i in 0..num_pts {
         let x: f64 = rng.gen();
         let y: f64 = rng.gen();
-        pts.push(vec![x, y, 2.0]);
+        pts.push(vec![x * 100.0, y * 100.0, 2.0]);
     }
 
     let mut dt = startin::Triangulation::new();
@@ -19,14 +20,14 @@ fn main() {
     //-- delete 5 vertices on convex hull
     let mut total: usize = 0;
     loop {
-        let j: usize = rng.gen_range(1, 99);
+        let j: usize = rng.gen_range(1, num_pts);
         if dt.is_vertex_convex_hull(j) == true {
             let re = dt.remove(j);
             if re.is_err() == true {
                 println!("!!!Error: {:?}", re.unwrap_err());
             }
             total = total + 1;
-            if total == 5 {
+            if total == 10 {
                 break;
             }
         }
