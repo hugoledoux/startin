@@ -1,5 +1,4 @@
 extern crate startin;
-use rand::prelude::*;
 
 fn main() {
     let mut pts: Vec<Vec<f64>> = Vec::new();

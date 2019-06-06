@@ -11,12 +11,6 @@ fn main() {
     let mut dt = startin::Triangulation::new();
     dt.insert(&pts);
 
-    let re = dt.insert_one_pt(20.0, 30.0, 2.0);
-    match re {
-        Ok(_v) => println!("Inserted new point"),
-        Err(v) => println!("Duplicate of vertex #{}, not inserted", v),
-    }
-
     println!("*****");
     println!("Number of points in DT: {}", dt.number_of_vertices());
     println!("Number of triangles in DT: {}", dt.number_of_triangles());
@@ -27,6 +21,26 @@ fn main() {
         if i > 0 {
             println!("#{}: ({:.3}, {:.3}, {:.3})", i, each[0], each[1], each[2]);
         }
+    }
+
+    //-- insert a new vertex
+    let re = dt.insert_one_pt(22.2, 33.3, 4.4);
+    match re {
+        Ok(_v) => println!("Inserted new point"),
+        Err(v) => println!("Duplicate of vertex #{}, not inserted", v),
+    }
+    //-- remove it
+    let re = dt.remove(6);
+    if re.is_err() == true {
+        println!("!!! Deletion error: {:?}", re.unwrap_err());
+    } else {
+        println!("Deleted vertex");
+    }
+    //-- insert it again
+    let re = dt.insert_one_pt(22.2, 33.3, 4.4);
+    match re {
+        Ok(_v) => println!("Inserted new point"),
+        Err(v) => println!("Duplicate of vertex #{}, not inserted", v),
     }
 
     //-- get the convex hull
@@ -42,4 +56,8 @@ fn main() {
     } else {
         println!("Outside convex hull");
     }
+
+    //-- some stats
+    println!("Number of points in DT: {}", dt.number_of_vertices());
+    println!("Number of triangles in DT: {}", dt.number_of_triangles());
 }
