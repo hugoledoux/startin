@@ -58,12 +58,6 @@
 //!     } else {
 //!         println!("Deleted vertex");
 //!     }
-//!     //-- insert it again
-//!     let re = dt.insert_one_pt(22.2, 33.3, 4.4);
-//!     match re {
-//!         Ok(_v) => println!("Inserted new point"),
-//!         Err(v) => println!("Duplicate of vertex #{}, not inserted", v),
-//!     }
 //!
 //!     //-- get the convex hull
 //!     let ch = dt.convex_hull();
