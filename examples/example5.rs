@@ -22,5 +22,5 @@ fn main() {
     // let _re = dt.insert_one_pt(1.5, 1.5, 33.0);
     // println!("{}", dt.printme(true));
     // assert!(dt.is_valid());
-    dt.write_obj("/Users/hugo/temp/0.obj".to_string(), true);
+    // dt.write_obj("/Users/hugo/temp/0.obj".to_string(), true);
 }
