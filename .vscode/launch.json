@@ -1,0 +1,156 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'startin'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--lib",
+          "--package=startin"
+        ],
+        "filter": {
+          "name": "startin",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug example 'example1'",
+      "cargo": {
+        "args": [
+          "build",
+          "--example=example1",
+          "--package=startin"
+        ],
+        "filter": {
+          "name": "example1",
+          "kind": "example"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in example 'example1'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--example=example1",
+          "--package=startin"
+        ],
+        "filter": {
+          "name": "example1",
+          "kind": "example"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug example 'example2'",
+      "cargo": {
+        "args": [
+          "build",
+          "--example=example2",
+          "--package=startin"
+        ],
+        "filter": {
+          "name": "example2",
+          "kind": "example"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in example 'example2'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--example=example2",
+          "--package=startin"
+        ],
+        "filter": {
+          "name": "example2",
+          "kind": "example"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug example 'example3'",
+      "cargo": {
+        "args": [
+          "build",
+          "--example=example3",
+          "--package=startin"
+        ],
+        "filter": {
+          "name": "example3",
+          "kind": "example"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+        {
+          "type": "lldb",
+          "request": "launch",
+          "name": "Debug example 'example5'",
+          "cargo": {
+            "args": [
+              "build",
+              "--example=example5",
+              "--package=startin"
+            ],
+            "filter": {
+              "name": "example5",
+              "kind": "example"
+            }
+          },
+          "args": [],
+          "cwd": "${workspaceFolder}"
+        },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in example 'example3'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--example=example3",
+          "--package=startin"
+        ],
+        "filter": {
+          "name": "example3",
+          "kind": "example"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}
