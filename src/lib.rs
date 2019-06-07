@@ -277,8 +277,8 @@ impl std::ops::Index<usize> for Link {
     }
 }
 
-/// A triangulation is a collection of Stars, each Star has is (x,y,z)
-/// and a Link (an array of adjacent vertices, ordered)
+/// A triangulation is a collection of Stars, each Star has its (x,y,z)
+/// and a Link (an array of adjacent vertices, ordered CCW)
 pub struct Star {
     pub pt: [f64; 3],
     pub link: Link,
@@ -286,11 +286,9 @@ pub struct Star {
 
 impl Star {
     pub fn new(x: f64, y: f64, z: f64) -> Star {
-        // let s: Vec<usize> = Vec::with_capacity(8);
         let l = Link::new();
         Star {
             pt: [x, y, z],
-            // link: s,
             link: l,
         }
     }
@@ -1062,7 +1060,8 @@ impl Triangulation {
             self.flip31(v);
             return Ok(self.stars.len() - 1);
         } else {
-            //-- we got "stuck" and we need to apply a special "flip"
+            //-- convex part is filled, and we need to apply a special "flip"
+            //-- to delete the vertex v and its incident edges
             // println!("FLIP-FOR-CH");
             self.stars[adjs[1]].link.delete(v);
             self.stars[*(adjs.last().unwrap())].link.delete(v);
