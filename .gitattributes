@@ -1,2 +1,1 @@
-* linguist-vendored
-/src/*.rs linguist-vendored=false
+/src/*.c linguist-language=Rust
