@@ -1,2 +1,2 @@
 * linguist-vendored
-*.rs linguist-vendored=false
+/src/*.rs linguist-vendored=false
