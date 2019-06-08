@@ -1,1 +1,2 @@
- *.* linguist-language=Rust
+* linguist-vendored
+*.rs linguist-vendored=false
