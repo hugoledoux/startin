@@ -324,7 +324,7 @@ impl Triangulation {
             snaptol: 0.001,
             cur: 0,
             is_init: false,
-            jump_and_walk: true,
+            jump_and_walk: false,
             robust_predicates: true,
             free_indices: es,
         }
