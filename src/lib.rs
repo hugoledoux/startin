@@ -586,16 +586,15 @@ impl Triangulation {
         for each in self.stars[v].link.iter() {
             ns.push(*each);
         }
-        for n in ns {
-            self.stars[n].link.delete(v);
+        for n in ns.iter() {
+            self.stars[*n].link.delete(v);
         }
         self.stars[v].link.clear();
         self.stars[v].pt[0] = -999.9;
         self.stars[v].pt[1] = -999.9;
         self.stars[v].pt[2] = -999.9;
         self.free_indices.push(v);
-        // self.cur = 0;
-        // TODO: find a proper cur after deletion
+        self.cur = ns[0];
     }
 
     /// Returns the coordinates of the vertex v in a Vec [x,y,z]
