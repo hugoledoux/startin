@@ -11,6 +11,9 @@
 // He removed the point_traits dependency.
 // --
 // Modified slightly by Hugo Ledoux so that Vec are borrowed
+// --
+// https://github.com/Stoeoef/spade/blob/master/src/exactpred.rs
+// --
 
 //! This is a direct transcript of the sourcecode and algorithms provided by
 //! Jonathan Richard Shewchuk (https://www.cs.cmu.edu/~quake/robust.html)
