@@ -5,8 +5,12 @@
 // <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
-
-#![allow(non_snake_case)]
+// --
+// Modified by Martijn Meijers for https://bitbucket.org/bmmeijers/tri-rs
+// (https://bitbucket.org/bmmeijers/tri-rs/src/master/src/pred.rs)
+// He removed the point_traits dependency.
+// --
+// Modified slightly by Hugo Ledoux so that Vec are borrowed
 
 //! This is a direct transcript of the sourcecode and algorithms provided by
 //! Jonathan Richard Shewchuk (https://www.cs.cmu.edu/~quake/robust.html)
@@ -18,7 +22,10 @@
 //! The "adaptive" nature will increase performance only if a simpler calculation
 //! cannot be guaranteed to be accurate enough, yielding a higher performance on
 //! average.
+
 //use point_traits::PointN;
+
+#![allow(non_snake_case)]
 
 // These values are precomputed from the "exactinit" method of the c-source code. They should? be
 // the same in all IEEE-754 environments, including rust f64
