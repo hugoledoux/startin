@@ -10,7 +10,7 @@
 //!
 //! The deletion of a vertex is also possible. The algorithm implemented is a modification of the one of [Mostafavi, Gold, and Dakowicz (2003)](https://doi.org/10.1016/S0098-3004(03)00017-7). The ears are filled by flipping, so it's in theory more robust. I have also extended the algorithm to allow the deletion of vertices on the boundary of the convex hull. The algorithm is sub-optimal, but in practice the number of neighbours of a given vertex in a DT is only 6, so it doesn't really matter.
 //!
-//! Robust arithmetic for the geometric predicates are used ([Shewchuk's predicates](https://www.cs.cmu.edu/~quake/robust.html)), so the library is robust and shouldn't crash (touch wood).
+//! Robust arithmetic for the geometric predicates are used ([Shewchuk's predicates](https://www.cs.cmu.edu/~quake/robust.html), well its [Rust port](https://github.com/Stoeoef/spade/blob/master/src/exactpred.rs)), so the library is robust and shouldn't crash (touch wood).
 //!
 //! I made this in Rust because I wanted to learn Rust.
 //!
@@ -316,9 +316,6 @@ impl Triangulation {
         let mut l: Vec<Star> = Vec::new();
         l.push(Star::new(-999.9, -999.9, -999.9));
         let es: Vec<usize> = Vec::new();
-        unsafe {
-            geom::shewchuk::exactinit();
-        }
         Triangulation {
             stars: l,
             snaptol: 0.001,

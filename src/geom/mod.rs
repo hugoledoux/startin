@@ -5,24 +5,24 @@
 //! are used (activated by default by startin), but also possible to rely on floating-point
 //! arithmetic (not recommended).
 
-extern crate libc;
+mod exactpred;
 
-pub mod shewchuk {
-    extern "C" {
-        pub fn exactinit();
-        pub fn orient2d(
-            pa: *const libc::c_double,
-            pb: *const libc::c_double,
-            pc: *const libc::c_double,
-        ) -> libc::c_double;
-        pub fn incircle(
-            pa: *const libc::c_double,
-            pb: *const libc::c_double,
-            pc: *const libc::c_double,
-            pp: *const libc::c_double,
-        ) -> libc::c_double;
-    }
-}
+// pub mod shewchuk {
+//     extern "C" {
+//         pub fn exactinit();
+//         pub fn orient2d(
+//             pa: *const libc::c_double,
+//             pb: *const libc::c_double,
+//             pc: *const libc::c_double,
+//         ) -> libc::c_double;
+//         pub fn incircle(
+//             pa: *const libc::c_double,
+//             pb: *const libc::c_double,
+//             pc: *const libc::c_double,
+//             pp: *const libc::c_double,
+//         ) -> libc::c_double;
+//     }
+// }
 
 pub fn distance2d_squared(a: &[f64], b: &[f64]) -> f64 {
     (b[0] - a[0]) * (b[0] - a[0]) + (b[1] - a[1]) * (b[1] - a[1])
@@ -43,7 +43,8 @@ pub fn orient2d_robust(a: &[f64], b: &[f64], c: &[f64]) -> i8 {
     //-- CCW    = +1
     //-- CW     = -1
     //-- colinear = 0
-    let re = unsafe { shewchuk::orient2d(a.as_ptr(), b.as_ptr(), c.as_ptr()) };
+    // let re = unsafe { shewchuk::orient2d(a.as_ptr(), b.as_ptr(), c.as_ptr()) };
+    let re = exactpred::orient2d(a, b, c);
     if re == 0.0 {
         return 0;
     } else if re > 0.0 {
@@ -82,7 +83,8 @@ pub fn incircle_robust(a: &[f64], b: &[f64], c: &[f64], p: &[f64]) -> i8 {
     //-- CCW    = +1
     //-- CW     = -1
     //-- colinear = 0
-    let re = unsafe { shewchuk::incircle(a.as_ptr(), b.as_ptr(), c.as_ptr(), p.as_ptr()) };
+    // let re = unsafe { shewchuk::incircle(a.as_ptr(), b.as_ptr(), c.as_ptr(), p.as_ptr()) };
+    let re = exactpred::incircle(a, b, c, p);
     if re == 0.0 {
         return 0;
     } else if re > 0.0 {
