@@ -316,9 +316,6 @@ impl Triangulation {
         let mut l: Vec<Star> = Vec::new();
         l.push(Star::new(-999.9, -999.9, -999.9));
         let es: Vec<usize> = Vec::new();
-        unsafe {
-            geom::shewchuk::exactinit();
-        }
         Triangulation {
             stars: l,
             snaptol: 0.001,
