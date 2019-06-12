@@ -1133,35 +1133,34 @@ fn two_two_sum(a1: f64, a0: f64, b1: f64, b0: f64) -> (f64, f64, f64, f64) {
     (x3, x2, x1, x0)
 }
 
-//#[cfg(test)]
-//mod test {
-//    use super::{orient2d, incircle};
-//    use cgmath::Point2;
+#[cfg(test)]
+mod test {
+    use super::{incircle, orient2d};
 
-//    #[test]
-//    fn test_orient2d() {
-//        let from = Point2::new(-1f64, -1.0);
-//        let to = Point2::new(1f64, 1.0);
-//        let p1 = Point2::new(::std::f64::MIN_POSITIVE, ::std::f64::MIN_POSITIVE,);
-//        let p2 = Point2::new(-::std::f64::MIN_POSITIVE, -::std::f64::MIN_POSITIVE);
-//        let p3 = Point2::new(-::std::f64::MIN_POSITIVE, ::std::f64::MIN_POSITIVE);
-//        let p4 = Point2::new(::std::f64::MIN_POSITIVE, -::std::f64::MIN_POSITIVE);
+    #[test]
+    fn test_orient2d() {
+        let from = vec![-1f64, -1.0];
+        let to = vec![1f64, 1.0];
+        let p1 = vec![::std::f64::MIN_POSITIVE, ::std::f64::MIN_POSITIVE];
+        let p2 = vec![-::std::f64::MIN_POSITIVE, -::std::f64::MIN_POSITIVE];
+        let p3 = vec![-::std::f64::MIN_POSITIVE, ::std::f64::MIN_POSITIVE];
+        let p4 = vec![::std::f64::MIN_POSITIVE, -::std::f64::MIN_POSITIVE];
 
-//        for &(p, sign) in &[(p1, 0.0), (p2, 0.0), (p3, 1.0), (p4, -1.0)] {
-//            let det = orient2d(&from, &to, &p);
-//            assert!(det == sign || det.signum() == sign.signum());
-//        }
-//    }
+        for (p, sign) in &[(p1, 0.0), (p2, 0.0), (p3, 1.0), (p4, -1.0)] {
+            let det = orient2d(&from, &to, &p);
+            assert!(det == *sign || det.signum() == sign.signum());
+        }
+    }
 
-//    #[test]
-//    fn test_incircle() {
-//        let from = Point2::new(-1f64, -1.0);
-//        let to = Point2::new(1f64, 1.0);
-//        let p_left = Point2::new(-::std::f64::MIN_POSITIVE, ::std::f64::MIN_POSITIVE);
-//        let p_right = Point2::new(::std::f64::MIN_POSITIVE, -::std::f64::MIN_POSITIVE);
-//        let p_query = Point2::new(2.0, 2.0);
+    #[test]
+    fn test_incircle() {
+        let from = vec![-1f64, -1.0];
+        let to = vec![1f64, 1.0];
+        let p_left = vec![-::std::f64::MIN_POSITIVE, ::std::f64::MIN_POSITIVE];
+        let p_right = vec![::std::f64::MIN_POSITIVE, -::std::f64::MIN_POSITIVE];
+        let p_query = vec![2.0, 2.0];
 
-//        assert!(incircle(&from, &p_left, &to, &p_query) > 0.0);
-//        assert!(incircle(&from, &to, &p_right, &p_query) > 0.0);
-//    }
-//}
+        assert!(incircle(&from, &p_left, &to, &p_query) > 0.0);
+        assert!(incircle(&from, &to, &p_right, &p_query) > 0.0);
+    }
+}
