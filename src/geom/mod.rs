@@ -5,9 +5,7 @@
 //! are used (activated by default by startin), but also possible to rely on floating-point
 //! arithmetic (not recommended).
 
-// extern crate libc;
-
-mod pred;
+mod exactpred;
 
 // pub mod shewchuk {
 //     extern "C" {
@@ -46,7 +44,7 @@ pub fn orient2d_robust(a: &[f64], b: &[f64], c: &[f64]) -> i8 {
     //-- CW     = -1
     //-- colinear = 0
     // let re = unsafe { shewchuk::orient2d(a.as_ptr(), b.as_ptr(), c.as_ptr()) };
-    let re = pred::orient2d(a, b, c);
+    let re = exactpred::orient2d(a, b, c);
     if re == 0.0 {
         return 0;
     } else if re > 0.0 {
@@ -86,7 +84,7 @@ pub fn incircle_robust(a: &[f64], b: &[f64], c: &[f64], p: &[f64]) -> i8 {
     //-- CW     = -1
     //-- colinear = 0
     // let re = unsafe { shewchuk::incircle(a.as_ptr(), b.as_ptr(), c.as_ptr(), p.as_ptr()) };
-    let re = pred::incircle(a, b, c, p);
+    let re = exactpred::incircle(a, b, c, p);
     if re == 0.0 {
         return 0;
     } else if re > 0.0 {
