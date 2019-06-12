@@ -8,9 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.4.2] - 2019-06-12
+### Changed
+- predicates.c is not used anymore. The Rust port of it (https://github.com/Stoeoef/spade/blob/master/src/exactpred.rs) is used.
+- dependencies for the examples are not used/listed for the library anymore.
+
+
 ## [0.4.1] - 2019-06-11
 ### Changed
-- predicates.h has sys removed from include for time.h
+- predicates.c has sys removed from include for time.h
 - jump-and-walk is not the default anymore, walk starts from last one (no randomness by default thus)
 
 
