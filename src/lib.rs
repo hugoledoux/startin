@@ -973,7 +973,7 @@ impl Triangulation {
         return re;
     }
 
-    pub fn remove_on_convex_hull(&mut self, v: usize) -> Result<usize, &'static str> {
+    fn remove_on_convex_hull(&mut self, v: usize) -> Result<usize, &'static str> {
         // println!("!!! REMOVE ON CONVEX HULL");
         let mut adjs: Vec<usize> = Vec::new();
         for each in self.stars[v].link.iter() {
