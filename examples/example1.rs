@@ -88,7 +88,7 @@ fn main() {
         println!("Vertex does not exists.");
     }
 
-    let trs = dt.incident_triangles_to_vertex(66).unwrap();
+    let trs = dt.incident_triangles_to_vertex(6).unwrap();
 
     let re = dt.adjacent_triangles_to_triangle(&trs[0]);
     if re.is_some() == true {

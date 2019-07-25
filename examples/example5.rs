@@ -29,6 +29,12 @@ fn main() {
         println!("point {:?}", a.unwrap());
     }
 
+    let re = dt.locate(50.0, 50.0);
+    match re {
+        Some(x) => println!("Triangle: {}", x),
+        None => println!("No triangle found, outside of the CH."),
+    }
+
     // let _re = dt.insert_one_pt(1.5, 1.5, 33.0);
     // println!("{}", dt.printme(true));
     // assert!(dt.is_valid());
