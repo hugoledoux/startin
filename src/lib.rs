@@ -115,7 +115,7 @@ impl fmt::Display for Triangle {
 }
 
 //----------------------
-pub struct Link(Vec<usize>);
+struct Link(Vec<usize>);
 
 impl Link {
     fn new() -> Link {
@@ -279,7 +279,7 @@ impl std::ops::Index<usize> for Link {
 
 /// A triangulation is a collection of Stars, each Star has its (x,y,z)
 /// and a Link (an array of adjacent vertices, ordered CCW)
-pub struct Star {
+struct Star {
     pub pt: [f64; 3],
     pub link: Link,
 }
