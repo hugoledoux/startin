@@ -749,7 +749,7 @@ impl Triangulation {
         if v == 0 {
             return false;
         }
-        if v >= self.stars.len() {
+        if self.vertex_exists(v) == false {
             return false;
         }
         self.stars[v].link.contains_infinite_vertex()
@@ -1085,7 +1085,7 @@ impl Triangulation {
         if v == 0 {
             return Err("Cannot remove the infinite vertex");
         }
-        if (v >= self.stars.len()) || (self.stars[v].link.len() == 0) {
+        if self.vertex_exists(v) == false {
             return Err("Vertex does not exist");
         }
         if self.is_vertex_convex_hull(v) {
@@ -1193,6 +1193,14 @@ impl Triangulation {
         }
         s.push_str("**********\n");
         s
+    }
+
+    fn vertex_exists(&self, v: usize) -> bool {
+        let mut re = true;
+        if v >= self.stars.len() || self.is_vertex_removed(v) == true {
+            re = false;
+        }
+        re
     }
 }
 
