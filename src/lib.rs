@@ -425,11 +425,24 @@ impl Triangulation {
     pub fn insert(&mut self, pts: &Vec<Vec<f64>>) {
         let mut duplicates = 0;
         for each in pts {
-            let re = self.insert_one_pt(each[0], each[1], each[2]);
-            match re {
-                Ok(_x) => continue,
-                Err(_e) => duplicates = duplicates + 1,
-            };
+            if (each.len() < 2) || (each.len() > 3) {
+                panic!(
+                    "Point {:?} should be 2D or 3D (and is now {}D).",
+                    each,
+                    each.len()
+                );
+            } else {
+                let re;
+                if each.len() == 2 {
+                    re = self.insert_one_pt(each[0], each[1], 0.0);
+                } else {
+                    re = self.insert_one_pt(each[0], each[1], each[2]);
+                }
+                match re {
+                    Ok(_x) => continue,
+                    Err(_e) => duplicates = duplicates + 1,
+                }
+            }
         }
     }
 
