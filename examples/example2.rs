@@ -2,7 +2,8 @@ extern crate startin;
 
 fn main() {
     let mut pts: Vec<Vec<f64>> = Vec::new();
-    pts.push(vec![20.0, 30.0, 2.0]);
+    pts.push(vec![20 as f64, 30.0]);
+    pts.push(vec![20 as f64, 30.0, 1.1, 3.3]);
     pts.push(vec![120.0, 33.0, 12.5]);
     pts.push(vec![124.0, 222.0, 7.65]);
     pts.push(vec![20.0, 133.0, 21.0]);

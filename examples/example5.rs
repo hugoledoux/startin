@@ -15,9 +15,19 @@ fn main() {
     println!("{}", dt.printme(true));
 
     let _re = dt.remove(3);
-    println!("{}", dt.printme(true));
+    // println!("{}", dt.printme(true));
+
+    println!("is 3 removed {}", dt.is_vertex_removed(3));
+    // dt.insert_one_pt(1.1, 2.2, 3.3);
+    // println!("is 3 removed {}", dt.is_vertex_removed(3));
+    // println!("is 4 removed {}", dt.is_vertex_removed(4));
 
     assert!(dt.is_valid());
+
+    let a = dt.get_point(3);
+    if a.is_some() == true {
+        println!("point {:?}", a.unwrap());
+    }
 
     // let _re = dt.insert_one_pt(1.5, 1.5, 33.0);
     // println!("{}", dt.printme(true));

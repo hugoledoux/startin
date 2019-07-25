@@ -305,7 +305,7 @@ pub struct Triangulation {
     is_init: bool,
     jump_and_walk: bool,
     robust_predicates: bool,
-    free_indices: Vec<usize>,
+    removed_indices: Vec<usize>,
 }
 
 impl Triangulation {
@@ -314,7 +314,7 @@ impl Triangulation {
         // TODO: allocate a certain number?
         // let mut l: Vec<Star> = Vec::with_capacity(100000);
         let mut l: Vec<Star> = Vec::new();
-        l.push(Star::new(-999.9, -999.9, -999.9));
+        l.push(Star::new(-99999.99999, -99999.99999, -99999.99999));
         let es: Vec<usize> = Vec::new();
         Triangulation {
             stars: l,
@@ -323,7 +323,7 @@ impl Triangulation {
             is_init: false,
             jump_and_walk: false,
             robust_predicates: true,
-            free_indices: es,
+            removed_indices: es,
         }
     }
 
@@ -467,12 +467,12 @@ impl Triangulation {
         }
         //-- ok we now insert the point in the data structure
         let pi: usize;
-        if self.free_indices.is_empty() == true {
+        if self.removed_indices.is_empty() == true {
             self.stars.push(Star::new(px, py, pz));
             pi = self.stars.len() - 1;
         } else {
             // self.stars.push(Star::new(px, py, pz));
-            pi = self.free_indices.pop().unwrap();
+            pi = self.removed_indices.pop().unwrap();
             self.stars[pi].pt[0] = px;
             self.stars[pi].pt[1] = py;
             self.stars[pi].pt[2] = pz;
@@ -603,20 +603,24 @@ impl Triangulation {
         self.stars[v].pt[0] = -999.9;
         self.stars[v].pt[1] = -999.9;
         self.stars[v].pt[2] = -999.9;
-        self.free_indices.push(v);
+        self.removed_indices.push(v);
         self.cur = ns[0];
     }
 
     /// Returns the coordinates of the vertex v in a Vec [x,y,z]
-    pub fn get_point(&self, v: usize) -> Vec<f64> {
-        self.stars[v].pt.to_vec()
+    pub fn get_point(&self, v: usize) -> Option<Vec<f64>> {
+        if self.vertex_exists(v) == false {
+            None
+        } else {
+            Some(self.stars[v].pt.to_vec())
+        }
     }
 
-    pub fn adjacent_triangles_to_triangle(&self, tr: &Triangle) -> Vec<Triangle> {
-        let mut trs: Vec<Triangle> = Vec::new();
+    pub fn adjacent_triangles_to_triangle(&self, tr: &Triangle) -> Option<Vec<Triangle>> {
         if self.is_triangle(&tr) == false || tr.is_infinite() == true {
-            return trs;
+            return None;
         }
+        let mut trs: Vec<Triangle> = Vec::new();
         let mut opp = self.stars[tr.tr2].link.get_next_vertex(tr.tr1).unwrap();
         if opp != 0 {
             trs.push(Triangle {
@@ -641,16 +645,16 @@ impl Triangulation {
                 tr2: tr.tr1,
             });
         }
-        trs
+        Some(trs)
     }
 
-    // Returns a Vec of Triangles (finite + infinite) to the vertex v.
-    // If v doesn't exist, then an empty Vec is returned.
-    pub fn incident_triangles_to_vertex(&self, v: usize) -> Vec<Triangle> {
-        let mut trs: Vec<Triangle> = Vec::new();
-        if v >= self.stars.len() {
-            return trs;
+    /// Returns a Vec of Triangles (finite + infinite) to the vertex v.
+    /// If v doesn't exist, then [`None`] is returned.
+    pub fn incident_triangles_to_vertex(&self, v: usize) -> Option<Vec<Triangle>> {
+        if self.vertex_exists(v) == false {
+            return None;
         }
+        let mut trs: Vec<Triangle> = Vec::new();
         for (i, each) in self.stars[v].link.iter().enumerate() {
             let j = self.stars[v].link.next_index(i);
             trs.push(Triangle {
@@ -659,19 +663,28 @@ impl Triangulation {
                 tr2: self.stars[v].link[j],
             });
         }
-        trs
+        Some(trs)
     }
 
-    pub fn adjacent_vertices_to_vertex(&self, v: usize) -> Vec<usize> {
-        // TODO: should infinite vertex be returned here? I guess not?
-        let mut adjs: Vec<usize> = Vec::new();
-        if v >= self.stars.len() {
-            return adjs;
+    /// Returns the degree of a vertex, [`None`] is it doesn't exist.
+    pub fn degree(&self, v: usize) -> Option<usize> {
+        if self.vertex_exists(v) == false {
+            return None;
         }
+        Some(self.stars[v].link.len())
+    }
+
+    /// Returns a list (`Vec<usize>`) (ordered CCW) of the adjacent vertices.
+    /// [`None`] if the vertex is not part of the triangulation.
+    pub fn adjacent_vertices_to_vertex(&self, v: usize) -> Option<Vec<usize>> {
+        if self.vertex_exists(v) == false {
+            return None;
+        }
+        let mut adjs: Vec<usize> = Vec::new();
         for each in self.stars[v].link.iter() {
             adjs.push(*each);
         }
-        adjs
+        Some(adjs)
     }
 
     /// Returns whether a triplet of indices is a Triangle in the triangulation.
@@ -709,7 +722,7 @@ impl Triangulation {
     /// Returns number of finite vertices in the triangulation.
     pub fn number_of_vertices(&self) -> usize {
         //-- number of finite vertices
-        (self.stars.len() - 1 - self.free_indices.len())
+        (self.stars.len() - 1 - self.removed_indices.len())
     }
 
     /// Returns number of finite triangles in the triangulation.
@@ -736,6 +749,20 @@ impl Triangulation {
         count
     }
 
+    /// Returns the number of vertices which are marked as "removed"
+    pub fn number_of_removed_vertices(&self) -> usize {
+        self.removed_indices.len()
+    }
+
+    pub fn is_vertex_removed(&self, v: usize) -> bool {
+        let re = self.removed_indices.iter().position(|&x| x == v);
+        if re == None {
+            false
+        } else {
+            true
+        }
+    }
+
     /// Returns the convex hull of the dataset, oriented CCW.
     /// It is a list of vertex indices (first != last)
     pub fn convex_hull(&self) -> Vec<usize> {
@@ -747,7 +774,7 @@ impl Triangulation {
         re
     }
 
-    /// Returns size of the convex hull of the dataset
+    /// Returns the size (ie the number of vertices) of the convex hull of the dataset
     pub fn number_of_vertices_on_convex_hull(&self) -> usize {
         //-- number of finite vertices on the boundary of the convex hull
         if self.is_init == false {
@@ -938,6 +965,9 @@ impl Triangulation {
         trs
     }
 
+    /// Validates the Delaunay triangulation:
+    /// (1) checks each triangle against each vertex (circumcircle tests); very slow
+    /// (2) checks whether the convex hull is really convex
     pub fn is_valid(&self) -> bool {
         self.is_valid_ch_convex() && self.is_valid_circumcircle()
     }
@@ -1088,7 +1118,7 @@ impl Triangulation {
             self.stars[v].pt[0] = -999.9;
             self.stars[v].pt[1] = -999.9;
             self.stars[v].pt[2] = -999.9;
-            self.free_indices.push(v);
+            self.removed_indices.push(v);
             return Ok(self.stars.len() - 1);
         }
     }

@@ -79,25 +79,24 @@ fn main() {
     //     println!("Outside convex hull");
     // }
 
-    let vadjs = dt.adjacent_vertices_to_vertex(66);
-    for each in vadjs {
-        println!("Adjacent vertex {}", each);
+    let re = dt.adjacent_vertices_to_vertex(66);
+    if re.is_some() == true {
+        for each in re.unwrap() {
+            println!("Adjacent vertex {}", each);
+        }
+    } else {
+        println!("Vertex does not exists.");
     }
 
-    let trs = dt.incident_triangles_to_vertex(66);
-    // if trs.len() == 0 {
-    //     println!("No incident triangles");
-    // }
-    // for tr in trs.iter() {
-    //     println!("incident: {}", *tr);
-    //     println!("is_triangle? {}", dt.is_triangle(&tr));
-    // }
+    let trs = dt.incident_triangles_to_vertex(66).unwrap();
 
-    let adjtr = dt.adjacent_triangles_to_triangle(&trs[0]);
-    println!("Adjacent to: {}", &trs[0]);
-    for tr in adjtr.iter() {
-        println!("adj: {}", tr);
-        // println!("is_triangle? {}", dt.is_triangle(&tr));
+    let re = dt.adjacent_triangles_to_triangle(&trs[0]);
+    if re.is_some() == true {
+        println!("Adjacent to: {}", &trs[0]);
+        for tr in re.unwrap().iter() {
+            println!("adj: {}", tr);
+            // println!("is_triangle? {}", dt.is_triangle(&tr));
+        }
     }
 
     // let stats = dt.statistics_degree();
