@@ -806,6 +806,38 @@ impl Triangulation {
         }
     }
 
+    // Returns closest point (in 2D) to a query point (x,y).
+    // if (x,y) is outside the convex hull [`None`]
+    pub fn closest_point(&self, px: f64, py: f64) -> Option<usize> {
+        let re = self.locate(px, py);
+        if re.is_none() == true {
+            return None;
+        }
+        let p: [f64; 3] = [px, py, 0.0];
+        let tr = re.unwrap();
+        let mut d = std::f64::MAX;
+        let mut chosen: usize = 3;
+
+        if geom::distance2d_squared(&self.stars[tr.tr0].pt, &p) < d {
+            d = geom::distance2d_squared(&self.stars[tr.tr0].pt, &p);
+            chosen = 0;
+        }
+        if geom::distance2d_squared(&self.stars[tr.tr1].pt, &p) < d {
+            d = geom::distance2d_squared(&self.stars[tr.tr1].pt, &p);
+            chosen = 1;
+        }
+        if geom::distance2d_squared(&self.stars[tr.tr2].pt, &p) < d {
+            chosen = 2;
+        }
+        if chosen == 0 {
+            return Some(tr.tr0);
+        } else if chosen == 1 {
+            return Some(tr.tr1);
+        } else {
+            return Some(tr.tr2);
+        }
+    }
+
     fn walk(&self, x: &[f64]) -> Triangle {
         //-- find the starting tr
         let mut cur = self.cur;

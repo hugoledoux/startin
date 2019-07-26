@@ -14,7 +14,7 @@ fn main() {
     dt.insert(&pts);
     println!("{}", dt.printme(true));
 
-    let _re = dt.remove(3);
+    // let _re = dt.remove(3);
     // println!("{}", dt.printme(true));
 
     println!("is 3 removed {}", dt.is_vertex_removed(3));
@@ -33,6 +33,12 @@ fn main() {
     match re {
         Some(x) => println!("Triangle: {}", x),
         None => println!("No triangle found, outside of the CH."),
+    }
+
+    let re = dt.closest_point(1.1, 1.11);
+    match re {
+        Some(x) => println!("Point: {}", x),
+        None => println!("Outside of the CH."),
     }
 
     // let _re = dt.insert_one_pt(1.5, 1.5, 33.0);
