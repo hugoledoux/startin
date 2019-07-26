@@ -604,7 +604,11 @@ impl Triangulation {
         self.stars[v].pt[1] = -999.9;
         self.stars[v].pt[2] = -999.9;
         self.removed_indices.push(v);
-        self.cur = ns[0];
+        if ns[0] != 0 {
+            self.cur = ns[0];
+        } else {
+            self.cur = ns[1];
+        }
     }
 
     /// Returns the coordinates of the vertex v in a Vec [x,y,z]
@@ -1151,6 +1155,12 @@ impl Triangulation {
             self.stars[v].pt[1] = -999.9;
             self.stars[v].pt[2] = -999.9;
             self.removed_indices.push(v);
+            if adjs[0] != 0 {
+                self.cur = adjs[0];
+            }
+            else {
+                self.cur = adjs[1];
+            }
             return Ok(self.stars.len() - 1);
         }
     }
