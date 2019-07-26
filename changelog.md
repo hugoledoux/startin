@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.4.2] - 2019-07-26
+### Changed
+- minor improvements to the API, alignment with CGAL SurfaceMesh functions (more or less)
+- better doc
+
+
 ## [0.4.2] - 2019-06-12
 ### Changed
 - predicates.c is not used anymore. The Rust port of it (https://github.com/Stoeoef/spade/blob/master/src/exactpred.rs) is used.
