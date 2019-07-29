@@ -976,6 +976,21 @@ impl Triangulation {
         pts
     }
 
+    /// Returns a <Vec<usize> of all the finite edges (implicitly grouped by 2)
+    pub fn all_edges(&self) -> Vec<usize> {
+        let mut edges: Vec<usize> = Vec::new();
+        for i in 1..self.stars.len() {
+            for value in self.stars[i].link.iter() {
+                if (*value != 0) && (i < *value) {
+                    edges.push(i);
+                    edges.push(*value);
+                }
+            }
+        }
+        edges
+    }
+
+    /// Returns a <Vec<Triangle> of all the finite triangles (including the infinite one)
     pub fn all_triangles(&self) -> Vec<Triangle> {
         let mut trs: Vec<Triangle> = Vec::new();
         for (i, star) in self.stars.iter().enumerate() {
@@ -1157,8 +1172,7 @@ impl Triangulation {
             self.removed_indices.push(v);
             if adjs[0] != 0 {
                 self.cur = adjs[0];
-            }
-            else {
+            } else {
                 self.cur = adjs[1];
             }
             return Ok(self.stars.len() - 1);
