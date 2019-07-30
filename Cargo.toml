@@ -1,11 +1,11 @@
 
 [package]
 name = "startin"
-version = "0.4.4"
+version = "0.4.5"
 authors = ["Hugo Ledoux <h.ledoux@tudelft.nl>"]
 edition = "2018"
 license = "MIT"
-description = "A Delaunay triangulator for terrain data."
+description = "A Delaunay triangulator for terrains."
 repository = "https://github.com/hugoledoux/startin"
 keywords = ["delaunay", "triangulation", "terrain", "gis"]
 readme = "README.md"
@@ -17,7 +17,6 @@ rand = "0.6"
 csv = "1"
 serde = "1.0"
 serde_derive = "1.0"
-
 
 [[example]]
 name = "example1"
