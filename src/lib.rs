@@ -86,22 +86,19 @@ use rand::Rng;
 use std::fmt;
 use std::fs::File;
 use std::io::Write;
-use std::mem;
 
 extern crate rand;
 
 /// A Triangle is a triplet of indices
 pub struct Triangle {
-    pub tr0: usize,
-    pub tr1: usize,
-    pub tr2: usize,
+    pub v: [usize; 3],
 }
 
 impl Triangle {
     /// Checks whether a Triangle is "infinite",
     /// ie if one its vertices is the infinite vertex
     fn is_infinite(&self) -> bool {
-        if self.tr0 == 0 || self.tr1 == 0 || self.tr2 == 0 {
+        if self.v[0] == 0 || self.v[1] == 0 || self.v[2] == 0 {
             return true;
         }
         return false;
@@ -110,7 +107,7 @@ impl Triangle {
 
 impl fmt::Display for Triangle {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "({}, {}, {})", self.tr0, self.tr1, self.tr2)
+        write!(f, "({}, {}, {})", self.v[0], self.v[1], self.v[2])
     }
 }
 
@@ -456,14 +453,14 @@ impl Triangulation {
         let p: [f64; 3] = [px, py, pz];
         let tr = self.walk(&p);
         // println!("STARTING TR: {}", tr);
-        if geom::distance2d_squared(&self.stars[tr.tr0].pt, &p) <= (self.snaptol * self.snaptol) {
-            return Err(tr.tr0);
+        if geom::distance2d_squared(&self.stars[tr.v[0]].pt, &p) <= (self.snaptol * self.snaptol) {
+            return Err(tr.v[0]);
         }
-        if geom::distance2d_squared(&self.stars[tr.tr1].pt, &p) <= (self.snaptol * self.snaptol) {
-            return Err(tr.tr1);
+        if geom::distance2d_squared(&self.stars[tr.v[1]].pt, &p) <= (self.snaptol * self.snaptol) {
+            return Err(tr.v[1]);
         }
-        if geom::distance2d_squared(&self.stars[tr.tr2].pt, &p) <= (self.snaptol * self.snaptol) {
-            return Err(tr.tr2);
+        if geom::distance2d_squared(&self.stars[tr.v[2]].pt, &p) <= (self.snaptol * self.snaptol) {
+            return Err(tr.v[2]);
         }
         //-- ok we now insert the point in the data structure
         let pi: usize;
@@ -490,19 +487,13 @@ impl Triangulation {
         // println!("--> Update DT");
         let mut mystack: Vec<Triangle> = Vec::new();
         mystack.push(Triangle {
-            tr0: pi,
-            tr1: self.stars[pi].link[0],
-            tr2: self.stars[pi].link[1],
+            v: [pi, self.stars[pi].link[0], self.stars[pi].link[1]],
         });
         mystack.push(Triangle {
-            tr0: pi,
-            tr1: self.stars[pi].link[1],
-            tr2: self.stars[pi].link[2],
+            v: [pi, self.stars[pi].link[1], self.stars[pi].link[2]],
         });
         mystack.push(Triangle {
-            tr0: pi,
-            tr1: self.stars[pi].link[2],
-            tr2: self.stars[pi].link[0],
+            v: [pi, self.stars[pi].link[2], self.stars[pi].link[0]],
         });
 
         loop {
@@ -515,24 +506,24 @@ impl Triangulation {
 
             if tr.is_infinite() == true {
                 let mut a: i8 = 0;
-                if tr.tr0 == 0 {
+                if tr.v[0] == 0 {
                     a = geom::orient2d(
                         &self.stars[opposite].pt,
-                        &self.stars[tr.tr1].pt,
-                        &self.stars[tr.tr2].pt,
+                        &self.stars[tr.v[1]].pt,
+                        &self.stars[tr.v[2]].pt,
                         self.robust_predicates,
                     );
-                } else if tr.tr1 == 0 {
+                } else if tr.v[1] == 0 {
                     a = geom::orient2d(
-                        &self.stars[tr.tr0].pt,
+                        &self.stars[tr.v[0]].pt,
                         &self.stars[opposite].pt,
-                        &self.stars[tr.tr2].pt,
+                        &self.stars[tr.v[2]].pt,
                         self.robust_predicates,
                     );
-                } else if tr.tr2 == 0 {
+                } else if tr.v[2] == 0 {
                     a = geom::orient2d(
-                        &self.stars[tr.tr0].pt,
-                        &self.stars[tr.tr1].pt,
+                        &self.stars[tr.v[0]].pt,
+                        &self.stars[tr.v[1]].pt,
                         &self.stars[opposite].pt,
                         self.robust_predicates,
                     );
@@ -549,9 +540,9 @@ impl Triangulation {
                     //- if insertion on CH then break the edge, otherwise do nothing
                     //-- TODO sure the flips are okay here?
                     if geom::orient2d(
-                        &self.stars[tr.tr0].pt,
-                        &self.stars[tr.tr1].pt,
-                        &self.stars[tr.tr2].pt,
+                        &self.stars[tr.v[0]].pt,
+                        &self.stars[tr.v[1]].pt,
+                        &self.stars[tr.v[2]].pt,
                         self.robust_predicates,
                     ) == 0
                     {
@@ -562,9 +553,9 @@ impl Triangulation {
                     }
                 } else {
                     if geom::incircle(
-                        &self.stars[tr.tr0].pt,
-                        &self.stars[tr.tr1].pt,
-                        &self.stars[tr.tr2].pt,
+                        &self.stars[tr.v[0]].pt,
+                        &self.stars[tr.v[1]].pt,
+                        &self.stars[tr.v[2]].pt,
                         &self.stars[opposite].pt,
                         self.robust_predicates,
                     ) > 0
@@ -580,12 +571,12 @@ impl Triangulation {
     }
 
     fn flip13(&mut self, pi: usize, tr: &Triangle) {
-        self.stars[pi].link.add(tr.tr0);
-        self.stars[pi].link.add(tr.tr1);
-        self.stars[pi].link.add(tr.tr2);
-        self.stars[tr.tr0].link.insert_after_v(pi, tr.tr1);
-        self.stars[tr.tr1].link.insert_after_v(pi, tr.tr2);
-        self.stars[tr.tr2].link.insert_after_v(pi, tr.tr0);
+        self.stars[pi].link.add(tr.v[0]);
+        self.stars[pi].link.add(tr.v[1]);
+        self.stars[pi].link.add(tr.v[2]);
+        self.stars[tr.v[0]].link.insert_after_v(pi, tr.v[1]);
+        self.stars[tr.v[1]].link.insert_after_v(pi, tr.v[2]);
+        self.stars[tr.v[2]].link.insert_after_v(pi, tr.v[0]);
         //-- put infinite vertex first in list
         self.stars[pi].link.infinite_first();
     }
@@ -625,28 +616,22 @@ impl Triangulation {
             return None;
         }
         let mut trs: Vec<Triangle> = Vec::new();
-        let mut opp = self.stars[tr.tr2].link.get_next_vertex(tr.tr1).unwrap();
+        let mut opp = self.stars[tr.v[2]].link.get_next_vertex(tr.v[1]).unwrap();
         if opp != 0 {
             trs.push(Triangle {
-                tr0: tr.tr1,
-                tr1: opp,
-                tr2: tr.tr2,
+                v: [tr.v[1], opp, tr.v[2]],
             });
         }
-        opp = self.stars[tr.tr0].link.get_next_vertex(tr.tr2).unwrap();
+        opp = self.stars[tr.v[0]].link.get_next_vertex(tr.v[2]).unwrap();
         if opp != 0 {
             trs.push(Triangle {
-                tr0: tr.tr2,
-                tr1: opp,
-                tr2: tr.tr0,
+                v: [tr.v[2], opp, tr.v[0]],
             });
         }
-        opp = self.stars[tr.tr1].link.get_next_vertex(tr.tr0).unwrap();
+        opp = self.stars[tr.v[1]].link.get_next_vertex(tr.v[0]).unwrap();
         if opp != 0 {
             trs.push(Triangle {
-                tr0: tr.tr0,
-                tr1: opp,
-                tr2: tr.tr1,
+                v: [tr.v[0], opp, tr.v[1]],
             });
         }
         Some(trs)
@@ -662,9 +647,7 @@ impl Triangulation {
         for (i, each) in self.stars[v].link.iter().enumerate() {
             let j = self.stars[v].link.next_index(i);
             trs.push(Triangle {
-                tr0: v,
-                tr1: *each,
-                tr2: self.stars[v].link[j],
+                v: [v, *each, self.stars[v].link[j]],
             });
         }
         Some(trs)
@@ -694,11 +677,11 @@ impl Triangulation {
     /// Returns whether a triplet of indices is a Triangle in the triangulation.
     pub fn is_triangle(&self, tr: &Triangle) -> bool {
         // TODO: what about infinite triangles?
-        let re = self.stars[tr.tr0].link.get_next_vertex(tr.tr1);
+        let re = self.stars[tr.v[0]].link.get_next_vertex(tr.v[1]);
         if re.is_none() {
             return false;
         } else {
-            if re.unwrap() == tr.tr2 {
+            if re.unwrap() == tr.v[2] {
                 return true;
             } else {
                 return false;
@@ -738,11 +721,7 @@ impl Triangulation {
                 if i < *value {
                     let k = star.link[star.link.next_index(j)];
                     if i < k {
-                        let tr = Triangle {
-                            tr0: i,
-                            tr1: *value,
-                            tr2: k,
-                        };
+                        let tr = Triangle { v: [i, *value, k] };
                         if tr.is_infinite() == false {
                             count = count + 1;
                         }
@@ -822,23 +801,19 @@ impl Triangulation {
         let mut d = std::f64::MAX;
         let mut chosen: usize = 3;
 
-        if geom::distance2d_squared(&self.stars[tr.tr0].pt, &p) < d {
-            d = geom::distance2d_squared(&self.stars[tr.tr0].pt, &p);
-            chosen = 0;
-        }
-        if geom::distance2d_squared(&self.stars[tr.tr1].pt, &p) < d {
-            d = geom::distance2d_squared(&self.stars[tr.tr1].pt, &p);
-            chosen = 1;
-        }
-        if geom::distance2d_squared(&self.stars[tr.tr2].pt, &p) < d {
-            chosen = 2;
+        for i in 0..2 {
+            let dtmp = geom::distance2d_squared(&self.stars[tr.v[i]].pt, &p);
+            if dtmp < d {
+                d = dtmp;
+                chosen = i;
+            }
         }
         if chosen == 0 {
-            return Some(tr.tr0);
+            return Some(tr.v[0]);
         } else if chosen == 1 {
-            return Some(tr.tr1);
+            return Some(tr.v[1]);
         } else {
-            return Some(tr.tr2);
+            return Some(tr.v[2]);
         }
     }
 
@@ -864,41 +839,41 @@ impl Triangulation {
                 }
             }
         }
-        let mut tr = Triangle {
-            tr0: 0,
-            tr1: 0,
-            tr2: 0,
-        };
+        let mut tr = Triangle { v: [0, 0, 0] };
         // println!("cur: {}", cur);
         //-- 1. find a finite triangle
-        tr.tr0 = cur;
+        tr.v[0] = cur;
         if self.stars[cur].link[0] == 0 {
-            tr.tr1 = self.stars[cur].link[1];
-            tr.tr2 = self.stars[cur].link[2];
+            tr.v[1] = self.stars[cur].link[1];
+            tr.v[2] = self.stars[cur].link[2];
         } else {
-            tr.tr1 = self.stars[cur].link[0];
-            tr.tr2 = self.stars[cur].link[1];
+            tr.v[1] = self.stars[cur].link[0];
+            tr.v[2] = self.stars[cur].link[1];
         }
         //-- 2. order it such that tr0-tr1-x is CCW
         if geom::orient2d(
-            &self.stars[tr.tr0].pt,
-            &self.stars[tr.tr1].pt,
+            &self.stars[tr.v[0]].pt,
+            &self.stars[tr.v[1]].pt,
             &x,
             self.robust_predicates,
         ) == -1
         {
             if geom::orient2d(
-                &self.stars[tr.tr1].pt,
-                &self.stars[tr.tr2].pt,
+                &self.stars[tr.v[1]].pt,
+                &self.stars[tr.v[2]].pt,
                 &x,
                 self.robust_predicates,
             ) != -1
             {
-                mem::swap(&mut tr.tr0, &mut tr.tr1);
-                mem::swap(&mut tr.tr1, &mut tr.tr2);
+                let tmp: usize = tr.v[0];
+                tr.v[0] = tr.v[1];
+                tr.v[1] = tr.v[2];
+                tr.v[2] = tmp;
             } else {
-                mem::swap(&mut tr.tr1, &mut tr.tr2);
-                mem::swap(&mut tr.tr0, &mut tr.tr1);
+                let tmp: usize = tr.v[1];
+                tr.v[0] = tr.v[2];
+                tr.v[1] = tr.v[0];
+                tr.v[2] = tmp;
             }
         }
         //-- 3. start the walk
@@ -908,15 +883,15 @@ impl Triangulation {
                 break;
             }
             if geom::orient2d(
-                &self.stars[tr.tr1].pt,
-                &self.stars[tr.tr2].pt,
+                &self.stars[tr.v[1]].pt,
+                &self.stars[tr.v[2]].pt,
                 &x,
                 self.robust_predicates,
             ) != -1
             {
                 if geom::orient2d(
-                    &self.stars[tr.tr2].pt,
-                    &self.stars[tr.tr0].pt,
+                    &self.stars[tr.v[2]].pt,
+                    &self.stars[tr.v[0]].pt,
                     &x,
                     self.robust_predicates,
                 ) != -1
@@ -925,16 +900,16 @@ impl Triangulation {
                 } else {
                     //-- walk to incident to tr1,tr2
                     // println!("here");
-                    let prev = self.stars[tr.tr2].link.get_prev_vertex(tr.tr0).unwrap();
-                    tr.tr1 = tr.tr2;
-                    tr.tr2 = prev;
+                    let prev = self.stars[tr.v[2]].link.get_prev_vertex(tr.v[0]).unwrap();
+                    tr.v[1] = tr.v[2];
+                    tr.v[2] = prev;
                 }
             } else {
                 //-- walk to incident to tr1,tr2
                 // a.iter().position(|&x| x == 2), Some(1)
-                let prev = self.stars[tr.tr1].link.get_prev_vertex(tr.tr2).unwrap();
-                tr.tr0 = tr.tr2;
-                tr.tr2 = prev;
+                let prev = self.stars[tr.v[1]].link.get_prev_vertex(tr.v[2]).unwrap();
+                tr.v[0] = tr.v[2];
+                tr.v[2] = prev;
             }
         }
         return tr;
@@ -942,29 +917,25 @@ impl Triangulation {
 
     fn flip22(&mut self, tr: &Triangle, opposite: usize) -> (Triangle, Triangle) {
         //-- step 1.
-        self.stars[tr.tr0].link.insert_after_v(opposite, tr.tr1);
+        self.stars[tr.v[0]].link.insert_after_v(opposite, tr.v[1]);
         //-- step 2.
-        self.stars[tr.tr1].link.delete(tr.tr2);
+        self.stars[tr.v[1]].link.delete(tr.v[2]);
         //-- step 3.
-        self.stars[opposite].link.insert_after_v(tr.tr0, tr.tr2);
+        self.stars[opposite].link.insert_after_v(tr.v[0], tr.v[2]);
         //-- step 4.
-        self.stars[tr.tr2].link.delete(tr.tr1);
+        self.stars[tr.v[2]].link.delete(tr.v[1]);
         //-- make 2 triangles to return (to stack)
         let ret0 = Triangle {
-            tr0: tr.tr0,
-            tr1: tr.tr1,
-            tr2: opposite,
+            v: [tr.v[0], tr.v[1], opposite],
         };
         let ret1 = Triangle {
-            tr0: tr.tr0,
-            tr1: opposite,
-            tr2: tr.tr2,
+            v: [tr.v[0], opposite, tr.v[2]],
         };
         (ret0, ret1)
     }
 
     fn get_opposite_vertex(&self, tr: &Triangle) -> usize {
-        self.stars[tr.tr2].link.get_next_vertex(tr.tr1).unwrap()
+        self.stars[tr.v[2]].link.get_next_vertex(tr.v[1]).unwrap()
     }
 
     /// Returns a Vec<Vec<f64>> of all the vertices (including the infinite one)
@@ -1000,11 +971,7 @@ impl Triangulation {
                     // let k = star.l[self.nexti(star.link.len(), j)];
                     let k = star.link[star.link.next_index(j)];
                     if i < k {
-                        let tr = Triangle {
-                            tr0: i,
-                            tr1: *value,
-                            tr2: k,
-                        };
+                        let tr = Triangle { v: [i, *value, k] };
                         if tr.is_infinite() == false {
                             // println!("{}", tr);
                             trs.push(tr);
@@ -1030,9 +997,9 @@ impl Triangulation {
             for i in 1..self.stars.len() {
                 if self.stars[i].is_deleted() == false
                     && geom::incircle(
-                        &self.stars[tr.tr0].pt,
-                        &self.stars[tr.tr1].pt,
-                        &self.stars[tr.tr2].pt,
+                        &self.stars[tr.v[0]].pt,
+                        &self.stars[tr.v[1]].pt,
+                        &self.stars[tr.v[2]].pt,
                         &self.stars[i].pt,
                         self.robust_predicates,
                     ) > 0
@@ -1135,9 +1102,7 @@ impl Triangulation {
                 if isdel == true {
                     // println!("flip22");
                     let t = Triangle {
-                        tr0: adjs[a],
-                        tr1: adjs[b],
-                        tr2: v,
+                        v: [adjs[a], adjs[b], v],
                     };
                     self.flip22(&t, adjs[c]);
                     adjs.remove((cur + 1) % adjs.len());
@@ -1235,9 +1200,7 @@ impl Triangulation {
                 if isdel == true {
                     // println!("flip22");
                     let t = Triangle {
-                        tr0: adjs[a],
-                        tr1: adjs[b],
-                        tr2: v,
+                        v: [adjs[a], adjs[b], v],
                     };
                     self.flip22(&t, adjs[c]);
                     adjs.remove((cur + 1) % adjs.len());
@@ -1271,7 +1234,7 @@ impl Triangulation {
             }
         }
         for tr in trs.iter() {
-            write!(f, "f {} {} {}\n", tr.tr0, tr.tr1, tr.tr2).unwrap();
+            write!(f, "f {} {} {}\n", tr.v[0], tr.v[1], tr.v[2]).unwrap();
         }
         Ok(())
     }
