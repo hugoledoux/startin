@@ -240,40 +240,6 @@ impl<'a> Iterator for Iter<'a> {
     }
 }
 
-// impl<'a> IntoIterator for &'a Link {
-//     type Item = &'a usize;
-//     type IntoIter = Iter<'a>;
-
-//     fn into_iter(self) -> Self::IntoIter {
-//         self.iter()
-//     }
-// }
-
-// impl IntoIterator for Link {
-//     type Item = usize;
-//     type IntoIter = ::std::vec::IntoIter<usize>;
-
-//     fn into_iter(self) -> Self::IntoIter {
-//         self.0.into_iter()
-//     }
-// }
-
-// impl Iterator for Link {
-//     type Item = usize;
-
-//     fn next(&mut self) -> Option<usize> {
-//         // Increment our count. This is why we started at zero.
-//         self.count += 1;
-
-//         // Check to see if we've finished counting or not.
-//         if self.count < 6 {
-//             Some(self.count)
-//         } else {
-//             None
-//         }
-//     }
-// }
-
 impl std::ops::Index<usize> for Link {
     type Output = usize;
     fn index(&self, idx: usize) -> &usize {
