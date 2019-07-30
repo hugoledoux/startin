@@ -806,22 +806,24 @@ impl Triangulation {
         let p: [f64; 3] = [px, py, 0.0];
         let tr = re.unwrap();
         let mut d = std::f64::MAX;
-        let mut chosen: usize = 3;
-
-        for i in 0..2 {
-            let dtmp = geom::distance2d_squared(&self.stars[tr.v[i]].pt, &p);
+        let mut closest: usize = 0;
+        //-- 1. find triangle and closest vertex from the 3
+        for each in tr.v.iter() {
+            // println!("{}", each);
+            let dtmp = geom::distance2d_squared(&self.stars[*each].pt, &p);
             if dtmp < d {
                 d = dtmp;
-                chosen = i;
+                closest = *each;
             }
         }
-        if chosen == 0 {
-            return Some(tr.v[0]);
-        } else if chosen == 1 {
-            return Some(tr.v[1]);
-        } else {
-            return Some(tr.v[2]);
+        for each in self.stars[closest].link.iter() {
+            let dtmp = geom::distance2d_squared(&self.stars[*each].pt, &p);
+            if dtmp < d {
+                d = dtmp;
+                closest = *each;
+            }
         }
+        Some(closest)
     }
 
     fn walk(&self, x: &[f64]) -> Triangle {
