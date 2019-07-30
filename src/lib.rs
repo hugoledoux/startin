@@ -14,8 +14,15 @@
 //!
 //! I made this in Rust because I wanted to learn Rust.
 //!
-//! But if you prefer Python, I made bindings (very beta): [https://github.com/hugoledoux/startin_python/](https://github.com/hugoledoux/startin_python/)
+//! # Python bindings
 //!
+//! If you prefer Python, I made bindings: [https://github.com/hugoledoux/startin_python/](https://github.com/hugoledoux/startin_python/)
+//!
+//! # Web-demo with WebAssembly
+//!
+//! Rust can be compiled easily to [WebAssembly](https://www.rust-lang.org/what/wasm), and you see a demo of the possibilities of startin (all computations are done locally and it's fast!).
+//!
+//! [web-demo](https://hugoledoux.github.io/startin_wasm/www/dist/)
 //!
 //! # Usage
 //!
