@@ -123,6 +123,7 @@ struct Link(Vec<usize>);
 
 impl Link {
     fn new() -> Link {
+        // Link(Vec::new())
         Link(Vec::with_capacity(8))
     }
     fn len(&self) -> usize {
@@ -244,6 +245,14 @@ impl std::ops::Index<usize> for Link {
     type Output = usize;
     fn index(&self, idx: usize) -> &usize {
         &self.0[idx as usize]
+    }
+}
+
+impl fmt::Display for Link {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        // fmt.write_str("pt: {}\n", self.pt)?;
+        fmt.write_str(&format!("link: {:?}\n", self.0))?;
+        Ok(())
     }
 }
 
