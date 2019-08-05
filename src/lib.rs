@@ -156,24 +156,6 @@ impl Link {
             // self.0.remove(re.unwrap());
         }
     }
-    fn infinite_first(&mut self) {
-        let re = self.0.iter().position(|&x| x == 0);
-        if re != None {
-            let posinf = re.unwrap();
-            if posinf == 0 {
-                return;
-            }
-            let mut newstar: Vec<usize> = Vec::new();
-            for j in posinf..self.0.len() {
-                newstar.push(self.0[j]);
-            }
-            for j in 0..posinf {
-                newstar.push(self.0[j]);
-            }
-            // println!("newstar: {:?}", newstar);
-            self.0 = newstar;
-        }
-    }
     fn clear(&mut self) {
         self.0.clear();
     }
@@ -560,7 +542,7 @@ impl Triangulation {
         self.stars[tr.v[1]].link.insert_after_v(pi, tr.v[2]);
         self.stars[tr.v[2]].link.insert_after_v(pi, tr.v[0]);
         //-- put infinite vertex first in list
-        self.stars[pi].link.infinite_first();
+        // self.stars[pi].link.infinite_first();
     }
 
     fn flip31(&mut self, v: usize) {
@@ -1106,7 +1088,7 @@ impl Triangulation {
             self.stars[*(adjs.last().unwrap())].link.delete(v);
             for i in 2..(adjs.len() - 1) {
                 self.stars[adjs[i]].link.replace(v, 0);
-                self.stars[adjs[i]].link.infinite_first();
+                // self.stars[adjs[i]].link.infinite_first();
             }
             let mut prev = v;
             for i in 2..(adjs.len() - 1) {
