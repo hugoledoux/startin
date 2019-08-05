@@ -156,6 +156,24 @@ impl Link {
             // self.0.remove(re.unwrap());
         }
     }
+    fn infinite_first(&mut self) {
+        let re = self.0.iter().position(|&x| x == 0);
+        if re != None {
+            let posinf = re.unwrap();
+            if posinf == 0 {
+                return;
+            }
+            let mut newstar: Vec<usize> = Vec::new();
+            for j in posinf..self.0.len() {
+                newstar.push(self.0[j]);
+            }
+            for j in 0..posinf {
+                newstar.push(self.0[j]);
+            }
+            // println!("newstar: {:?}", newstar);
+            self.0 = newstar;
+        }
+    }
     fn clear(&mut self) {
         self.0.clear();
     }
@@ -561,8 +579,10 @@ impl Triangulation {
         self.removed_indices.push(v);
         if ns[0] != 0 {
             self.cur = ns[0];
-        } else {
+        } else if ns[1] != 0 {
             self.cur = ns[1];
+        } else if ns[2] != 0 {
+            self.cur = ns[2];
         }
     }
 
@@ -1005,6 +1025,8 @@ impl Triangulation {
     fn remove_on_convex_hull(&mut self, v: usize) -> Result<usize, &'static str> {
         // println!("!!! REMOVE ON CONVEX HULL");
         let mut adjs: Vec<usize> = Vec::new();
+        //-- necessary because assumptions below for start-end line on CH
+        self.stars[v].link.infinite_first();
         for each in self.stars[v].link.iter() {
             adjs.push(*each);
         }
@@ -1090,7 +1112,7 @@ impl Triangulation {
             self.stars[*(adjs.last().unwrap())].link.delete(v);
             for i in 2..(adjs.len() - 1) {
                 self.stars[adjs[i]].link.replace(v, 0);
-                // self.stars[adjs[i]].link.infinite_first();
+                self.stars[adjs[i]].link.infinite_first();
             }
             let mut prev = v;
             for i in 2..(adjs.len() - 1) {
@@ -1103,11 +1125,18 @@ impl Triangulation {
             self.stars[v].pt[1] = -999.9;
             self.stars[v].pt[2] = -999.9;
             self.removed_indices.push(v);
-            if adjs[0] != 0 {
-                self.cur = adjs[0];
-            } else {
-                self.cur = adjs[1];
+
+            for i in 0..1000 {
+                if adjs[i] != 0 {
+                    self.cur = adjs[0];
+                    break;
+                }
             }
+            // if adjs[0] != 0 {
+            //     self.cur = adjs[0];
+            // } else {
+            //     self.cur = adjs[1];
+            // }
             return Ok(self.stars.len() - 1);
         }
     }
