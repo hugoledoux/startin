@@ -807,14 +807,16 @@ impl Triangulation {
         }
         let mut tr = Triangle { v: [0, 0, 0] };
         // println!("cur: {}", cur);
+
         //-- 1. find a finite triangle
         tr.v[0] = cur;
-        if self.stars[cur].link[0] == 0 {
-            tr.v[1] = self.stars[cur].link[1];
-            tr.v[2] = self.stars[cur].link[2];
-        } else {
-            tr.v[1] = self.stars[cur].link[0];
-            tr.v[2] = self.stars[cur].link[1];
+        let l = &self.stars[cur].link;
+        for i in 0..(l.len() - 1) {
+            if (l[i] != 0) && (l[i + 1] != 0) {
+                tr.v[1] = l[i];
+                tr.v[2] = l[i + 1];
+                break;
+            }
         }
         //-- 2. order it such that tr0-tr1-x is CCW
         if geom::orient2d(
