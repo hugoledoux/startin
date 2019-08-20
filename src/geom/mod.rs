@@ -7,23 +7,6 @@
 
 mod exactpred;
 
-// pub mod shewchuk {
-//     extern "C" {
-//         pub fn exactinit();
-//         pub fn orient2d(
-//             pa: *const libc::c_double,
-//             pb: *const libc::c_double,
-//             pc: *const libc::c_double,
-//         ) -> libc::c_double;
-//         pub fn incircle(
-//             pa: *const libc::c_double,
-//             pb: *const libc::c_double,
-//             pc: *const libc::c_double,
-//             pp: *const libc::c_double,
-//         ) -> libc::c_double;
-//     }
-// }
-
 pub fn det3x3t(a: &[f64], b: &[f64], c: &[f64]) -> f64 {
     ((a[0] - c[0]) * (b[1] - c[1])) - ((a[1] - c[1]) * (b[0] - c[0]))
 }
