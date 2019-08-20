@@ -10,10 +10,10 @@ fn main() {
     let mut dt = startin::Triangulation::new();
     dt.insert(&pts);
 
-    let re = dt.interpolate_nn(2., 1.);
-    let re = dt.interpolate_nn(11., 11.);
-    let re = dt.interpolate_tin_linear(2., 1.);
-    let re = dt.interpolate_tin_linear(111., 11.);
+    // let re = dt.interpolate_nn(2., 1.);
+    // let re = dt.interpolate_nn(11., 11.);
+    // let re = dt.interpolate_tin_linear(2., 1.);
+    let re = dt.interpolate_laplace(1., 1.);
     println!("{:?}", re);
 
     //-- some stats

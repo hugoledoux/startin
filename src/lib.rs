@@ -195,6 +195,14 @@ impl Link {
         }
     }
 
+    fn prev_index(&self, i: usize) -> usize {
+        if i == 0 {
+            (self.0.len() - 1)
+        } else {
+            (i - 1)
+        }
+    }
+
     fn get_index(&self, v: usize) -> Option<usize> {
         return self.0.iter().position(|&x| x == v);
     }
@@ -1287,6 +1295,45 @@ impl Triangulation {
         total += self.stars[tr.v[1]].pt[2] * a1;
         total += self.stars[tr.v[2]].pt[2] * a2;
         Some(total / (a0 + a1 + a2))
+    }
+
+    /// Interpolation with Laplace
+    /// (variation of nni with distances instead of stolen areas; faster in practice)
+    pub fn interpolate_laplace(&mut self, px: f64, py: f64) -> Option<f64> {
+        let re = self.insert_one_pt(px, py, 0.);
+        let pi: usize;
+        if re.is_ok() {
+            pi = re.unwrap();
+        } else {
+            pi = re.unwrap_err();
+        }
+        // println!("pi: {}", pi);
+        let l = &self.stars[pi].link;
+        // println!("pis len: {}", l.len());
+        let mut centres: Vec<Vec<f64>> = Vec::new();
+        for (i, v) in l.iter().enumerate() {
+            let j = l.next_index(i);
+            centres.push(geom::circle_centre(
+                &self.stars[pi].pt,
+                &self.stars[*v].pt,
+                &self.stars[l[j]].pt,
+            ));
+        }
+        let mut weights: Vec<f64> = Vec::new();
+        for (i, v) in l.iter().enumerate() {
+            println!("{}-{:?}", i, pi);
+            // fetch 2 voronoi centres
+            let prev = l.prev_index(i);
+            let e = geom::distance2d(&centres[i], &centres[prev]);
+            let w = geom::distance2d(&self.stars[pi].pt, &self.stars[*v].pt);
+            weights.push(e / w);
+        }
+        let mut z: f64 = 0.0;
+        for (i, v) in l.iter().enumerate() {
+            z += weights[i] * self.stars[*v].pt[2];
+        }
+        let sumweights: f64 = weights.iter().sum();
+        Some(z / sumweights)
     }
 }
 

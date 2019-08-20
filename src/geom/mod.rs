@@ -24,12 +24,39 @@ mod exactpred;
 //     }
 // }
 
+pub fn det3x3t(a: &[f64], b: &[f64], c: &[f64]) -> f64 {
+    ((a[0] - c[0]) * (b[1] - c[1])) - ((a[1] - c[1]) * (b[0] - c[0]))
+}
+
 pub fn area_triangle(a: &[f64], b: &[f64], c: &[f64]) -> f64 {
-    ((a[0] - c[0]) * (b[1] - c[1])) - ((a[1] - c[1]) * (b[0] - c[0])) / 2.0
+    (det3x3t(a, b, c) / 2.0)
+}
+
+pub fn circle_centre(a: &[f64], b: &[f64], c: &[f64]) -> Vec<f64> {
+    //-- nicked from http://www.ambrsoft.com/trigocalc/circle3d.htm
+    let val_a = det3x3t(&[a[0], a[1], 1.0], &[b[0], b[1], 1.0], &[c[0], c[1], 1.0]);
+    let val_b = det3x3t(
+        &[a[0] * a[0] + a[1] * a[1], a[1], 1.0],
+        &[b[0] * b[0] + b[1] * b[1], b[1], 1.0],
+        &[c[0] * c[0] + c[1] * c[1], c[1], 1.0],
+    );
+    let val_c = det3x3t(
+        &[a[0] * a[0] + a[1] * a[1], a[0], 1.0],
+        &[b[0] * b[0] + b[1] * b[1], b[0], 1.0],
+        &[c[0] * c[0] + c[1] * c[1], c[0], 1.0],
+    );
+    let x = val_b / (2.0 * val_a);
+    let y = -val_c / (2.0 * val_a);
+    vec![x, y, 0.0]
 }
 
 pub fn distance2d_squared(a: &[f64], b: &[f64]) -> f64 {
     (b[0] - a[0]) * (b[0] - a[0]) + (b[1] - a[1]) * (b[1] - a[1])
+}
+
+pub fn distance2d(a: &[f64], b: &[f64]) -> f64 {
+    let d2 = (b[0] - a[0]) * (b[0] - a[0]) + (b[1] - a[1]) * (b[1] - a[1]);
+    d2.sqrt()
 }
 
 pub fn orient2d(a: &[f64], b: &[f64], c: &[f64], robust_predicates: bool) -> i8 {
