@@ -24,6 +24,10 @@ mod exactpred;
 //     }
 // }
 
+pub fn area_triangle(a: &[f64], b: &[f64], c: &[f64]) -> f64 {
+    ((a[0] - c[0]) * (b[1] - c[1])) - ((a[1] - c[1]) * (b[0] - c[0])) / 2.0
+}
+
 pub fn distance2d_squared(a: &[f64], b: &[f64]) -> f64 {
     (b[0] - a[0]) * (b[0] - a[0]) + (b[1] - a[1]) * (b[1] - a[1])
 }

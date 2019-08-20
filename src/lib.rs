@@ -1261,6 +1261,31 @@ impl Triangulation {
         }
         re
     }
+
+    pub fn interpolate_nn(&self, px: f64, py: f64) -> Option<f64> {
+        let re = self.closest_point(px, py);
+        if re.is_some() {
+            Some(self.stars[re.unwrap()].pt[2])
+        } else {
+            None
+        }
+    }
+
+    pub fn interpolate_tin_linear(&self, px: f64, py: f64) -> Option<f64> {
+        let p: [f64; 3] = [px, py, 0.0];
+        let tr = self.walk(&p);
+        if tr.is_infinite() {
+            return None;
+        }
+        let a0: f64 = geom::area_triangle(&p, &self.stars[tr.v[1]].pt, &self.stars[tr.v[2]].pt);
+        let a1: f64 = geom::area_triangle(&p, &self.stars[tr.v[2]].pt, &self.stars[tr.v[0]].pt);
+        let a2: f64 = geom::area_triangle(&p, &self.stars[tr.v[0]].pt, &self.stars[tr.v[1]].pt);
+        let mut total = 0.;
+        total += self.stars[tr.v[0]].pt[2] * a0;
+        total += self.stars[tr.v[1]].pt[2] * a1;
+        total += self.stars[tr.v[2]].pt[2] * a2;
+        Some(total / (a0 + a1 + a2))
+    }
 }
 
 impl fmt::Display for Triangulation {
