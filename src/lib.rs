@@ -1262,6 +1262,7 @@ impl Triangulation {
         re
     }
 
+    /// Interpolation; nearest/closest neighbour
     pub fn interpolate_nn(&self, px: f64, py: f64) -> Option<f64> {
         let re = self.closest_point(px, py);
         if re.is_some() {
@@ -1271,6 +1272,7 @@ impl Triangulation {
         }
     }
 
+    /// Interpolation: linear in TIN
     pub fn interpolate_tin_linear(&self, px: f64, py: f64) -> Option<f64> {
         let p: [f64; 3] = [px, py, 0.0];
         let tr = self.walk(&p);
