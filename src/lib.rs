@@ -1307,9 +1307,7 @@ impl Triangulation {
         } else {
             pi = re.unwrap_err();
         }
-        // println!("pi: {}", pi);
         let l = &self.stars[pi].link;
-        // println!("pis len: {}", l.len());
         let mut centres: Vec<Vec<f64>> = Vec::new();
         for (i, v) in l.iter().enumerate() {
             let j = l.next_index(i);
@@ -1321,10 +1319,8 @@ impl Triangulation {
         }
         let mut weights: Vec<f64> = Vec::new();
         for (i, v) in l.iter().enumerate() {
-            println!("{}-{:?}", i, pi);
             // fetch 2 voronoi centres
-            let prev = l.prev_index(i);
-            let e = geom::distance2d(&centres[i], &centres[prev]);
+            let e = geom::distance2d(&centres[i], &centres[l.prev_index(i)]);
             let w = geom::distance2d(&self.stars[pi].pt, &self.stars[*v].pt);
             weights.push(e / w);
         }
@@ -1333,6 +1329,8 @@ impl Triangulation {
             z += weights[i] * self.stars[*v].pt[2];
         }
         let sumweights: f64 = weights.iter().sum();
+        //-- delete the interpolation location point
+        let _rr = self.remove(pi);
         Some(z / sumweights)
     }
 }
