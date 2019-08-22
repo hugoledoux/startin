@@ -16,6 +16,9 @@ fn main() {
     let re = dt.interpolate_laplace(1., 1.);
     println!("{:?}", re);
 
+    let re = dt.interpolate_laplace(111., 111.);
+    println!("{:?}", re);
+
     //-- some stats
     println!("Number of points in DT: {}", dt.number_of_vertices());
     println!("Number of triangles in DT: {}", dt.number_of_triangles());

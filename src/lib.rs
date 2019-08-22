@@ -1301,9 +1301,13 @@ impl Triangulation {
         Some(total / (a0 + a1 + a2))
     }
 
-    /// Interpolation with Laplace
+    /// Interpolation with Laplace (http://dilbert.engr.ucdavis.edu/~suku/nem/index.html)
     /// (variation of nni with distances instead of stolen areas; faster in practice)
+    /// None if outside the convex hull, other the value
     pub fn interpolate_laplace(&mut self, px: f64, py: f64) -> Option<f64> {
+        if self.locate(px, py).is_none() {
+            return None;
+        }
         let re = self.insert_one_pt(px, py, 0.);
         let pi: usize;
         if re.is_ok() {
