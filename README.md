@@ -13,6 +13,7 @@ The deletion of a vertex is also possible. The algorithm implemented is a modifi
 
 Robust arithmetic for the geometric predicates are used ([Shewchuk's predicates](https://www.cs.cmu.edu/~quake/robust.html), well its [Rust port](https://github.com/Stoeoef/spade/blob/master/src/exactpred.rs)), so the library is robust and shouldn't crash (touch wood). 
 
+There are a few interpolation functions implemented (based on the DT): (1) nearest-neighbour, (2) linear in TIN, (3) Laplace.
 
 # Python bindings
 
@@ -23,7 +24,7 @@ If you prefer Python, I made bindings: [https://github.com/hugoledoux/startin_py
 
 Rust can be compiled easily to [WebAssembly](https://www.rust-lang.org/what/wasm), and you see a demo of the possibilities of startin (all computations are done locally and it's fast!).
 
-[web-demo](https://hugoledoux.github.io/startin_wasm/www/dist/)
+[--> web-demo](https://hugoledoux.github.io/startin_wasm/www/dist/)
 
 
 
