@@ -8,6 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.4.6] - 2019-08-22
+### Added
+- 3 interpolation functions, based on the DT, added: nearest-neighbour, linear in TIN, Laplace.
+### Changed
+- fixed a bug with walking that sometimes crashed when point outside convex hull were inserted
+- the OBJ writer is now about 1283X faster
+
+
 ## [0.4.5] - 2019-07-30
 ### Changed
 - closest_vertex() is now returning the real natural neighbour, and not an approximation
