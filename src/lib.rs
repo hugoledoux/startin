@@ -1221,26 +1221,27 @@ impl Triangulation {
     pub fn write_obj(&self, path: String, twod: bool) -> std::io::Result<()> {
         let trs = self.all_triangles();
         let mut f = File::create(path)?;
+        let mut s = String::new();
         for i in 1..self.stars.len() {
             if twod == true {
-                write!(
-                    f,
+                s.push_str(&format!(
                     "v {} {} {}\n",
                     self.stars[i].pt[0], self.stars[i].pt[1], 0
-                )
-                .unwrap();
+                ));
             } else {
-                write!(
-                    f,
+                s.push_str(&format!(
                     "v {} {} {}\n",
                     self.stars[i].pt[0], self.stars[i].pt[1], self.stars[i].pt[2]
-                )
-                .unwrap();
+                ));
             }
         }
+        write!(f, "{}", s).unwrap();
+        let mut s = String::new();
         for tr in trs.iter() {
-            write!(f, "f {} {} {}\n", tr.v[0], tr.v[1], tr.v[2]).unwrap();
+            s.push_str(&format!("f {} {} {}\n", tr.v[0], tr.v[1], tr.v[2]));
         }
+        write!(f, "{}", s).unwrap();
+        // println!("write fobj: {:.2?}", starttime.elapsed());
         Ok(())
     }
 
