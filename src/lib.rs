@@ -1218,6 +1218,7 @@ impl Triangulation {
         return Ok(self.stars.len() - 1);
     }
 
+    /// write an OBJ file to disk
     pub fn write_obj(&self, path: String, twod: bool) -> std::io::Result<()> {
         let trs = self.all_triangles();
         let mut f = File::create(path)?;
@@ -1271,7 +1272,8 @@ impl Triangulation {
         re
     }
 
-    /// Interpolation; nearest/closest neighbour
+    /// Interpolation: nearest/closest neighbour
+    /// None if outside the convex hull, other the value
     pub fn interpolate_nn(&self, px: f64, py: f64) -> Option<f64> {
         let re = self.closest_point(px, py);
         if re.is_some() {
@@ -1282,6 +1284,7 @@ impl Triangulation {
     }
 
     /// Interpolation: linear in TIN
+    /// None if outside the convex hull, other the value
     pub fn interpolate_tin_linear(&self, px: f64, py: f64) -> Option<f64> {
         let p: [f64; 3] = [px, py, 0.0];
         let tr = self.walk(&p);
