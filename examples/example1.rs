@@ -102,9 +102,17 @@ fn main() {
     // let stats = dt.statistics_degree();
     // println!("stats: {}--{}--{}", stats.0, stats.1, stats.2);
 
-    // dt.write_obj("/Users/hugo/temp/out.obj".to_string(), false)
-    //     .unwrap();
-    // println!("--> OBJ output saved to: '/Users/hugo/temp/out.obj'");
+    let pathout = "/Users/hugo/temp/out.obj";
+    println!("Writing OBJ file...");
+    let re = dt.write_obj(pathout.to_string(), false);
+    match re {
+        Ok(_x) => println!("--> OBJ output saved to: {}", pathout),
+        Err(_x) => println!("ERROR: path {} doesn't exist, abort.", pathout),
+    }
+
+    // dt.write_obj(pathout.to_string(), false)
+    //     .expect(&format!("Path {} doesn't exist, abort.", pathout));
+    // println!("--> OBJ output saved to: {}", pathout);
 }
 
 fn read_xyz_file() -> Result<Vec<CSVPoint>, Box<Error>> {
