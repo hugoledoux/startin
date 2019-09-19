@@ -360,13 +360,13 @@ fn incircleadapt(pa: &[f64], pb: &[f64], pc: &[f64], pd: &[f64], permanent: f64)
         aytbclen = scale_expansion_zeroelim(&bc, adytail, &mut aytbc);
         let temp16alen = scale_expansion_zeroelim(&aytbc[..aytbclen], 2.0 * ady, &mut temp16a);
 
-        let mut aytcc = [0f64; 8];
-        let aytcclen = scale_expansion_zeroelim(&cc, adytail, &mut aytcc);
-        let temp16blen = scale_expansion_zeroelim(&aytcc[..aytcclen], cdx, &mut temp16b);
-
         let mut aytbb = [0f64; 8];
         let aytbblen = scale_expansion_zeroelim(&bb, adytail, &mut aytbb);
-        let temp16clen = scale_expansion_zeroelim(&aytbb[..aytbblen], -bdx, &mut temp16c);
+        let temp16blen = scale_expansion_zeroelim(&aytbb[..aytbblen], cdx, &mut temp16b);
+
+        let mut aytcc = [0f64; 8];
+        let aytcclen = scale_expansion_zeroelim(&cc, adytail, &mut aytcc);
+        let temp16clen = scale_expansion_zeroelim(&aytcc[..aytcclen], -bdx, &mut temp16c);
 
         let temp32alen = fast_expansion_sum_zeroelim(
             &temp16a[..temp16alen],
