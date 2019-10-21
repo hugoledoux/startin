@@ -139,3 +139,27 @@ pub fn incircle_fast(a: &[f64], b: &[f64], c: &[f64], p: &[f64]) -> i8 {
         return -1;
     }
 }
+
+pub fn circumcentre_encroach_bbox(a: &[f64], b: &[f64], c: &[f64], bbox: &[f64]) -> bool {
+    //-- true  -> circumcircle of triangle encoarches on the bbox
+    //-- false -> circumcircle of triangle does not encoarches on the bbox
+    let cc = circle_centre(a, b, c);
+    // println!("bbox={:?}", bbox);
+    // println!("cc={:?}", c);
+    let radius: f64 = distance2d(&cc, a);
+    let mut xaxis: f64 = cc[0] - bbox[0];
+    if (bbox[2] - cc[0]) > xaxis {
+        xaxis = bbox[2] - cc[0];
+    }
+    let mut yaxis: f64 = cc[1] - bbox[1];
+    if (bbox[3] - cc[1]) > xaxis {
+        yaxis = bbox[2] - cc[0];
+    }
+    let mut d: f64 = xaxis;
+    if yaxis < xaxis {
+        d = yaxis;
+    }
+    // println!("d={}", d);
+    // println!("radius={}", radius);
+    return if radius < d { false } else { true };
+}
