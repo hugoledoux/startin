@@ -86,7 +86,7 @@
 //! }
 //! ```
 
-mod geom;
+pub mod geom;
 
 use rand::prelude::thread_rng;
 use rand::Rng;
