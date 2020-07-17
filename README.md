@@ -27,6 +27,9 @@ Rust can be compiled easily to [WebAssembly](https://www.rust-lang.org/what/wasm
 
 [--> web-demo](https://hugoledoux.github.io/startin_wasm/www/dist/)
 
+# Documentation
+
+You can read the complete documentation [here](https://docs.rs/startin)
 
 # Usage
 
