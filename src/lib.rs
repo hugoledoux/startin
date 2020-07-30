@@ -239,7 +239,7 @@ impl Link {
 }
 
 //-- taken from https://stackoverflow.com/questions/40668074/am-i-incorrectly-implementing-intoiterator-for-a-reference-or-is-this-a-rust-bug
-struct Iter<'a>(Box<Iterator<Item = &'a usize> + 'a>);
+struct Iter<'a>(Box<dyn Iterator<Item = &'a usize> + 'a>);
 
 impl<'a> Iterator for Iter<'a> {
     type Item = &'a usize;
