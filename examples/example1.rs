@@ -115,7 +115,7 @@ fn main() {
     // println!("--> OBJ output saved to: {}", pathout);
 }
 
-fn read_xyz_file() -> Result<Vec<CSVPoint>, Box<Error>> {
+fn read_xyz_file() -> Result<Vec<CSVPoint>, Box<dyn Error>> {
     let mut rdr = csv::ReaderBuilder::new()
         .delimiter(b' ')
         .from_reader(io::stdin());
