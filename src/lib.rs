@@ -867,8 +867,8 @@ impl Triangulation {
                 tr.v[2] = tmp;
             } else {
                 let tmp: usize = tr.v[1];
-                tr.v[0] = tr.v[2];
                 tr.v[1] = tr.v[0];
+                tr.v[0] = tr.v[2];
                 tr.v[2] = tmp;
             }
         }
