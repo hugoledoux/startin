@@ -30,4 +30,12 @@ fn main() {
 
     println!("Number of points in DT: {}", dt.number_of_vertices());
     println!("Number of triangles in DT: {}", dt.number_of_triangles());
+
+    // let pathout = "/Users/hugo/temp/out.obj";
+    // println!("Writing OBJ file...");
+    // let re = dt.write_obj(pathout.to_string(), false);
+    // match re {
+    //     Ok(_x) => println!("--> OBJ output saved to: {}", pathout),
+    //     Err(_x) => println!("ERROR: path {} doesn't exist, abort.", pathout),
+    // }
 }
