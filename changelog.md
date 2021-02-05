@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.4.8] - 2021-02-05 
+### Changed
+- Fix a small bug in walk, that seemed to have no real effect (except slowly down a bit)
+
 ## [0.4.7] - 2019-11-20
 ### Changed
 - Fix the bug about predicates.rs raised by Martijn Meijers (https://github.com/Stoeoef/spade/issues/48)
