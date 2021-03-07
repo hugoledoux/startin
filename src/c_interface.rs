@@ -51,7 +51,7 @@ pub extern "C" fn insert(ptr: *mut Triangulation, length: c_int, arr: *mut c_dou
 pub extern "C" fn interpolate_nn(ptr: *mut Triangulation, px: c_double, py: c_double) -> c_double {
     let t = unsafe { ptr.as_mut().unwrap() };
     let re = Triangulation::interpolate_nn(t, px, py);
-    return re.unwrap_or_else(|| f64::NAN);
+    return re.unwrap_or_else(|| std::f64::NAN);
 }
 
 #[no_mangle]
@@ -62,7 +62,7 @@ pub extern "C" fn interpolate_linear(
 ) -> c_double {
     let t = unsafe { ptr.as_mut().unwrap() };
     let re = Triangulation::interpolate_tin_linear(t, px, py);
-    return re.unwrap_or_else(|| f64::NAN);
+    return re.unwrap_or_else(|| std::f64::NAN);
 }
 
 #[no_mangle]
@@ -73,7 +73,7 @@ pub extern "C" fn interpolate_laplace(
 ) -> c_double {
     let t = unsafe { ptr.as_mut().unwrap() };
     let re = Triangulation::interpolate_laplace(t, px, py);
-    return re.unwrap_or_else(|| f64::NAN);
+    return re.unwrap_or_else(|| std::f64::NAN);
 }
 
 #[no_mangle]
