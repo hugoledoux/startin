@@ -5,8 +5,6 @@
 //! are used (activated by default by startin), but also possible to rely on floating-point
 //! arithmetic (not recommended).
 
-mod exactpred;
-
 extern crate robust;
 
 pub fn det3x3t(a: &[f64], b: &[f64], c: &[f64]) -> f64 {
@@ -50,28 +48,12 @@ pub fn orient2d(a: &[f64], b: &[f64], c: &[f64], robust_predicates: bool) -> i8 
     //-- colinear = 0
     if robust_predicates == true {
         return orient2d_robust(&a, &b, &c);
-    // return orient2d_robust_new(&a, &b, &c);
     } else {
         return orient2d_fast(&a, &b, &c);
     }
 }
 
 pub fn orient2d_robust(a: &[f64], b: &[f64], c: &[f64]) -> i8 {
-    //-- CCW    = +1
-    //-- CW     = -1
-    //-- colinear = 0
-
-    let re = exactpred::orient2d(a, b, c);
-    if re == 0.0 {
-        return 0;
-    } else if re > 0.0 {
-        return 1;
-    } else {
-        return -1;
-    }
-}
-
-pub fn orient2d_robust_new(a: &[f64], b: &[f64], c: &[f64]) -> i8 {
     //-- CCW    = +1
     //-- CW     = -1
     //-- colinear = 0
@@ -109,27 +91,12 @@ pub fn incircle(a: &[f64], b: &[f64], c: &[f64], p: &[f64], robust_predicates: b
     //-- p is ONCIRCLE == 0
     if robust_predicates == true {
         return incircle_robust(&a, &b, &c, &p);
-    // return incircle_robust_new(&a, &b, &c, &p);
     } else {
         return incircle_fast(&a, &b, &c, &p);
     }
 }
 
 pub fn incircle_robust(a: &[f64], b: &[f64], c: &[f64], p: &[f64]) -> i8 {
-    //-- p is INSIDE   == +1
-    //-- p is OUTSIDE  == -1
-    //-- p is ONCIRCLE == 0
-    let re = exactpred::incircle(a, b, c, p);
-    if re == 0.0 {
-        return 0;
-    } else if re > 0.0 {
-        return 1;
-    } else {
-        return -1;
-    }
-}
-
-pub fn incircle_robust_new(a: &[f64], b: &[f64], c: &[f64], p: &[f64]) -> i8 {
     //-- p is INSIDE   == +1
     //-- p is OUTSIDE  == -1
     //-- p is ONCIRCLE == 0
