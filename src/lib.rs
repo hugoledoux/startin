@@ -88,6 +88,9 @@
 
 mod geom;
 
+#[cfg(feature = "c_api")]
+mod c_interface;
+
 use rand::prelude::thread_rng;
 use rand::Rng;
 use std::fmt;
@@ -119,6 +122,7 @@ impl fmt::Display for Triangle {
 }
 
 //----------------------
+#[repr(C)]
 struct Link(Vec<usize>);
 
 impl Link {
@@ -266,6 +270,7 @@ impl fmt::Display for Link {
 
 /// A triangulation is a collection of Stars, each Star has its (x,y,z)
 /// and a Link (an array of adjacent vertices, ordered CCW)
+#[repr(C)]
 struct Star {
     pub pt: [f64; 3],
     pub link: Link,
@@ -285,6 +290,7 @@ impl Star {
 }
 
 //----------------------
+#[repr(C)]
 pub struct Triangulation {
     stars: Vec<Star>,
     snaptol: f64,
@@ -296,7 +302,6 @@ pub struct Triangulation {
 }
 
 impl Triangulation {
-    //-- new
     pub fn new() -> Triangulation {
         // TODO: allocate a certain number?
         // let mut l: Vec<Star> = Vec::with_capacity(100000);
@@ -409,6 +414,7 @@ impl Triangulation {
         self.robust_predicates = b;
     }
 
+    // why not use ndarray or similar here?
     pub fn insert(&mut self, pts: &Vec<Vec<f64>>) {
         let mut duplicates = 0;
         for each in pts {
@@ -435,7 +441,6 @@ impl Triangulation {
 
     //-- insert_one_pt
     pub fn insert_one_pt(&mut self, px: f64, py: f64, pz: f64) -> Result<usize, usize> {
-        // println!("-->{}", p);
         if self.is_init == false {
             return self.insert_one_pt_init_phase(px, py, pz);
         }

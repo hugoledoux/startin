@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.4.9] - 2021-03-07
+### Added
+- Added basic C interface, so startin can be called from other languages (such as C or Julia). Build with `cargo build --features c_api`.
+
 ## [0.4.8] - 2021-02-05 
 ### Changed
 - Fix a small bug in walk, that seemed to have no real effect (except slowly down a bit)
