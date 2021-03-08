@@ -12,6 +12,7 @@ readme = "README.md"
 
 [dependencies]
 rand = "0.6"
+robust = "0.2.3"
 
 [dev-dependencies]
 csv = "1"
