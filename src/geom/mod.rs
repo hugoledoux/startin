@@ -35,8 +35,8 @@ pub fn circle_centre(a: &[f64], b: &[f64], c: &[f64]) -> Vec<f64> {
     vec![x, y, 0.0]
 }
 
-pub fn distance2d_squared(a: &[f64], b: &[f64]) -> f64 {
-    (b[0] - a[0]) * (b[0] - a[0]) + (b[1] - a[1]) * (b[1] - a[1])
+pub fn distance_squared(ax: f64, ay: f64, bx: f64, by: f64) -> f64 {
+    (bx - ax) * (bx - ax) + (by - ay) * (by - ay)
 }
 
 pub fn distance2d(a: &[f64], b: &[f64]) -> f64 {

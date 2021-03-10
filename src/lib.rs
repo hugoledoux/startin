@@ -132,7 +132,7 @@ impl PointN for Point2 {
     }
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Point3 {
     pub x: f64,
     pub y: f64,
@@ -289,6 +289,10 @@ impl Link {
         }
     }
 
+    pub fn is_deleted(&self) -> bool {
+        self.0.is_empty()
+    }
+
     fn iter(&self) -> Iter {
         Iter(Box::new(self.0.iter()))
     }
@@ -387,6 +391,7 @@ where
         if self.pts.is_empty() {
             self.pts.push(pt.clone());
             self.stars.push(Link::new());
+            self.tmppt = Some(pt.clone());
         }
 
         for i in 1..self.pts.len() {
@@ -823,14 +828,13 @@ where
         if self.vertex_exists(v) == false {
             return false;
         }
-        self.stars[v].link.contains_infinite_vertex()
+        self.stars[v].contains_infinite_vertex()
     }
 
     /// Returns, if it exists, the Triangle containing (px,py).
     /// If it is direction on a vertex/edge, then one is randomly chosen.
     pub fn locate(&self, px: f64, py: f64) -> Option<Triangle> {
-        let p: [f64; 3] = [px, py, 0.0];
-        let re = self.walk(&p);
+        let re = self.walk(px, py);
         match re.is_infinite() {
             true => None,
             false => Some(re),
@@ -839,50 +843,54 @@ where
 
     // Returns closest point (in 2D) to a query point (x,y).
     // if (x,y) is outside the convex hull [`None`]
-    pub fn closest_point(&self, px: f64, py: f64) -> Option<usize> {
-        let re = self.locate(px, py);
-        if re.is_none() == true {
-            return None;
-        }
-        let p: [f64; 3] = [px, py, 0.0];
-        let tr = re.unwrap();
-        let mut d = std::f64::MAX;
-        let mut closest: usize = 0;
-        //-- 1. find triangle and closest vertex from the 3
-        for each in tr.v.iter() {
-            // println!("{}", each);
-            let dtmp = geom::distance2d_squared(&self.stars[*each].pt, &p);
-            if dtmp < d {
-                d = dtmp;
-                closest = *each;
-            }
-        }
-        for each in self.stars[closest].link.iter() {
-            let dtmp = geom::distance2d_squared(&self.stars[*each].pt, &p);
-            if dtmp < d {
-                d = dtmp;
-                closest = *each;
-            }
-        }
-        Some(closest)
-    }
+    // pub fn closest_point(&self, px: f64, py: f64) -> Option<usize> {
+    //     let re = self.locate(px, py);
+    //     if re.is_none() == true {
+    //         return None;
+    //     }
+    //     let p: [f64; 3] = [px, py, 0.0];
+    //     let tr = re.unwrap();
+    //     let mut d = std::f64::MAX;
+    //     let mut closest: usize = 0;
+    //     //-- 1. find triangle and closest vertex from the 3
+    //     for each in tr.v.iter() {
+    //         // println!("{}", each);
+    //         let dtmp = geom::distance2d_squared(&self.stars[*each].pt, &p);
+    //         if dtmp < d {
+    //             d = dtmp;
+    //             closest = *each;
+    //         }
+    //     }
+    //     for each in self.stars[closest].link.iter() {
+    //         let dtmp = geom::distance2d_squared(&self.stars[*each].pt, &p);
+    //         if dtmp < d {
+    //             d = dtmp;
+    //             closest = *each;
+    //         }
+    //     }
+    //     Some(closest)
+    // }
 
-    fn walk(&self, x: &[f64]) -> Triangle {
+    fn walk(&self, x: f64, y: f64) -> Triangle {
+        // let p = Point2 { x: x, y: y };
+
         //-- find the starting tr
         let mut cur = self.cur;
         //-- jump-and-walk
         if self.jump_and_walk == true {
             let mut rng = thread_rng();
-            let mut d: f64 = geom::distance2d_squared(&self.stars[self.cur].pt, &x);
+            let mut d: f64 =
+                geom::distance_squared(x, y, self.pts[self.cur].x(), self.pts[self.cur].y());
             let n = (self.stars.len() as f64).powf(0.25);
             // let n = (self.stars.len() as f64).powf(0.25) * 7.0;
+            // TODO: change value to sample in walk?
             for _i in 0..n as i32 {
                 let re: usize = rng.gen_range(1, self.stars.len());
                 // let dtemp = x.square_2d_distance(&self.stars[re].pt);
                 if self.stars[re].is_deleted() == true {
                     continue;
                 }
-                let dtemp = geom::distance2d_squared(&self.stars[re].pt, &x);
+                let dtemp = geom::distance_squared(x, y, self.pts[re].x(), self.pts[re].y());
                 if dtemp < d {
                     cur = re;
                     d = dtemp;
@@ -894,7 +902,7 @@ where
 
         //-- 1. find a finite triangle
         tr.v[0] = cur;
-        let l = &self.stars[cur].link;
+        let l = &self.stars[cur];
         for i in 0..(l.len() - 1) {
             if (l[i] != 0) && (l[i + 1] != 0) {
                 tr.v[1] = l[i];
@@ -903,10 +911,11 @@ where
             }
         }
         //-- 2. order it such that tr0-tr1-x is CCW
+        let re = geom::orient2d_new(&self.pts[a], &self.pts[b], &self.pts[c]);
         if geom::orient2d(
-            &self.stars[tr.v[0]].pt,
-            &self.stars[tr.v[1]].pt,
-            &x,
+            &self.pts[tr.v[0]],
+            &self.pts[tr.v[1]],
+            &p,
             self.robust_predicates,
         ) == -1
         {
