@@ -99,6 +99,58 @@ use std::io::Write;
 
 extern crate rand;
 
+pub trait PointN {
+    fn x(&self) -> f64;
+    fn y(&self) -> f64;
+    fn z(&self) -> f64;
+    fn distance(&self, other: &Self) -> f64 {
+        let d = (other.x() - self.x()) * (other.x() - self.x())
+            + (other.y() - self.y()) * (other.y() - self.y());
+        d.sqrt()
+    }
+    fn distance_squared(&self, other: &Self) -> f64 {
+        (other.x() - self.x()) * (other.x() - self.x())
+            + (other.y() - self.y()) * (other.y() - self.y())
+    }
+}
+
+#[derive(Copy, Clone, PartialEq, Debug)]
+pub struct Point2 {
+    pub x: f64,
+    pub y: f64,
+}
+
+impl PointN for Point2 {
+    fn x(&self) -> f64 {
+        self.x
+    }
+    fn y(&self) -> f64 {
+        self.y
+    }
+    fn z(&self) -> f64 {
+        0.0_f64
+    }
+}
+
+#[derive(Clone, PartialEq, Debug)]
+pub struct Point3 {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+}
+
+impl PointN for Point3 {
+    fn x(&self) -> f64 {
+        self.x
+    }
+    fn y(&self) -> f64 {
+        self.y
+    }
+    fn z(&self) -> f64 {
+        self.z
+    }
+}
+
 /// A Triangle is a triplet of indices
 pub struct Triangle {
     pub v: [usize; 3],
