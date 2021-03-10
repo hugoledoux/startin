@@ -5,6 +5,8 @@
 //! are used (activated by default by startin), but also possible to rely on floating-point
 //! arithmetic (not recommended).
 
+use super::PointN;
+
 extern crate robust;
 
 pub fn det3x3t(a: &[f64], b: &[f64], c: &[f64]) -> f64 {
@@ -40,6 +42,27 @@ pub fn distance2d_squared(a: &[f64], b: &[f64]) -> f64 {
 pub fn distance2d(a: &[f64], b: &[f64]) -> f64 {
     let d2 = (b[0] - a[0]) * (b[0] - a[0]) + (b[1] - a[1]) * (b[1] - a[1]);
     d2.sqrt()
+}
+
+pub fn orient2d_new<T>(a: &T, b: &T, c: &T) -> i8
+where
+    T: PointN,
+{
+    //-- CCW    = +1
+    //-- CW     = -1
+    //-- colinear = 0
+    let re = robust::orient2d(
+        robust::Coord { x: a.x(), y: a.y() },
+        robust::Coord { x: b.x(), y: b.y() },
+        robust::Coord { x: c.x(), y: c.y() },
+    );
+    if re == 0.0_f64 {
+        return 0;
+    } else if re.is_sign_positive() {
+        return 1;
+    } else {
+        return -1;
+    }
 }
 
 pub fn orient2d(a: &[f64], b: &[f64], c: &[f64], robust_predicates: bool) -> i8 {
@@ -79,6 +102,28 @@ pub fn orient2d_fast(a: &[f64], b: &[f64], c: &[f64]) -> i8 {
     if re.abs() < 1e-12 {
         return 0;
     } else if re > 0.0 {
+        return 1;
+    } else {
+        return -1;
+    }
+}
+
+pub fn incircle_new<T>(a: &T, b: &T, c: &T, p: &T) -> i8
+where
+    T: PointN,
+{
+    //-- p is INSIDE   == +1
+    //-- p is OUTSIDE  == -1
+    //-- p is ONCIRCLE == 0
+    let re = robust::incircle(
+        robust::Coord { x: a.x(), y: a.y() },
+        robust::Coord { x: b.x(), y: b.y() },
+        robust::Coord { x: c.x(), y: c.y() },
+        robust::Coord { x: p.x(), y: p.y() },
+    );
+    if re == 0.0_f64 {
+        return 0;
+    } else if re.is_sign_positive() {
         return 1;
     } else {
         return -1;
