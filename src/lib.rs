@@ -322,29 +322,36 @@ impl fmt::Display for Link {
 
 /// A triangulation is a collection of Stars, each Star has its (x,y,z)
 /// and a Link (an array of adjacent vertices, ordered CCW)
-#[repr(C)]
-struct Star {
-    pub pt: [f64; 3],
-    pub link: Link,
-}
+// #[repr(C)]
+// struct Star<T>
+// where
+//     T: PointN,
+// {
+//     pub pt: T,
+//     pub link: Link,
+// }
 
-impl Star {
-    pub fn new(x: f64, y: f64, z: f64) -> Star {
-        let l = Link::new();
-        Star {
-            pt: [x, y, z],
-            link: l,
-        }
-    }
-    pub fn is_deleted(&self) -> bool {
-        self.link.is_empty()
-    }
-}
+// impl<T> Star<T>
+// where
+//     T: PointN,
+// {
+//     pub fn new(s: T) -> Self {
+//         let l = Link::new();
+//         Star { pt: s, link: l }
+//     }
+//     pub fn is_deleted(&self) -> bool {
+//         self.link.is_empty()
+//     }
+// }
 
 //----------------------
 #[repr(C)]
-pub struct Triangulation {
-    stars: Vec<Star>,
+pub struct Triangulation<T>
+where
+    T: PointN,
+{
+    stars: Vec<Link>,
+    pts: Vec<T>,
     snaptol: f64,
     cur: usize,
     is_init: bool,
@@ -353,15 +360,19 @@ pub struct Triangulation {
     removed_indices: Vec<usize>,
 }
 
-impl Triangulation {
-    pub fn new() -> Triangulation {
+impl<T: Clone> Triangulation<T>
+where
+    T: PointN,
+{
+    pub fn new() -> Self {
         // TODO: allocate a certain number?
         // let mut l: Vec<Star> = Vec::with_capacity(100000);
-        let mut l: Vec<Star> = Vec::new();
-        l.push(Star::new(-99999.99999, -99999.99999, -99999.99999));
+        let mut l: Vec<Link> = Vec::new();
+        let thepts: Vec<T> = Vec::new();
         let es: Vec<usize> = Vec::new();
         Triangulation {
             stars: l,
+            pts: thepts,
             snaptol: 0.001,
             cur: 0,
             is_init: false,
@@ -371,56 +382,59 @@ impl Triangulation {
         }
     }
 
-    fn insert_one_pt_init_phase(&mut self, x: f64, y: f64, z: f64) -> Result<usize, usize> {
-        let p: [f64; 3] = [x, y, z];
-        for i in 1..self.stars.len() {
-            if geom::distance2d_squared(&self.stars[i].pt, &p) <= (self.snaptol * self.snaptol) {
+    fn insert_one_pt_init_phase(&mut self, pt: T) -> Result<usize, usize> {
+        //-- if first point then insert infinity point
+        if self.pts.is_empty() {
+            self.pts.push(pt.clone());
+            self.stars.push(Link::new());
+        }
+
+        for i in 1..self.pts.len() {
+            if pt.distance_squared(&self.pts[i]) <= (self.snaptol * self.snaptol) {
                 return Err(i);
             }
         }
+
         //-- add point to Triangulation and create its empty star
-        self.stars.push(Star::new(x, y, z));
+        self.pts.push(pt);
+        self.stars.push(Link::new());
+
         //-- form the first triangles (finite + infinite)
         let l = self.stars.len();
         if l >= 4 {
             let a = l - 3;
             let b = l - 2;
             let c = l - 1;
-            let re = geom::orient2d(
-                &self.stars[a].pt,
-                &self.stars[b].pt,
-                &self.stars[c].pt,
-                self.robust_predicates,
-            );
+            let re = geom::orient2d_new(&self.pts[a], &self.pts[b], &self.pts[c]);
             if re == 1 {
                 // println!("init: ({},{},{})", a, b, c);
-                self.stars[0].link.add(a);
-                self.stars[0].link.add(c);
-                self.stars[0].link.add(b);
-                self.stars[a].link.add(0);
-                self.stars[a].link.add(b);
-                self.stars[a].link.add(c);
-                self.stars[b].link.add(0);
-                self.stars[b].link.add(c);
-                self.stars[b].link.add(a);
-                self.stars[c].link.add(0);
-                self.stars[c].link.add(a);
-                self.stars[c].link.add(b);
+                self.stars[0].add(a);
+                self.stars[0].add(c);
+                self.stars[0].add(b);
+                self.stars[a].add(0);
+                self.stars[a].add(b);
+                self.stars[a].add(c);
+                self.stars[b].add(0);
+                self.stars[b].add(c);
+                self.stars[b].add(a);
+                self.stars[c].add(0);
+                self.stars[c].add(a);
+                self.stars[c].add(b);
                 self.is_init = true;
             } else if re == -1 {
                 // println!("init: ({},{},{})", a, c, b);
-                self.stars[0].link.add(a);
-                self.stars[0].link.add(b);
-                self.stars[0].link.add(c);
-                self.stars[a].link.add(0);
-                self.stars[a].link.add(c);
-                self.stars[a].link.add(b);
-                self.stars[b].link.add(0);
-                self.stars[b].link.add(a);
-                self.stars[b].link.add(c);
-                self.stars[c].link.add(0);
-                self.stars[c].link.add(b);
-                self.stars[c].link.add(a);
+                self.stars[0].add(a);
+                self.stars[0].add(b);
+                self.stars[0].add(c);
+                self.stars[a].add(0);
+                self.stars[a].add(c);
+                self.stars[a].add(b);
+                self.stars[b].add(0);
+                self.stars[b].add(a);
+                self.stars[b].add(c);
+                self.stars[c].add(0);
+                self.stars[c].add(b);
+                self.stars[c].add(a);
                 self.is_init = true;
             }
         }
@@ -428,7 +442,7 @@ impl Triangulation {
         if self.is_init == true {
             //-- insert the previous vertices in the dt
             for j in 1..(l - 3) {
-                let tr = self.walk(&self.stars[j].pt);
+                let tr = self.walk(&self.pts[j]);
                 // println!("found tr: {}", tr);
                 self.flip13(j, &tr);
                 self.update_dt(j);
@@ -467,353 +481,338 @@ impl Triangulation {
     }
 
     // why not use ndarray or similar here?
-    pub fn insert(&mut self, pts: &Vec<Vec<f64>>) {
+    pub fn insert(&mut self, pts: &Vec<T>) {
         let mut duplicates = 0;
         for each in pts {
-            if (each.len() < 2) || (each.len() > 3) {
-                panic!(
-                    "Point {:?} should be 2D or 3D (and is now {}D).",
-                    each,
-                    each.len()
-                );
-            } else {
-                let re;
-                if each.len() == 2 {
-                    re = self.insert_one_pt(each[0], each[1], 0.0);
-                } else {
-                    re = self.insert_one_pt(each[0], each[1], each[2]);
-                }
-                match re {
-                    Ok(_x) => continue,
-                    Err(_e) => duplicates = duplicates + 1,
-                }
+            let re = self.insert_one_pt(*each);
+            match re {
+                Ok(_x) => continue,
+                Err(_e) => duplicates = duplicates + 1,
             }
         }
     }
 
     //-- insert_one_pt
-    pub fn insert_one_pt(&mut self, px: f64, py: f64, pz: f64) -> Result<usize, usize> {
+    // pub fn insert_one_pt(&mut self, px: f64, py: f64, pz: f64) -> Result<usize, usize> {
+    pub fn insert_one_pt(&mut self, p: T) -> Result<usize, usize> {
         if self.is_init == false {
-            return self.insert_one_pt_init_phase(px, py, pz);
+            return self.insert_one_pt_init_phase(p);
         }
         //-- walk
-        let p: [f64; 3] = [px, py, pz];
+        // let p: [f64; 3] = [px, py, pz];
         let tr = self.walk(&p);
         // println!("STARTING TR: {}", tr);
-        if geom::distance2d_squared(&self.stars[tr.v[0]].pt, &p) <= (self.snaptol * self.snaptol) {
-            return Err(tr.v[0]);
+
+        for i in 0..3 {
+            if p.distance_squared(&self.pts[tr.v[i]]) <= (self.snaptol * self.snaptol) {
+                return Err(tr.v[i]);
+            }
         }
-        if geom::distance2d_squared(&self.stars[tr.v[1]].pt, &p) <= (self.snaptol * self.snaptol) {
-            return Err(tr.v[1]);
-        }
-        if geom::distance2d_squared(&self.stars[tr.v[2]].pt, &p) <= (self.snaptol * self.snaptol) {
-            return Err(tr.v[2]);
-        }
+
         //-- ok we now insert the point in the data structure
         let pi: usize;
         if self.removed_indices.is_empty() == true {
-            self.stars.push(Star::new(px, py, pz));
+            self.pts.push(p);
+            self.stars.push(Link::new());
             pi = self.stars.len() - 1;
         } else {
-            // self.stars.push(Star::new(px, py, pz));
             pi = self.removed_indices.pop().unwrap();
-            self.stars[pi].pt[0] = px;
-            self.stars[pi].pt[1] = py;
-            self.stars[pi].pt[2] = pz;
+            self.pts[pi] = p;
+            self.stars[pi] = Link::new();
         }
         //-- flip13()
         self.flip13(pi, &tr);
         //-- update_dt()
-        self.update_dt(pi);
+        // self.update_dt(pi); TODO
 
         self.cur = pi;
         Ok(pi)
     }
 
-    fn update_dt(&mut self, pi: usize) {
-        // println!("--> Update DT");
-        let mut mystack: Vec<Triangle> = Vec::new();
-        mystack.push(Triangle {
-            v: [pi, self.stars[pi].link[0], self.stars[pi].link[1]],
-        });
-        mystack.push(Triangle {
-            v: [pi, self.stars[pi].link[1], self.stars[pi].link[2]],
-        });
-        mystack.push(Triangle {
-            v: [pi, self.stars[pi].link[2], self.stars[pi].link[0]],
-        });
+    // fn update_dt(&mut self, pi: usize) {
+    //     // println!("--> Update DT");
+    //     let mut mystack: Vec<Triangle> = Vec::new();
+    //     mystack.push(Triangle {
+    //         v: [pi, self.stars[pi].link[0], self.stars[pi].link[1]],
+    //     });
+    //     mystack.push(Triangle {
+    //         v: [pi, self.stars[pi].link[1], self.stars[pi].link[2]],
+    //     });
+    //     mystack.push(Triangle {
+    //         v: [pi, self.stars[pi].link[2], self.stars[pi].link[0]],
+    //     });
 
-        loop {
-            let tr = match mystack.pop() {
-                None => break,
-                Some(x) => x,
-            };
-            let opposite = self.get_opposite_vertex(&tr);
-            // println!("stacked: {} {}", tr, opposite);
+    //     loop {
+    //         let tr = match mystack.pop() {
+    //             None => break,
+    //             Some(x) => x,
+    //         };
+    //         let opposite = self.get_opposite_vertex(&tr);
+    //         // println!("stacked: {} {}", tr, opposite);
 
-            if tr.is_infinite() == true {
-                let mut a: i8 = 0;
-                if tr.v[0] == 0 {
-                    a = geom::orient2d(
-                        &self.stars[opposite].pt,
-                        &self.stars[tr.v[1]].pt,
-                        &self.stars[tr.v[2]].pt,
-                        self.robust_predicates,
-                    );
-                } else if tr.v[1] == 0 {
-                    a = geom::orient2d(
-                        &self.stars[tr.v[0]].pt,
-                        &self.stars[opposite].pt,
-                        &self.stars[tr.v[2]].pt,
-                        self.robust_predicates,
-                    );
-                } else if tr.v[2] == 0 {
-                    a = geom::orient2d(
-                        &self.stars[tr.v[0]].pt,
-                        &self.stars[tr.v[1]].pt,
-                        &self.stars[opposite].pt,
-                        self.robust_predicates,
-                    );
-                }
-                // println!("TODO: INCIRCLE FOR INFINITY {}", a);
-                if a > 0 {
-                    // println!("FLIPPED0 {} {}", tr, opposite);
-                    let (ret0, ret1) = self.flip22(&tr, opposite);
-                    mystack.push(ret0);
-                    mystack.push(ret1);
-                }
-            } else {
-                if opposite == 0 {
-                    //- if insertion on CH then break the edge, otherwise do nothing
-                    //-- TODO sure the flips are okay here?
-                    if geom::orient2d(
-                        &self.stars[tr.v[0]].pt,
-                        &self.stars[tr.v[1]].pt,
-                        &self.stars[tr.v[2]].pt,
-                        self.robust_predicates,
-                    ) == 0
-                    {
-                        // println!("FLIPPED1 {} {}", tr, 0);
-                        let (ret0, ret1) = self.flip22(&tr, 0);
-                        mystack.push(ret0);
-                        mystack.push(ret1);
-                    }
-                } else {
-                    if geom::incircle(
-                        &self.stars[tr.v[0]].pt,
-                        &self.stars[tr.v[1]].pt,
-                        &self.stars[tr.v[2]].pt,
-                        &self.stars[opposite].pt,
-                        self.robust_predicates,
-                    ) > 0
-                    {
-                        // println!("FLIPPED2 {} {}", tr, opposite);
-                        let (ret0, ret1) = self.flip22(&tr, opposite);
-                        mystack.push(ret0);
-                        mystack.push(ret1);
-                    }
-                }
-            }
-        }
-    }
+    //         if tr.is_infinite() == true {
+    //             let mut a: i8 = 0;
+    //             if tr.v[0] == 0 {
+    //                 a = geom::orient2d(
+    //                     &self.stars[opposite].pt,
+    //                     &self.stars[tr.v[1]].pt,
+    //                     &self.stars[tr.v[2]].pt,
+    //                     self.robust_predicates,
+    //                 );
+    //             } else if tr.v[1] == 0 {
+    //                 a = geom::orient2d(
+    //                     &self.stars[tr.v[0]].pt,
+    //                     &self.stars[opposite].pt,
+    //                     &self.stars[tr.v[2]].pt,
+    //                     self.robust_predicates,
+    //                 );
+    //             } else if tr.v[2] == 0 {
+    //                 a = geom::orient2d(
+    //                     &self.stars[tr.v[0]].pt,
+    //                     &self.stars[tr.v[1]].pt,
+    //                     &self.stars[opposite].pt,
+    //                     self.robust_predicates,
+    //                 );
+    //             }
+    //             // println!("TODO: INCIRCLE FOR INFINITY {}", a);
+    //             if a > 0 {
+    //                 // println!("FLIPPED0 {} {}", tr, opposite);
+    //                 let (ret0, ret1) = self.flip22(&tr, opposite);
+    //                 mystack.push(ret0);
+    //                 mystack.push(ret1);
+    //             }
+    //         } else {
+    //             if opposite == 0 {
+    //                 //- if insertion on CH then break the edge, otherwise do nothing
+    //                 //-- TODO sure the flips are okay here?
+    //                 if geom::orient2d(
+    //                     &self.stars[tr.v[0]].pt,
+    //                     &self.stars[tr.v[1]].pt,
+    //                     &self.stars[tr.v[2]].pt,
+    //                     self.robust_predicates,
+    //                 ) == 0
+    //                 {
+    //                     // println!("FLIPPED1 {} {}", tr, 0);
+    //                     let (ret0, ret1) = self.flip22(&tr, 0);
+    //                     mystack.push(ret0);
+    //                     mystack.push(ret1);
+    //                 }
+    //             } else {
+    //                 if geom::incircle(
+    //                     &self.stars[tr.v[0]].pt,
+    //                     &self.stars[tr.v[1]].pt,
+    //                     &self.stars[tr.v[2]].pt,
+    //                     &self.stars[opposite].pt,
+    //                     self.robust_predicates,
+    //                 ) > 0
+    //                 {
+    //                     // println!("FLIPPED2 {} {}", tr, opposite);
+    //                     let (ret0, ret1) = self.flip22(&tr, opposite);
+    //                     mystack.push(ret0);
+    //                     mystack.push(ret1);
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 
     fn flip13(&mut self, pi: usize, tr: &Triangle) {
-        self.stars[pi].link.add(tr.v[0]);
-        self.stars[pi].link.add(tr.v[1]);
-        self.stars[pi].link.add(tr.v[2]);
-        self.stars[tr.v[0]].link.insert_after_v(pi, tr.v[1]);
-        self.stars[tr.v[1]].link.insert_after_v(pi, tr.v[2]);
-        self.stars[tr.v[2]].link.insert_after_v(pi, tr.v[0]);
-        //-- put infinite vertex first in list
+        self.stars[pi].add(tr.v[0]);
+        self.stars[pi].add(tr.v[1]);
+        self.stars[pi].add(tr.v[2]);
+        self.stars[tr.v[0]].insert_after_v(pi, tr.v[1]);
+        self.stars[tr.v[1]].insert_after_v(pi, tr.v[2]);
+        self.stars[tr.v[2]].insert_after_v(pi, tr.v[0]);
+        //-- TODO: put infinite vertex first in list
         // self.stars[pi].link.infinite_first();
     }
 
-    fn flip31(&mut self, v: usize) {
-        // println!("FLIP31");
-        let mut ns: Vec<usize> = Vec::new();
-        for each in self.stars[v].link.iter() {
-            ns.push(*each);
-        }
-        for n in ns.iter() {
-            self.stars[*n].link.delete(v);
-        }
-        self.stars[v].link.clear();
-        self.stars[v].pt[0] = -999.9;
-        self.stars[v].pt[1] = -999.9;
-        self.stars[v].pt[2] = -999.9;
-        self.removed_indices.push(v);
-        if ns[0] != 0 {
-            self.cur = ns[0];
-        } else if ns[1] != 0 {
-            self.cur = ns[1];
-        } else if ns[2] != 0 {
-            self.cur = ns[2];
-        }
-    }
+    // fn flip31(&mut self, v: usize) {
+    //     // println!("FLIP31");
+    //     let mut ns: Vec<usize> = Vec::new();
+    //     for each in self.stars[v].link.iter() {
+    //         ns.push(*each);
+    //     }
+    //     for n in ns.iter() {
+    //         self.stars[*n].link.delete(v);
+    //     }
+    //     self.stars[v].link.clear();
+    //     self.stars[v].pt[0] = -999.9;
+    //     self.stars[v].pt[1] = -999.9;
+    //     self.stars[v].pt[2] = -999.9;
+    //     self.removed_indices.push(v);
+    //     if ns[0] != 0 {
+    //         self.cur = ns[0];
+    //     } else if ns[1] != 0 {
+    //         self.cur = ns[1];
+    //     } else if ns[2] != 0 {
+    //         self.cur = ns[2];
+    //     }
+    // }
 
-    /// Returns the coordinates of the vertex v in a Vec [x,y,z]
-    pub fn get_point(&self, v: usize) -> Option<Vec<f64>> {
-        if self.vertex_exists(v) == false {
-            None
-        } else {
-            Some(self.stars[v].pt.to_vec())
-        }
-    }
+    // /// Returns the coordinates of the vertex v in a Vec [x,y,z]
+    // pub fn get_point(&self, v: usize) -> Option<Vec<f64>> {
+    //     if self.vertex_exists(v) == false {
+    //         None
+    //     } else {
+    //         Some(self.stars[v].pt.to_vec())
+    //     }
+    // }
 
-    pub fn adjacent_triangles_to_triangle(&self, tr: &Triangle) -> Option<Vec<Triangle>> {
-        if self.is_triangle(&tr) == false || tr.is_infinite() == true {
-            return None;
-        }
-        let mut trs: Vec<Triangle> = Vec::new();
-        let mut opp = self.stars[tr.v[2]].link.get_next_vertex(tr.v[1]).unwrap();
-        if opp != 0 {
-            trs.push(Triangle {
-                v: [tr.v[1], opp, tr.v[2]],
-            });
-        }
-        opp = self.stars[tr.v[0]].link.get_next_vertex(tr.v[2]).unwrap();
-        if opp != 0 {
-            trs.push(Triangle {
-                v: [tr.v[2], opp, tr.v[0]],
-            });
-        }
-        opp = self.stars[tr.v[1]].link.get_next_vertex(tr.v[0]).unwrap();
-        if opp != 0 {
-            trs.push(Triangle {
-                v: [tr.v[0], opp, tr.v[1]],
-            });
-        }
-        Some(trs)
-    }
+    // pub fn adjacent_triangles_to_triangle(&self, tr: &Triangle) -> Option<Vec<Triangle>> {
+    //     if self.is_triangle(&tr) == false || tr.is_infinite() == true {
+    //         return None;
+    //     }
+    //     let mut trs: Vec<Triangle> = Vec::new();
+    //     let mut opp = self.stars[tr.v[2]].link.get_next_vertex(tr.v[1]).unwrap();
+    //     if opp != 0 {
+    //         trs.push(Triangle {
+    //             v: [tr.v[1], opp, tr.v[2]],
+    //         });
+    //     }
+    //     opp = self.stars[tr.v[0]].link.get_next_vertex(tr.v[2]).unwrap();
+    //     if opp != 0 {
+    //         trs.push(Triangle {
+    //             v: [tr.v[2], opp, tr.v[0]],
+    //         });
+    //     }
+    //     opp = self.stars[tr.v[1]].link.get_next_vertex(tr.v[0]).unwrap();
+    //     if opp != 0 {
+    //         trs.push(Triangle {
+    //             v: [tr.v[0], opp, tr.v[1]],
+    //         });
+    //     }
+    //     Some(trs)
+    // }
 
-    /// Returns a Vec of Triangles (finite + infinite) to the vertex v.
-    /// If v doesn't exist, then [`None`] is returned.
-    pub fn incident_triangles_to_vertex(&self, v: usize) -> Option<Vec<Triangle>> {
-        if self.vertex_exists(v) == false {
-            return None;
-        }
-        let mut trs: Vec<Triangle> = Vec::new();
-        for (i, each) in self.stars[v].link.iter().enumerate() {
-            let j = self.stars[v].link.next_index(i);
-            trs.push(Triangle {
-                v: [v, *each, self.stars[v].link[j]],
-            });
-        }
-        Some(trs)
-    }
+    // /// Returns a Vec of Triangles (finite + infinite) to the vertex v.
+    // /// If v doesn't exist, then [`None`] is returned.
+    // pub fn incident_triangles_to_vertex(&self, v: usize) -> Option<Vec<Triangle>> {
+    //     if self.vertex_exists(v) == false {
+    //         return None;
+    //     }
+    //     let mut trs: Vec<Triangle> = Vec::new();
+    //     for (i, each) in self.stars[v].link.iter().enumerate() {
+    //         let j = self.stars[v].link.next_index(i);
+    //         trs.push(Triangle {
+    //             v: [v, *each, self.stars[v].link[j]],
+    //         });
+    //     }
+    //     Some(trs)
+    // }
 
-    /// Returns the degree of a vertex, [`None`] is it doesn't exist.
-    pub fn degree(&self, v: usize) -> Option<usize> {
-        if self.vertex_exists(v) == false {
-            return None;
-        }
-        Some(self.stars[v].link.len())
-    }
+    // /// Returns the degree of a vertex, [`None`] is it doesn't exist.
+    // pub fn degree(&self, v: usize) -> Option<usize> {
+    //     if self.vertex_exists(v) == false {
+    //         return None;
+    //     }
+    //     Some(self.stars[v].link.len())
+    // }
 
-    /// Returns a list (`Vec<usize>`) (ordered CCW) of the adjacent vertices.
-    /// [`None`] if the vertex is not part of the triangulation.
-    pub fn adjacent_vertices_to_vertex(&self, v: usize) -> Option<Vec<usize>> {
-        if self.vertex_exists(v) == false {
-            return None;
-        }
-        let mut adjs: Vec<usize> = Vec::new();
-        for each in self.stars[v].link.iter() {
-            adjs.push(*each);
-        }
-        Some(adjs)
-    }
+    // /// Returns a list (`Vec<usize>`) (ordered CCW) of the adjacent vertices.
+    // /// [`None`] if the vertex is not part of the triangulation.
+    // pub fn adjacent_vertices_to_vertex(&self, v: usize) -> Option<Vec<usize>> {
+    //     if self.vertex_exists(v) == false {
+    //         return None;
+    //     }
+    //     let mut adjs: Vec<usize> = Vec::new();
+    //     for each in self.stars[v].link.iter() {
+    //         adjs.push(*each);
+    //     }
+    //     Some(adjs)
+    // }
 
-    /// Returns whether a triplet of indices is a Triangle in the triangulation.
-    pub fn is_triangle(&self, tr: &Triangle) -> bool {
-        // TODO: what about infinite triangles?
-        let re = self.stars[tr.v[0]].link.get_next_vertex(tr.v[1]);
-        if re.is_none() {
-            return false;
-        } else {
-            if re.unwrap() == tr.v[2] {
-                return true;
-            } else {
-                return false;
-            }
-        }
-    }
+    // /// Returns whether a triplet of indices is a Triangle in the triangulation.
+    // pub fn is_triangle(&self, tr: &Triangle) -> bool {
+    //     // TODO: what about infinite triangles?
+    //     let re = self.stars[tr.v[0]].link.get_next_vertex(tr.v[1]);
+    //     if re.is_none() {
+    //         return false;
+    //     } else {
+    //         if re.unwrap() == tr.v[2] {
+    //             return true;
+    //         } else {
+    //             return false;
+    //         }
+    //     }
+    // }
 
-    pub fn statistics_degree(&self) -> (f64, usize, usize) {
-        let mut total: f64 = 0.0;
-        let mut min: usize = usize::max_value();
-        let mut max: usize = usize::min_value();
-        for i in 1..self.stars.len() {
-            total = total + self.stars[i].link.len() as f64;
-            if self.stars[i].link.len() > max {
-                max = self.stars[i].link.len();
-            }
-            if self.stars[i].link.len() < min {
-                min = self.stars[i].link.len();
-            }
-        }
-        total = total / (self.stars.len() - 2) as f64;
-        return (total, min, max);
-    }
+    // pub fn statistics_degree(&self) -> (f64, usize, usize) {
+    //     let mut total: f64 = 0.0;
+    //     let mut min: usize = usize::max_value();
+    //     let mut max: usize = usize::min_value();
+    //     for i in 1..self.stars.len() {
+    //         total = total + self.stars[i].link.len() as f64;
+    //         if self.stars[i].link.len() > max {
+    //             max = self.stars[i].link.len();
+    //         }
+    //         if self.stars[i].link.len() < min {
+    //             min = self.stars[i].link.len();
+    //         }
+    //     }
+    //     total = total / (self.stars.len() - 2) as f64;
+    //     return (total, min, max);
+    // }
 
-    /// Returns number of finite vertices in the triangulation.
-    pub fn number_of_vertices(&self) -> usize {
-        //-- number of finite vertices
-        self.stars.len() - 1 - self.removed_indices.len()
-    }
+    // /// Returns number of finite vertices in the triangulation.
+    // pub fn number_of_vertices(&self) -> usize {
+    //     //-- number of finite vertices
+    //     self.stars.len() - 1 - self.removed_indices.len()
+    // }
 
-    /// Returns number of finite triangles in the triangulation.
-    pub fn number_of_triangles(&self) -> usize {
-        //-- number of finite triangles
-        let mut count: usize = 0;
-        for (i, star) in self.stars.iter().enumerate() {
-            for (j, value) in star.link.iter().enumerate() {
-                if i < *value {
-                    let k = star.link[star.link.next_index(j)];
-                    if i < k {
-                        let tr = Triangle { v: [i, *value, k] };
-                        if tr.is_infinite() == false {
-                            count = count + 1;
-                        }
-                    }
-                }
-            }
-        }
-        count
-    }
+    // /// Returns number of finite triangles in the triangulation.
+    // pub fn number_of_triangles(&self) -> usize {
+    //     //-- number of finite triangles
+    //     let mut count: usize = 0;
+    //     for (i, star) in self.stars.iter().enumerate() {
+    //         for (j, value) in star.link.iter().enumerate() {
+    //             if i < *value {
+    //                 let k = star.link[star.link.next_index(j)];
+    //                 if i < k {
+    //                     let tr = Triangle { v: [i, *value, k] };
+    //                     if tr.is_infinite() == false {
+    //                         count = count + 1;
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+    //     count
+    // }
 
-    /// Returns the number of vertices which are marked as "removed"
-    pub fn number_of_removed_vertices(&self) -> usize {
-        self.removed_indices.len()
-    }
+    // /// Returns the number of vertices which are marked as "removed"
+    // pub fn number_of_removed_vertices(&self) -> usize {
+    //     self.removed_indices.len()
+    // }
 
-    pub fn is_vertex_removed(&self, v: usize) -> bool {
-        let re = self.removed_indices.iter().position(|&x| x == v);
-        if re == None {
-            false
-        } else {
-            true
-        }
-    }
+    // pub fn is_vertex_removed(&self, v: usize) -> bool {
+    //     let re = self.removed_indices.iter().position(|&x| x == v);
+    //     if re == None {
+    //         false
+    //     } else {
+    //         true
+    //     }
+    // }
 
-    /// Returns the convex hull of the dataset, oriented CCW.
-    /// It is a list of vertex indices (first != last)
-    pub fn convex_hull(&self) -> Vec<usize> {
-        let mut re: Vec<usize> = Vec::new();
-        for x in self.stars[0].link.iter() {
-            re.push(*x);
-        }
-        re.reverse();
-        re
-    }
+    // /// Returns the convex hull of the dataset, oriented CCW.
+    // /// It is a list of vertex indices (first != last)
+    // pub fn convex_hull(&self) -> Vec<usize> {
+    //     let mut re: Vec<usize> = Vec::new();
+    //     for x in self.stars[0].link.iter() {
+    //         re.push(*x);
+    //     }
+    //     re.reverse();
+    //     re
+    // }
 
-    /// Returns the size (ie the number of vertices) of the convex hull of the dataset
-    pub fn number_of_vertices_on_convex_hull(&self) -> usize {
-        //-- number of finite vertices on the boundary of the convex hull
-        if self.is_init == false {
-            return 0;
-        }
-        return self.stars[0].link.len();
-    }
+    // /// Returns the size (ie the number of vertices) of the convex hull of the dataset
+    // pub fn number_of_vertices_on_convex_hull(&self) -> usize {
+    //     //-- number of finite vertices on the boundary of the convex hull
+    //     if self.is_init == false {
+    //         return 0;
+    //     }
+    //     return self.stars[0].link.len();
+    // }
 
     /// Returns true if the vertex v is part of the boundary of the convex
     /// hull of the dataset. False otherwise.
@@ -968,24 +967,24 @@ impl Triangulation {
         return tr;
     }
 
-    fn flip22(&mut self, tr: &Triangle, opposite: usize) -> (Triangle, Triangle) {
-        //-- step 1.
-        self.stars[tr.v[0]].link.insert_after_v(opposite, tr.v[1]);
-        //-- step 2.
-        self.stars[tr.v[1]].link.delete(tr.v[2]);
-        //-- step 3.
-        self.stars[opposite].link.insert_after_v(tr.v[0], tr.v[2]);
-        //-- step 4.
-        self.stars[tr.v[2]].link.delete(tr.v[1]);
-        //-- make 2 triangles to return (to stack)
-        let ret0 = Triangle {
-            v: [tr.v[0], tr.v[1], opposite],
-        };
-        let ret1 = Triangle {
-            v: [tr.v[0], opposite, tr.v[2]],
-        };
-        (ret0, ret1)
-    }
+    // fn flip22(&mut self, tr: &Triangle, opposite: usize) -> (Triangle, Triangle) {
+    //     //-- step 1.
+    //     self.stars[tr.v[0]].link.insert_after_v(opposite, tr.v[1]);
+    //     //-- step 2.
+    //     self.stars[tr.v[1]].link.delete(tr.v[2]);
+    //     //-- step 3.
+    //     self.stars[opposite].link.insert_after_v(tr.v[0], tr.v[2]);
+    //     //-- step 4.
+    //     self.stars[tr.v[2]].link.delete(tr.v[1]);
+    //     //-- make 2 triangles to return (to stack)
+    //     let ret0 = Triangle {
+    //         v: [tr.v[0], tr.v[1], opposite],
+    //     };
+    //     let ret1 = Triangle {
+    //         v: [tr.v[0], opposite, tr.v[2]],
+    //     };
+    //     (ret0, ret1)
+    // }
 
     fn get_opposite_vertex(&self, tr: &Triangle) -> usize {
         self.stars[tr.v[2]].link.get_next_vertex(tr.v[1]).unwrap()
