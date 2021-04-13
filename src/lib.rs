@@ -1273,21 +1273,53 @@ impl Triangulation {
         if self.vertex_exists(v) == false {
             return None;
         }
-        if boundinfinity == false && self.is_vertex_convex_hull(v) == true {
-            return Some(f64::INFINITY);
-        }
-        //-- process non-CH points that exists
-        let l = &self.stars[v].link;
         let mut centres: Vec<Vec<f64>> = Vec::new();
-        for (i, n) in l.iter().enumerate() {
-            let j = l.next_index(i);
-            centres.push(geom::circle_centre(
-                &self.stars[v].pt,
-                &self.stars[*n].pt,
-                &self.stars[l[j]].pt,
-            ));
+        if self.is_vertex_convex_hull(v) == true {
+            if boundinfinity == false {
+                return Some(f64::INFINITY);
+            } else {
+                let mut tmp = self.stars[v].link.clone();
+                tmp.infinite_first();
+                tmp.delete(0);
+                let mut l: Vec<usize> = Vec::new();
+                for each in tmp.iter() {
+                    // println!("{:?}", each);
+                    l.push(*each)
+                }
+                // println!("{:?}", l);
+                for c in l.windows(2) {
+                    centres.push(geom::circle_centre(
+                        &self.stars[v].pt,
+                        &self.stars[c[0]].pt,
+                        &self.stars[c[1]].pt,
+                    ));
+                }
+                println!("centres: {:?}", centres);
+                //-- replace 0 by bisector, twice
+                // for each in l.windows(2) {
+                //     centres.push(geom::circle_centre(
+                //         &self.stars[v].pt,
+                //         &self.stars[c[0]].pt,
+                //         &self.stars[c[1]].pt,
+                //     ));
+                // }
+                // println!("{}", centres);
+                return Some(11.1);
+            }
+        } else {
+            //-- process non-CH points that exists
+            let l = &self.stars[v].link;
+            for (i, n) in l.iter().enumerate() {
+                let j = l.next_index(i);
+                centres.push(geom::circle_centre(
+                    &self.stars[v].pt,
+                    &self.stars[*n].pt,
+                    &self.stars[l[j]].pt,
+                ));
+            }
         }
-        centres.push(vec![centres[0][0], centres[0][1]]); //-- copy first to make circular
+        //-- copy first to make circular
+        centres.push(vec![centres[0][0], centres[0][1]]);
         println!("{:?}", centres);
         let mut totalarea = 0.0_f64;
         for c in centres.windows(2) {
