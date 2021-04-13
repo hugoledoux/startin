@@ -123,6 +123,7 @@ impl fmt::Display for Triangle {
 
 //----------------------
 #[repr(C)]
+#[derive(Debug, Clone)]
 struct Link(Vec<usize>);
 
 impl Link {
