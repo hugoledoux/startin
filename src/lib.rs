@@ -1269,6 +1269,33 @@ impl Triangulation {
         s
     }
 
+    pub fn voronoi_cell_area(&self, v: usize, boundinfinity: bool) -> Option<f64> {
+        if self.vertex_exists(v) == false {
+            return None;
+        }
+        if boundinfinity == false && self.is_vertex_convex_hull(v) == true {
+            return Some(f64::INFINITY);
+        }
+        //-- process non-CH points that exists
+        let l = &self.stars[v].link;
+        let mut centres: Vec<Vec<f64>> = Vec::new();
+        for (i, n) in l.iter().enumerate() {
+            let j = l.next_index(i);
+            centres.push(geom::circle_centre(
+                &self.stars[v].pt,
+                &self.stars[*n].pt,
+                &self.stars[l[j]].pt,
+            ));
+        }
+        centres.push(vec![centres[0][0], centres[0][1]]); //-- copy first to make circular
+        println!("{:?}", centres);
+        let mut totalarea = 0.0_f64;
+        for c in centres.windows(2) {
+            totalarea += geom::area_triangle(&self.stars[v].pt, &c[0], &c[1]);
+        }
+        Some(totalarea)
+    }
+
     fn vertex_exists(&self, v: usize) -> bool {
         let mut re = true;
         if v >= self.stars.len() || self.is_vertex_removed(v) == true {
