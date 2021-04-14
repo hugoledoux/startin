@@ -97,6 +97,8 @@ use std::fmt;
 use std::fs::File;
 use std::io::Write;
 
+use geojson::{Feature, FeatureCollection, Geometry, Value};
+
 extern crate rand;
 
 /// A Triangle is a triplet of indices
@@ -1255,6 +1257,67 @@ impl Triangulation {
         }
         write!(f, "{}", s).unwrap();
         // println!("write fobj: {:.2?}", starttime.elapsed());
+        Ok(())
+    }
+
+    /// write a GeoJSON file of the triangles/vertices to disk
+    pub fn write_geojson_triangles(&self, path: String) -> std::io::Result<()> {
+        let mut fc = FeatureCollection {
+            bbox: None,
+            features: vec![],
+            foreign_members: None,
+        };
+        //-- vertices
+        for i in 1..self.stars.len() {
+            println!("i: {:?}", i);
+            if self.stars[i].is_deleted() == true {
+                continue;
+            }
+            let pt = Geometry::new(Value::Point(vec![self.stars[i].pt[0], self.stars[i].pt[1]]));
+            // let mut attributes = Map::new();
+            // attributes.insert(String::from("id"), to_value(i.to_string()).unwrap());
+            // attributes.insert(
+            //     String::from("written"),
+            //     serde_json::value::Value::Bool(star.written),
+            // );
+            let f = Feature {
+                bbox: None,
+                geometry: Some(pt),
+                id: None,
+                properties: None, //Some(attributes),
+                foreign_members: None,
+            };
+            fc.features.push(f);
+        }
+        //-- triangles
+        let trs = self.all_triangles();
+        for tr in trs.iter() {
+            // s.push_str(&format!("f {} {} {}\n", tr.v[0], tr.v[1], tr.v[2]));
+            let mut l: Vec<Vec<Vec<f64>>> = vec![vec![Vec::with_capacity(1); 4]];
+            l[0][0].push(self.stars[tr.v[0]].pt[0]);
+            l[0][0].push(self.stars[tr.v[0]].pt[1]);
+            l[0][1].push(self.stars[tr.v[1]].pt[0]);
+            l[0][1].push(self.stars[tr.v[1]].pt[1]);
+            l[0][2].push(self.stars[tr.v[2]].pt[0]);
+            l[0][2].push(self.stars[tr.v[2]].pt[1]);
+            l[0][3].push(self.stars[tr.v[0]].pt[0]);
+            l[0][3].push(self.stars[tr.v[0]].pt[1]);
+            let gtr = Geometry::new(Value::Polygon(l));
+            // let mut attributes = Map::new();
+            // if self.stars[]
+            // attributes.insert(String::from("active"), to_value();
+            let f = Feature {
+                bbox: None,
+                geometry: Some(gtr),
+                id: None,
+                properties: None, //Some(attributes),
+                foreign_members: None,
+            };
+            fc.features.push(f);
+        }
+        //-- write the file to disk
+        let mut fo = File::create(path)?;
+        write!(fo, "{}", fc.to_string()).unwrap();
         Ok(())
     }
 

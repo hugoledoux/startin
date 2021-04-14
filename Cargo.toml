@@ -13,6 +13,8 @@ readme = "README.md"
 [dependencies]
 rand = "0.6"
 robust = "0.2"
+geojson= "*"
+serde_json= "*"
 
 [dev-dependencies]
 csv = "1"
