@@ -1233,6 +1233,9 @@ impl Triangulation {
         let mut f = File::create(path)?;
         let mut s = String::new();
         for i in 1..self.stars.len() {
+            if self.stars[i].is_deleted() == true {
+                continue;
+            }
             if twod == true {
                 s.push_str(&format!(
                     "v {} {} {}\n",
