@@ -1290,7 +1290,7 @@ impl Triangulation {
                     // println!("{:?}", each);
                     l.push(*each)
                 }
-                // println!("{:?}", l);
+                // println!("l: {:?}", l);
                 for c in l.windows(2) {
                     centres.push(geom::circle_centre(
                         &self.stars[v].pt,
@@ -1298,17 +1298,36 @@ impl Triangulation {
                         &self.stars[c[1]].pt,
                     ));
                 }
-                println!("centres: {:?}", centres);
-                //-- replace 0 by bisector, twice
-                // for each in l.windows(2) {
-                //     centres.push(geom::circle_centre(
-                //         &self.stars[v].pt,
-                //         &self.stars[c[0]].pt,
-                //         &self.stars[c[1]].pt,
-                //     ));
-                // }
-                // println!("{}", centres);
-                return Some(11.1);
+                // println!("centres: {:?}", centres);
+                //-- replace 0 by bisector, step1
+                let mut a = [
+                    self.stars[tmp[0]].pt[0] - self.stars[v].pt[0],
+                    self.stars[tmp[0]].pt[1] - self.stars[v].pt[1],
+                ];
+                let mut mid = [
+                    self.stars[v].pt[0] + (a[0] / 2.0),
+                    self.stars[v].pt[1] + (a[1] / 2.0),
+                ];
+                // println!("a {:?}", a);
+                // println!("mid {:?}", mid);
+                let c: Vec<f64> = vec![mid[0] + a[1], mid[1] - a[0], 0.0];
+                // println!("c1: {:?}", c);
+                centres.insert(0, c);
+                //-- replace 0 by bisector, step2
+                let last = tmp.last().unwrap();
+                a = [
+                    self.stars[*last].pt[0] - self.stars[v].pt[0],
+                    self.stars[*last].pt[1] - self.stars[v].pt[1],
+                ];
+                mid = [
+                    self.stars[v].pt[0] + (a[0] / 2.0),
+                    self.stars[v].pt[1] + (a[1] / 2.0),
+                ];
+                let c2: Vec<f64> = vec![mid[0] - a[1], mid[1] + a[0], 0.0];
+                // println!("c2: {:?}", c2);
+                centres.push(c2);
+                // println!("c: {:?}", centres);
+                // return Some(11.1);
             }
         } else {
             //-- process non-CH points that exists
@@ -1324,7 +1343,7 @@ impl Triangulation {
         }
         //-- copy first to make circular
         centres.push(vec![centres[0][0], centres[0][1]]);
-        println!("{:?}", centres);
+        // println!("{:?}", centres);
         let mut totalarea = 0.0_f64;
         for c in centres.windows(2) {
             totalarea += geom::area_triangle(&self.stars[v].pt, &c[0], &c[1]);
@@ -1367,6 +1386,39 @@ impl Triangulation {
         total += self.stars[tr.v[1]].pt[2] * a1;
         total += self.stars[tr.v[2]].pt[2] * a2;
         Some(total / (a0 + a1 + a2))
+    }
+
+    /// Interpolation with natural neighbour interpolation (nni)
+    pub fn interpolate_nni(&mut self, px: f64, py: f64) -> Option<f64> {
+        //-- no extrapolation
+        if self.locate(px, py).is_none() {
+            return None;
+        }
+        let re = self.insert_one_pt(px, py, 0.);
+        let pi: usize;
+        if re.is_ok() {
+            pi = re.unwrap();
+        } else {
+            pi = re.unwrap_err();
+        }
+        let nns = self.adjacent_vertices_to_vertex(pi).unwrap();
+        // println!("nns: {:?}", nns);
+        let mut weights: Vec<f64> = Vec::new();
+        for nn in &nns {
+            weights.push(self.voronoi_cell_area(*nn, true).unwrap());
+        }
+        let newarea = self.voronoi_cell_area(pi, true).unwrap();
+        // println!("newarea={:?}", newarea);
+        let _rr = self.remove(pi);
+        for (i, nn) in nns.iter().enumerate() {
+            weights[i] = self.voronoi_cell_area(*nn, true).unwrap() - weights[i];
+        }
+        // println!("weights {:?}", weights);
+        let mut z: f64 = 0.0;
+        for (i, nn) in nns.iter().enumerate() {
+            z += weights[i] * self.stars[*nn].pt[2];
+        }
+        Some(z / newarea)
     }
 
     /// Interpolation with Laplace (http://dilbert.engr.ucdavis.edu/~suku/nem/index.html)
