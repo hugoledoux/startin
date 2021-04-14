@@ -966,7 +966,7 @@ impl Triangulation {
         edges
     }
 
-    /// Returns a <Vec<Triangle> of all the finite triangles (including the infinite one)
+    /// Returns a <Vec<Triangle> of all the finite triangles
     pub fn all_triangles(&self) -> Vec<Triangle> {
         let mut trs: Vec<Triangle> = Vec::new();
         for (i, star) in self.stars.iter().enumerate() {
