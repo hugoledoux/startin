@@ -144,6 +144,9 @@ impl Link {
     fn add(&mut self, v: usize) {
         self.0.push(v);
     }
+    fn last(&mut self) -> Option<&usize> {
+        self.0.last()
+    }
     fn insert_after_v(&mut self, v: usize, after: usize) {
         let pos = self.0.iter().position(|&x| x == after).unwrap();
         self.0.insert(pos + 1, v);
