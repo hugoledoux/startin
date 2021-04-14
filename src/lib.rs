@@ -97,6 +97,8 @@ use std::fmt;
 use std::fs::File;
 use std::io::Write;
 
+use std::collections::HashMap;
+
 use geojson::{Feature, FeatureCollection, Geometry, Value};
 
 extern crate rand;
@@ -1261,7 +1263,7 @@ impl Triangulation {
     }
 
     /// write a GeoJSON file of the triangles/vertices to disk
-    pub fn write_geojson_triangles(&self, path: String) -> std::io::Result<()> {
+    pub fn write_geojson(&self, path: String) -> std::io::Result<()> {
         let mut fc = FeatureCollection {
             bbox: None,
             features: vec![],
@@ -1269,7 +1271,7 @@ impl Triangulation {
         };
         //-- vertices
         for i in 1..self.stars.len() {
-            println!("i: {:?}", i);
+            // println!("i: {:?}", i);
             if self.stars[i].is_deleted() == true {
                 continue;
             }
@@ -1339,73 +1341,184 @@ impl Triangulation {
         s
     }
 
-    pub fn voronoi_cell_area(&self, v: usize, boundinfinity: bool) -> Option<f64> {
+    // pub fn voronoi_cell_area(&self, v: usize, boundinfinity: bool) -> Option<f64> {
+    //     if self.vertex_exists(v) == false {
+    //         return None;
+    //     }
+    //     let mut centres: Vec<Vec<f64>> = Vec::new();
+    //     if self.is_vertex_convex_hull(v) == true {
+    //         if boundinfinity == false {
+    //             return Some(f64::INFINITY);
+    //         } else {
+    //             let mut tmp = self.stars[v].link.clone();
+    //             tmp.infinite_first();
+    //             tmp.delete(0);
+    //             let mut l: Vec<usize> = Vec::new();
+    //             for each in tmp.iter() {
+    //                 // println!("{:?}", each);
+    //                 l.push(*each)
+    //             }
+    //             // println!("l: {:?}", l);
+    //             for c in l.windows(2) {
+    //                 centres.push(geom::circle_centre(
+    //                     &self.stars[v].pt,
+    //                     &self.stars[c[0]].pt,
+    //                     &self.stars[c[1]].pt,
+    //                 ));
+    //             }
+    //             // println!("centres: {:?}", centres);
+    //             //-- replace 0 by bisector, step1
+    //             let mut a = [
+    //                 self.stars[tmp[0]].pt[0] - self.stars[v].pt[0],
+    //                 self.stars[tmp[0]].pt[1] - self.stars[v].pt[1],
+    //             ];
+    //             // let mut mid = [
+    //             //     self.stars[v].pt[0] + (a[0] / 2.0),
+    //             //     self.stars[v].pt[1] + (a[1] / 2.0),
+    //             // ];
+    //             // println!("a {:?}", a);
+    //             // println!("mid {:?}", mid);
+    //             let c: Vec<f64> = vec![centres[0][0] + a[1], centres[0][1] - a[0], 0.0];
+    //             // println!("c1: {:?}", c);
+    //             centres.insert(0, c);
+    //             //-- replace 0 by bisector, step2
+    //             let last = tmp.last().unwrap();
+    //             a = [
+    //                 self.stars[*last].pt[0] - self.stars[v].pt[0],
+    //                 self.stars[*last].pt[1] - self.stars[v].pt[1],
+    //             ];
+    //             // mid = [
+    //             //     self.stars[v].pt[0] + (a[0] / 2.0),
+    //             //     self.stars[v].pt[1] + (a[1] / 2.0),
+    //             // ];
+    //             let lastc = centres.last().unwrap();
+    //             let c2: Vec<f64> = vec![lastc[0] - a[1], lastc[1] + a[0], 0.0];
+    //             // println!("c2: {:?}", c2);
+    //             centres.push(c2);
+    //             // println!("centres: {:?}", centres);
+    //             // return Some(11.1);
+    //         }
+    //     } else {
+
+    pub fn voronoi_cell_area_ch_add_bound(
+        &self,
+        v: usize,
+        newc1: &mut [f64],
+        newc2: &mut [f64],
+    ) -> Option<f64> {
+        let mut centres: Vec<Vec<f64>> = Vec::new();
+        let mut tmp = self.stars[v].link.clone();
+        tmp.infinite_first();
+        tmp.delete(0);
+        let mut l: Vec<usize> = Vec::new();
+        for each in tmp.iter() {
+            // println!("{:?}", each);
+            l.push(*each)
+        }
+        // println!("l: {:?}", l);
+        for c in l.windows(2) {
+            centres.push(geom::circle_centre(
+                &self.stars[v].pt,
+                &self.stars[c[0]].pt,
+                &self.stars[c[1]].pt,
+            ));
+        }
+        // println!("centres: {:?}", centres);
+        //-- replace 0 by bisector, step1
+        let mut a = [
+            self.stars[tmp[0]].pt[0] - self.stars[v].pt[0],
+            self.stars[tmp[0]].pt[1] - self.stars[v].pt[1],
+        ];
+        // println!("a {:?}", a);
+        // println!("mid {:?}", mid);
+        let c: Vec<f64> = vec![centres[0][0] + a[1], centres[0][1] - a[0], 0.0];
+        newc1[0] = c[0];
+        newc1[1] = c[1];
+        // println!("c1: {:?}", c);
+        centres.insert(0, c);
+        //-- replace 0 by bisector, step2
+        let last = tmp.last().unwrap();
+        a = [
+            self.stars[*last].pt[0] - self.stars[v].pt[0],
+            self.stars[*last].pt[1] - self.stars[v].pt[1],
+        ];
+        // mid = [
+        //     self.stars[v].pt[0] + (a[0] / 2.0),
+        //     self.stars[v].pt[1] + (a[1] / 2.0),
+        // ];
+        let lastc = centres.last().unwrap();
+        let c2: Vec<f64> = vec![lastc[0] - a[1], lastc[1] + a[0], 0.0];
+        newc2[0] = c2[0];
+        newc2[1] = c2[1];
+        // println!("c2: {:?}", c2);
+        centres.push(c2);
+        // println!("centres: {:?}", centres);
+        //-- copy first to make circular
+        centres.push(vec![centres[0][0], centres[0][1]]);
+        // println!("{:?}", centres);
+        let mut totalarea = 0.0_f64;
+        for c in centres.windows(2) {
+            totalarea += geom::area_triangle(&self.stars[v].pt, &c[0], &c[1]);
+        }
+        Some(totalarea)
+    }
+
+    pub fn voronoi_cell_area_ch_use_bound(
+        &self,
+        v: usize,
+        newc1: &[f64],
+        newc2: &[f64],
+    ) -> Option<f64> {
+        let mut centres: Vec<Vec<f64>> = Vec::new();
+        let mut tmp = self.stars[v].link.clone();
+        tmp.infinite_first();
+        tmp.delete(0);
+        let mut l: Vec<usize> = Vec::new();
+        for each in tmp.iter() {
+            // println!("{:?}", each);
+            l.push(*each)
+        }
+        // println!("l: {:?}", l);
+        for c in l.windows(2) {
+            centres.push(geom::circle_centre(
+                &self.stars[v].pt,
+                &self.stars[c[0]].pt,
+                &self.stars[c[1]].pt,
+            ));
+        }
+        // println!("centres: {:?}", centres);
+        //-- replace 0 by bisector, step1
+        centres.insert(0, newc1.to_vec());
+        //-- replace 0 by bisector, step2
+        centres.push(newc2.to_vec());
+        // println!("centres: {:?}", centres);
+        //-- copy first to make circular
+        centres.push(vec![centres[0][0], centres[0][1]]);
+        // println!("{:?}", centres);
+        let mut totalarea = 0.0_f64;
+        for c in centres.windows(2) {
+            totalarea += geom::area_triangle(&self.stars[v].pt, &c[0], &c[1]);
+        }
+        Some(totalarea)
+    }
+
+    pub fn voronoi_cell_area(&self, v: usize) -> Option<f64> {
         if self.vertex_exists(v) == false {
             return None;
         }
-        let mut centres: Vec<Vec<f64>> = Vec::new();
         if self.is_vertex_convex_hull(v) == true {
-            if boundinfinity == false {
-                return Some(f64::INFINITY);
-            } else {
-                let mut tmp = self.stars[v].link.clone();
-                tmp.infinite_first();
-                tmp.delete(0);
-                let mut l: Vec<usize> = Vec::new();
-                for each in tmp.iter() {
-                    // println!("{:?}", each);
-                    l.push(*each)
-                }
-                // println!("l: {:?}", l);
-                for c in l.windows(2) {
-                    centres.push(geom::circle_centre(
-                        &self.stars[v].pt,
-                        &self.stars[c[0]].pt,
-                        &self.stars[c[1]].pt,
-                    ));
-                }
-                // println!("centres: {:?}", centres);
-                //-- replace 0 by bisector, step1
-                let mut a = [
-                    self.stars[tmp[0]].pt[0] - self.stars[v].pt[0],
-                    self.stars[tmp[0]].pt[1] - self.stars[v].pt[1],
-                ];
-                let mut mid = [
-                    self.stars[v].pt[0] + (a[0] / 2.0),
-                    self.stars[v].pt[1] + (a[1] / 2.0),
-                ];
-                // println!("a {:?}", a);
-                // println!("mid {:?}", mid);
-                let c: Vec<f64> = vec![mid[0] + a[1], mid[1] - a[0], 0.0];
-                // println!("c1: {:?}", c);
-                centres.insert(0, c);
-                //-- replace 0 by bisector, step2
-                let last = tmp.last().unwrap();
-                a = [
-                    self.stars[*last].pt[0] - self.stars[v].pt[0],
-                    self.stars[*last].pt[1] - self.stars[v].pt[1],
-                ];
-                mid = [
-                    self.stars[v].pt[0] + (a[0] / 2.0),
-                    self.stars[v].pt[1] + (a[1] / 2.0),
-                ];
-                let c2: Vec<f64> = vec![mid[0] - a[1], mid[1] + a[0], 0.0];
-                // println!("c2: {:?}", c2);
-                centres.push(c2);
-                // println!("c: {:?}", centres);
-                // return Some(11.1);
-            }
-        } else {
-            //-- process non-CH points that exists
-            let l = &self.stars[v].link;
-            for (i, n) in l.iter().enumerate() {
-                let j = l.next_index(i);
-                centres.push(geom::circle_centre(
-                    &self.stars[v].pt,
-                    &self.stars[*n].pt,
-                    &self.stars[l[j]].pt,
-                ));
-            }
+            return Some(f64::INFINITY);
+        }
+        //-- process non-CH points that exists
+        let mut centres: Vec<Vec<f64>> = Vec::new();
+        let l = &self.stars[v].link;
+        for (i, n) in l.iter().enumerate() {
+            let j = l.next_index(i);
+            centres.push(geom::circle_centre(
+                &self.stars[v].pt,
+                &self.stars[*n].pt,
+                &self.stars[l[j]].pt,
+            ));
         }
         //-- copy first to make circular
         centres.push(vec![centres[0][0], centres[0][1]]);
@@ -1460,6 +1573,7 @@ impl Triangulation {
         if self.locate(px, py).is_none() {
             return None;
         }
+        // TODO: what is directly on one vertex? return the value, no?
         let re = self.insert_one_pt(px, py, 0.);
         let pi: usize;
         if re.is_ok() {
@@ -1467,19 +1581,42 @@ impl Triangulation {
         } else {
             pi = re.unwrap_err();
         }
+        let mut addedcentres: HashMap<usize, Vec<Vec<f64>>> = HashMap::new();
         let nns = self.adjacent_vertices_to_vertex(pi).unwrap();
-        // println!("nns: {:?}", nns);
+        println!("nns: {:?}", nns);
         let mut weights: Vec<f64> = Vec::new();
         for nn in &nns {
-            weights.push(self.voronoi_cell_area(*nn, true).unwrap());
+            let mut a = self.voronoi_cell_area(*nn).unwrap();
+            if a != f64::INFINITY {
+                weights.push(a);
+            } else {
+                let mut c1 = vec![0.0, 1.0];
+                let mut c2 = vec![0.0, 1.0];
+                a = self
+                    .voronoi_cell_area_ch_add_bound(*nn, &mut c1, &mut c2)
+                    .unwrap();
+                addedcentres.insert(*nn, vec![c1, c2]);
+                weights.push(a);
+            }
         }
-        let newarea = self.voronoi_cell_area(pi, true).unwrap();
-        // println!("newarea={:?}", newarea);
+        let newarea = self.voronoi_cell_area(pi).unwrap();
+        println!("newarea={:?}", newarea);
         let _rr = self.remove(pi);
         for (i, nn) in nns.iter().enumerate() {
-            weights[i] = self.voronoi_cell_area(*nn, true).unwrap() - weights[i];
+            if addedcentres.contains_key(nn) {
+                let a = self
+                    .voronoi_cell_area_ch_use_bound(
+                        *nn,
+                        &addedcentres[&*nn][0],
+                        &addedcentres[&*nn][1],
+                    )
+                    .unwrap();
+                weights[i] = a - weights[i];
+            } else {
+                weights[i] = self.voronoi_cell_area(*nn).unwrap() - weights[i];
+            }
         }
-        // println!("weights {:?}", weights);
+        println!("weights {:?}", weights);
         let mut z: f64 = 0.0;
         for (i, nn) in nns.iter().enumerate() {
             z += weights[i] * self.stars[*nn].pt[2];
