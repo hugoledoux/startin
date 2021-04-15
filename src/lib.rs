@@ -1514,17 +1514,16 @@ impl Triangulation {
         if self.locate(px, py).is_none() {
             return None;
         }
-        // TODO: what is directly on one vertex? return the value, no?
         let re = self.insert_one_pt(px, py, 0.);
         let pi: usize;
         if re.is_ok() {
             pi = re.unwrap();
         } else {
-            pi = re.unwrap_err();
+            //-- return the value of the vertex if closer than self.snaptol
+            return Some(self.stars[re.unwrap_err()].pt[2]);
         }
         let mut addedcentres: HashMap<usize, Vec<Vec<f64>>> = HashMap::new();
         let nns = self.adjacent_vertices_to_vertex(pi).unwrap();
-        println!("nns: {:?}", nns);
         let mut weights: Vec<f64> = Vec::new();
         for nn in &nns {
             let mut a = self.voronoi_cell_area(*nn).unwrap();
@@ -1583,7 +1582,8 @@ impl Triangulation {
         if re.is_ok() {
             pi = re.unwrap();
         } else {
-            pi = re.unwrap_err();
+            //-- return the value of the vertex if closer than self.snaptol
+            return Some(self.stars[re.unwrap_err()].pt[2]);
         }
         let l = &self.stars[pi].link;
         let mut centres: Vec<Vec<f64>> = Vec::new();
