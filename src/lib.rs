@@ -1341,65 +1341,6 @@ impl Triangulation {
         s
     }
 
-    // pub fn voronoi_cell_area(&self, v: usize, boundinfinity: bool) -> Option<f64> {
-    //     if self.vertex_exists(v) == false {
-    //         return None;
-    //     }
-    //     let mut centres: Vec<Vec<f64>> = Vec::new();
-    //     if self.is_vertex_convex_hull(v) == true {
-    //         if boundinfinity == false {
-    //             return Some(f64::INFINITY);
-    //         } else {
-    //             let mut tmp = self.stars[v].link.clone();
-    //             tmp.infinite_first();
-    //             tmp.delete(0);
-    //             let mut l: Vec<usize> = Vec::new();
-    //             for each in tmp.iter() {
-    //                 // println!("{:?}", each);
-    //                 l.push(*each)
-    //             }
-    //             // println!("l: {:?}", l);
-    //             for c in l.windows(2) {
-    //                 centres.push(geom::circle_centre(
-    //                     &self.stars[v].pt,
-    //                     &self.stars[c[0]].pt,
-    //                     &self.stars[c[1]].pt,
-    //                 ));
-    //             }
-    //             // println!("centres: {:?}", centres);
-    //             //-- replace 0 by bisector, step1
-    //             let mut a = [
-    //                 self.stars[tmp[0]].pt[0] - self.stars[v].pt[0],
-    //                 self.stars[tmp[0]].pt[1] - self.stars[v].pt[1],
-    //             ];
-    //             // let mut mid = [
-    //             //     self.stars[v].pt[0] + (a[0] / 2.0),
-    //             //     self.stars[v].pt[1] + (a[1] / 2.0),
-    //             // ];
-    //             // println!("a {:?}", a);
-    //             // println!("mid {:?}", mid);
-    //             let c: Vec<f64> = vec![centres[0][0] + a[1], centres[0][1] - a[0], 0.0];
-    //             // println!("c1: {:?}", c);
-    //             centres.insert(0, c);
-    //             //-- replace 0 by bisector, step2
-    //             let last = tmp.last().unwrap();
-    //             a = [
-    //                 self.stars[*last].pt[0] - self.stars[v].pt[0],
-    //                 self.stars[*last].pt[1] - self.stars[v].pt[1],
-    //             ];
-    //             // mid = [
-    //             //     self.stars[v].pt[0] + (a[0] / 2.0),
-    //             //     self.stars[v].pt[1] + (a[1] / 2.0),
-    //             // ];
-    //             let lastc = centres.last().unwrap();
-    //             let c2: Vec<f64> = vec![lastc[0] - a[1], lastc[1] + a[0], 0.0];
-    //             // println!("c2: {:?}", c2);
-    //             centres.push(c2);
-    //             // println!("centres: {:?}", centres);
-    //             // return Some(11.1);
-    //         }
-    //     } else {
-
     pub fn voronoi_cell_area_ch_add_bound(
         &self,
         v: usize,
@@ -1600,7 +1541,7 @@ impl Triangulation {
             }
         }
         let newarea = self.voronoi_cell_area(pi).unwrap();
-        // println!("newarea={:?}", newarea);
+        //-- no extrapolation
         if newarea == f64::INFINITY {
             //-- interpolation point was added on boundary of CH
             //-- nothing to be done, Voronoi cell is unbounded
@@ -1622,7 +1563,7 @@ impl Triangulation {
                 weights[i] = self.voronoi_cell_area(*nn).unwrap() - weights[i];
             }
         }
-        println!("weights {:?}", weights);
+        // println!("weights {:?}", weights);
         let mut z: f64 = 0.0;
         for (i, nn) in nns.iter().enumerate() {
             z += weights[i] * self.stars[*nn].pt[2];
