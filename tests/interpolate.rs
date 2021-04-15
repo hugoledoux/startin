@@ -28,10 +28,7 @@ fn outside_ch() {
     assert_eq!(None, dt.interpolate_nni(5.0, -0.1));
     assert_eq!(None, dt.interpolate_laplace(5.0, -0.1));
     assert_eq!(None, dt.interpolate_tin_linear(5.0, -0.1));
-    // assert_eq!(None, dt.interpolate_nn(5.0, 0.0));
-    // assert_eq!(None, dt.interpolate_nni(5.0, 0.0));
-    // assert_eq!(None, dt.interpolate_laplace(5.0, 0.0));
-    // assert_eq!(None, dt.interpolate_tin_linear(5.0, 0.0));
+    assert_eq!(None, dt.interpolate_nni(5.0, 0.0));
 }
 
 #[test]
@@ -42,4 +39,28 @@ fn existing_point() {
     assert_eq!(Some(11.1), dt.interpolate_nni(5.0, 5.0));
     assert_eq!(Some(11.1), dt.interpolate_laplace(5.0, 5.0));
     assert_eq!(Some(11.1), dt.interpolate_tin_linear(5.0, 5.0));
+    assert_eq!(Some(1.0), dt.interpolate_nn(0.0, 0.0));
+    assert_eq!(Some(1.0), dt.interpolate_nni(0.0, 0.0));
+    assert_eq!(Some(1.0), dt.interpolate_laplace(0.0, 0.0));
+    assert_eq!(Some(1.0), dt.interpolate_tin_linear(0.0, 0.0));
+}
+
+#[test]
+fn middle() {
+    let mut dt = four_points();
+    assert_eq!(Some(2.5), dt.interpolate_nni(5.0, 5.0));
+    assert_eq!(Some(2.5), dt.interpolate_laplace(5.0, 5.0));
+}
+
+#[test]
+fn nn() {
+    let mut dt = four_points();
+    let _re = dt.insert_one_pt(5.0, 5.0, 11.1);
+    assert_eq!(Some(11.1), dt.interpolate_nn(5.1, 5.1));
+}
+
+#[test]
+fn tin_linear() {
+    let dt = four_points();
+    assert_eq!(Some(1.5), dt.interpolate_tin_linear(5.0, 0.0));
 }
