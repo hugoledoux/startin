@@ -1482,6 +1482,10 @@ impl Triangulation {
     /// Interpolation: nearest/closest neighbour
     /// None if outside the convex hull, other the value
     pub fn interpolate_nn(&self, px: f64, py: f64) -> Option<f64> {
+        //-- cannot interpolation if no TIN
+        if self.is_init == false {
+            return None;
+        }
         let re = self.closest_point(px, py);
         if re.is_some() {
             Some(self.stars[re.unwrap()].pt[2])
@@ -1493,6 +1497,10 @@ impl Triangulation {
     /// Interpolation: linear in TIN
     /// None if outside the convex hull, other the value
     pub fn interpolate_tin_linear(&self, px: f64, py: f64) -> Option<f64> {
+        //-- cannot interpolation if no TIN
+        if self.is_init == false {
+            return None;
+        }
         let p: [f64; 3] = [px, py, 0.0];
         let tr = self.walk(&p);
         if tr.is_infinite() {
@@ -1510,6 +1518,10 @@ impl Triangulation {
 
     /// Interpolation with natural neighbour interpolation (nni)
     pub fn interpolate_nni(&mut self, px: f64, py: f64) -> Option<f64> {
+        //-- cannot interpolation if no TIN
+        if self.is_init == false {
+            return None;
+        }
         //-- no extrapolation
         if self.locate(px, py).is_none() {
             return None;
@@ -1574,6 +1586,10 @@ impl Triangulation {
     /// (variation of nni with distances instead of stolen areas; faster in practice)
     /// None if outside the convex hull, other the value
     pub fn interpolate_laplace(&mut self, px: f64, py: f64) -> Option<f64> {
+        //-- cannot interpolation if no TIN
+        if self.is_init == false {
+            return None;
+        }
         if self.locate(px, py).is_none() {
             return None;
         }
