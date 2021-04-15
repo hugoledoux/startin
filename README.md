@@ -90,5 +90,9 @@ fn main() {
     //-- some stats
     println!("Number of points in DT: {}", dt.number_of_vertices());
     println!("Number of triangles in DT: {}", dt.number_of_triangles());
+
+    //-- save the triangulation in geojson for debug purposes
+    //-- do not attempt on large DT
+    let _re = dt.write_geojson("/home/elvis/tr.geojson".to_string());
 }
 ```
