@@ -1600,7 +1600,13 @@ impl Triangulation {
             }
         }
         let newarea = self.voronoi_cell_area(pi).unwrap();
-        println!("newarea={:?}", newarea);
+        // println!("newarea={:?}", newarea);
+        if newarea == f64::INFINITY {
+            //-- interpolation point was added on boundary of CH
+            //-- nothing to be done, Voronoi cell is unbounded
+            let _rr = self.remove(pi);
+            return None;
+        }
         let _rr = self.remove(pi);
         for (i, nn) in nns.iter().enumerate() {
             if addedcentres.contains_key(nn) {
