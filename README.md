@@ -25,7 +25,7 @@ If you prefer Python, I made bindings: [https://github.com/hugoledoux/startin_py
 
 Rust can be compiled easily to [WebAssembly](https://www.rust-lang.org/what/wasm), and you see a demo of the possibilities of startin (all computations are done locally and it's fast!).
 
-[--> web-demo](https://hugoledoux.github.io/startin_wasm/www/dist/)
+[--> web-demo](https://hugoledoux.github.io/startin_wasm/)
 
 # Documentation
 
