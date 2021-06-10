@@ -1153,7 +1153,7 @@ impl Triangulation {
 
             for i in 0..1000 {
                 if adjs[i] != 0 {
-                    self.cur = adjs[0];
+                    self.cur = adjs[i];
                     break;
                 }
             }
