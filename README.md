@@ -9,23 +9,26 @@ This is used mostly for the modelling of terrains.
 The construction algorithm used is an incremental insertion based on flips, and the data structure is a cheap implementation of the star-based structure defined in [Blandford et al. (2003)](https://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.9.6823), cheap because the link of each vertex is stored a simple array (`Vec`) and not in an optimised blob like they did.
 It results in a pretty fast library (comparison will come at some point), but it uses more space than the optimised one.
 
-The deletion of a vertex is also possible. The algorithm implemented is a modification of the one of [Mostafavi, Gold, and Dakowicz (2003)](https://doi.org/10.1016/S0098-3004(03)00017-7). The ears are filled by flipping, so it's in theory more robust. I have also extended the algorithm to allow the deletion of vertices on the boundary of the convex hull. The algorithm is sub-optimal, but in practice the number of neighbours of a given vertex in a DT is only 6, so it doesn't really matter.
+The deletion of a vertex is also possible. The algorithm implemented is a modification of the one of [Mostafavi, Gold, and Dakowicz (2003)](https://doi.org/10.1016/S0098-3004(03)00017-7). The ears are filled by flipping, so it's in theory more robust. 
+I have also extended the algorithm to allow the deletion of vertices on the boundary of the convex hull. 
+The algorithm is sub-optimal, but in practice the number of neighbours of a given vertex in a DT is only 6, so it doesn't really matter.
 
-Robust arithmetic for the geometric predicates are used ([Shewchuk's predicates](https://www.cs.cmu.edu/~quake/robust.html), well its [Rust port](https://github.com/Stoeoef/spade/blob/master/src/exactpred.rs)), so the library is robust and shouldn't crash (touch wood). 
+Robust arithmetic for the geometric predicates are used ([Shewchuk's predicates](https://www.cs.cmu.edu/~quake/robust.html), well the [Rust port of the code (robust crate)](https://crates.io/crates/robust)), so startin is robust and shouldn't crash (touch wood). 
 
 There are a few interpolation functions implemented (based on the DT): (1) nearest-neighbour, (2) linear in TIN, (3) Laplace.
 
 
 # Python bindings
 
-If you prefer Python, I made bindings: [https://github.com/hugoledoux/startin_python/](https://github.com/hugoledoux/startin_python/)
+If you prefer Python, I made bindings: [https://github.com/hugoledoux/startinpy/](https://github.com/hugoledoux/startinpy/)
 
 
 # Web-demo with WebAssembly
 
-Rust can be compiled easily to [WebAssembly](https://www.rust-lang.org/what/wasm), and you see a demo of the possibilities of startin (all computations are done locally and it's fast!).
+Rust can be compiled to [WebAssembly](https://www.rust-lang.org/what/wasm), and you can see a demo of some of the possibilities of startin (all computations are done locally and it's fast!).
 
 [--> web-demo](https://hugoledoux.github.io/startin_wasm/)
+
 
 # Documentation
 
