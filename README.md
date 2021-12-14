@@ -1,7 +1,7 @@
 # startin
 
 [![crates.io](https://img.shields.io/crates/v/startin.svg)](https://crates.io/crates/startin)
-[![PyPI version](https://badge.fury.io/py/startin.svg)](https://badge.fury.io/py/startin)
+[![PyPI version](https://badge.fury.io/py/startinpy.svg)](https://badge.fury.io/py/startinpy)
 
 A Delaunay triangulator where the input are 2.5D points, the DT is computed in 2D but the elevation of the vertices are kept.
 This is used mostly for the modelling of terrains.
