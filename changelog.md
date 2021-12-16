@@ -7,6 +7,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2] - 2021-12-16
+### Changed
+- fixed a bug that returned the wrong nearest neighbour (and thus wrong interpolate_nn() results)
+- improve the geojson output, now the id+z of the vertices are saved
+
 ## [0.5.1] - 2021-06-10
 ### Changed
 - fixed a small bug that arised sometimes when deleting a vertex on the convex hull
