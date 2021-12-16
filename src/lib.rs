@@ -810,20 +810,27 @@ impl Triangulation {
         let tr = re.unwrap();
         let mut d = std::f64::MAX;
         let mut closest: usize = 0;
-        //-- 1. find triangle and closest vertex from the 3
+        //-- find closest vertex in the triangle containing p
         for each in tr.v.iter() {
-            // println!("{}", each);
             let dtmp = geom::distance2d_squared(&self.stars[*each].pt, &p);
             if dtmp < d {
                 d = dtmp;
                 closest = *each;
             }
         }
-        for each in self.stars[closest].link.iter() {
-            let dtmp = geom::distance2d_squared(&self.stars[*each].pt, &p);
-            if dtmp < d {
-                d = dtmp;
-                closest = *each;
+        loop {
+            let mut found_one_closer = false;
+            for each in self.stars[closest].link.iter() {
+                let dtmp = geom::distance2d_squared(&self.stars[*each].pt, &p);
+                if dtmp < d {
+                    d = dtmp;
+                    closest = *each;
+                    found_one_closer = true;
+                    break;
+                }
+            }
+            if found_one_closer == false {
+                break;
             }
         }
         Some(closest)
