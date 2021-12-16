@@ -101,6 +101,7 @@ use std::fmt;
 use std::fs::File;
 use std::io::Write;
 
+use serde_json::{to_value, Map};
 use std::collections::HashMap;
 
 use geojson::{Feature, FeatureCollection, Geometry, Value};
@@ -1280,17 +1281,17 @@ impl Triangulation {
                 continue;
             }
             let pt = Geometry::new(Value::Point(vec![self.stars[i].pt[0], self.stars[i].pt[1]]));
-            // let mut attributes = Map::new();
-            // attributes.insert(String::from("id"), to_value(i.to_string()).unwrap());
-            // attributes.insert(
-            //     String::from("written"),
-            //     serde_json::value::Value::Bool(star.written),
-            // );
+            let mut attributes = Map::new();
+            attributes.insert(String::from("id"), to_value(i.to_string()).unwrap());
+            attributes.insert(
+                String::from("z"),
+                to_value(self.stars[i].pt[2].to_string()).unwrap(),
+            );
             let f = Feature {
                 bbox: None,
                 geometry: Some(pt),
                 id: None,
-                properties: None, //Some(attributes),
+                properties: Some(attributes),
                 foreign_members: None,
             };
             fc.features.push(f);
