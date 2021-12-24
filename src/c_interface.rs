@@ -23,9 +23,22 @@ pub extern "C" fn insert_one_pt(
     px: c_double,
     py: c_double,
     pz: c_double,
-) -> c_int {
+) -> usize {
     let t = unsafe { ptr.as_mut().unwrap() };
     let re = Triangulation::insert_one_pt(t, px, py, pz);
+    match re {
+        Ok(pointid) => return pointid,
+        Err(_) => return 0,
+    };
+}
+
+#[no_mangle]
+pub extern "C" fn remove(
+    ptr: *mut Triangulation,
+    pointid: usize,
+) -> c_int {
+    let t = unsafe { ptr.as_mut().unwrap() };
+    let re = Triangulation::remove(t, pointid);
     match re {
         Ok(_) => return 0,
         Err(_) => return 1,
@@ -66,6 +79,17 @@ pub extern "C" fn interpolate_linear(
 }
 
 #[no_mangle]
+pub extern "C" fn interpolate_nni(
+    ptr: *mut Triangulation,
+    px: c_double,
+    py: c_double,
+) -> c_double {
+    let t = unsafe { ptr.as_mut().unwrap() };
+    let re = Triangulation::interpolate_nni(t, px, py);
+    return re.unwrap_or_else(|| std::f64::NAN);
+}
+
+#[no_mangle]
 pub extern "C" fn interpolate_laplace(
     ptr: *mut Triangulation,
     px: c_double,
@@ -88,6 +112,20 @@ pub extern "C" fn write_obj(ptr: *mut Triangulation, s: *const c_char) -> c_int 
         return 1;
     }
     return 0;
+}
+
+#[no_mangle]
+pub extern "C" fn get_snap_tolerance(ptr: *mut Triangulation) -> c_double {
+    let t = unsafe { ptr.as_mut().unwrap() };
+    let re = Triangulation::get_snap_tolerance(t);
+    return re
+}
+
+#[no_mangle]
+pub extern "C" fn set_snap_tolerance(ptr: *mut Triangulation, tolerance: c_double) -> c_double {
+    let t = unsafe { ptr.as_mut().unwrap() };
+    let re = Triangulation::set_snap_tolerance(t, tolerance);
+    return re
 }
 
 #[no_mangle]
