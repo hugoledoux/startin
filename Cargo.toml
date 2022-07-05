@@ -1,9 +1,9 @@
 
 [package]
 name = "startin"
-version = "0.5.3"
+version = "0.5.4"
 authors = ["Hugo Ledoux <h.ledoux@tudelft.nl>"]
-edition = "2018"
+edition = "2021"
 license = "MIT"
 description = "A Delaunay triangulator for terrains."
 repository = "https://github.com/hugoledoux/startin"
@@ -13,7 +13,7 @@ readme = "README.md"
 [dependencies]
 rand = "0.6"
 robust = "0.2"
-geojson= "0.22"
+geojson= "0.23"
 serde_json= "1.0"
 
 [dev-dependencies]
