@@ -427,9 +427,17 @@ impl Triangulation {
         self.robust_predicates = b;
     }
 
-    // why not use ndarray or similar here?
-    pub fn insert(&mut self, pts: &Vec<Vec<f64>>) {
+    // TODO: why not use ndarray or similar here?
+    pub fn insert(&mut self, pts: &Vec<Vec<f64>>, bbox: Option<Vec<f64>>) {
         let mut duplicates = 0;
+        let mut c4: Vec<usize> = Vec::new();
+        if let Some(b) = bbox {
+            //-- insert the 4 corners
+            c4.push(self.insert_one_pt(b[0], b[1], 0.0).unwrap());
+            c4.push(self.insert_one_pt(b[2], b[1], 0.0).unwrap());
+            c4.push(self.insert_one_pt(b[2], b[3], 0.0).unwrap());
+            c4.push(self.insert_one_pt(b[0], b[3], 0.0).unwrap());
+        }
         for each in pts {
             if (each.len() < 2) || (each.len() > 3) {
                 panic!(
@@ -448,6 +456,12 @@ impl Triangulation {
                     Ok(_x) => continue,
                     Err(_e) => duplicates = duplicates + 1,
                 }
+            }
+        }
+        if c4.is_empty() == false {
+            //-- remove the 4 corners
+            for each in &c4 {
+                let _re = self.remove(*each);
             }
         }
     }
@@ -1676,7 +1690,9 @@ impl fmt::Display for Triangulation {
             "# convex hull: {:16}\n",
             self.number_of_vertices_on_convex_hull()
         ))?;
-        fmt.write_str(&format!("---\nrobust: {}\n", self.robust_predicates))?;
+        fmt.write_str(&format!("---\n"))?;
+        fmt.write_str(&format!("robust: {}\n", self.robust_predicates))?;
+        fmt.write_str(&format!("tolerance: {}\n", self.snaptol))?;
         fmt.write_str("===============================\n")?;
         Ok(())
     }
