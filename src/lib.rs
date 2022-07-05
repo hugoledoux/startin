@@ -1639,6 +1639,32 @@ impl Triangulation {
         let _rr = self.remove(pi);
         Some(z / sumweights)
     }
+
+    /// bbox
+    pub fn get_bbox(&self) -> Vec<f64> {
+        let mut minx: f64 = std::f64::MAX;
+        let mut miny: f64 = std::f64::MAX;
+        let mut maxx: f64 = std::f64::MIN;
+        let mut maxy: f64 = std::f64::MIN;
+        for i in 1..self.stars.len() {
+            if self.stars[i].is_deleted() == true {
+                continue;
+            }
+            if self.stars[i].pt[0] < minx {
+                minx = self.stars[i].pt[0];
+            }
+            if self.stars[i].pt[1] < miny {
+                miny = self.stars[i].pt[1];
+            }
+            if self.stars[i].pt[0] > maxx {
+                maxx = self.stars[i].pt[0];
+            }
+            if self.stars[i].pt[1] > maxy {
+                maxy = self.stars[i].pt[1];
+            }
+        }
+        vec![minx, miny, maxx, maxy]
+    }
 }
 
 impl fmt::Display for Triangulation {

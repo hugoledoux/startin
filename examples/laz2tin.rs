@@ -30,6 +30,7 @@ fn main() {
 
     println!("Number of points in DT: {}", dt.number_of_vertices());
     println!("Number of triangles in DT: {}", dt.number_of_triangles());
+    println!("bbox: {:?}", dt.get_bbox());
 
     // let pathout = "/Users/hugo/temp/out.obj";
     // println!("Writing OBJ file...");
