@@ -1262,8 +1262,22 @@ impl Triangulation {
         let trs = self.all_triangles();
         let mut f = File::create(path)?;
         let mut s = String::new();
+        //-- find one good vertice to replace the deleted one
+        let mut onegoodpt = vec![1.0, 1.0, 1.0];
+        // let onegoodpt: [f64; 3];
+        for i in 1..self.stars.len() {
+            if self.stars[i].is_deleted() == false {
+                onegoodpt[0] = self.stars[i].pt[0];
+                onegoodpt[1] = self.stars[i].pt[1];
+                onegoodpt[2] = self.stars[i].pt[2];
+            }
+        }
         for i in 1..self.stars.len() {
             if self.stars[i].is_deleted() == true {
+                s.push_str(&format!(
+                    "v {} {} {}\n",
+                    onegoodpt[0], onegoodpt[1], onegoodpt[2]
+                ));
                 continue;
             }
             if twod == true {
