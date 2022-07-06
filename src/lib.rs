@@ -1264,12 +1264,12 @@ impl Triangulation {
         let mut s = String::new();
         //-- find one good vertice to replace the deleted one
         let mut onegoodpt = vec![1.0, 1.0, 1.0];
-        // let onegoodpt: [f64; 3];
         for i in 1..self.stars.len() {
             if self.stars[i].is_deleted() == false {
                 onegoodpt[0] = self.stars[i].pt[0];
                 onegoodpt[1] = self.stars[i].pt[1];
                 onegoodpt[2] = self.stars[i].pt[2];
+                break;
             }
         }
         for i in 1..self.stars.len() {
