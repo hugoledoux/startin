@@ -108,6 +108,13 @@ use geojson::{Feature, FeatureCollection, Geometry, Value};
 
 extern crate rand;
 
+pub enum InsertionStrategy {
+    AsIs,
+    BBox,
+    // Sprinkle,
+    // ConBRIO,
+}
+
 /// A Triangle is a triplet of indices
 pub struct Triangle {
     pub v: [usize; 3],
@@ -427,42 +434,41 @@ impl Triangulation {
         self.robust_predicates = b;
     }
 
-    // TODO: why not use ndarray or similar here?
-    pub fn insert(&mut self, pts: &Vec<Vec<f64>>, bbox: Option<Vec<f64>>) {
+    pub fn insert(&mut self, pts: &Vec<[f64; 3]>, strategy: InsertionStrategy) {
         let mut duplicates = 0;
+        match strategy {
+            InsertionStrategy::BBox => {
+                //-- find the bbox
+                let bbox = geom::bbox2d(&pts);
+                self.insert_with_bbox(&pts, &bbox);
+            }
+            InsertionStrategy::AsIs => {
+                for each in pts {
+                    let re = self.insert_one_pt(each[0], each[1], each[2]);
+                    match re {
+                        Ok(_x) => continue,
+                        Err(_e) => duplicates = duplicates + 1,
+                    }
+                }
+            }
+            // InsertionStrategy::Sprinkle => println!("Sprinkle not implemented yet"),
+            // InsertionStrategy::ConBRIO => println!("ConBRIO not implemented yet"),
+        }
+    }
+
+    pub fn insert_with_bbox(&mut self, pts: &Vec<[f64; 3]>, bbox: &[f64; 4]) {
         let mut c4: Vec<usize> = Vec::new();
-        if let Some(b) = bbox {
-            //-- insert the 4 corners
-            c4.push(self.insert_one_pt(b[0], b[1], 0.0).unwrap());
-            c4.push(self.insert_one_pt(b[2], b[1], 0.0).unwrap());
-            c4.push(self.insert_one_pt(b[2], b[3], 0.0).unwrap());
-            c4.push(self.insert_one_pt(b[0], b[3], 0.0).unwrap());
-        }
+        //-- insert the 4 corners
+        c4.push(self.insert_one_pt(bbox[0], bbox[1], 0.0).unwrap());
+        c4.push(self.insert_one_pt(bbox[2], bbox[1], 0.0).unwrap());
+        c4.push(self.insert_one_pt(bbox[2], bbox[3], 0.0).unwrap());
+        c4.push(self.insert_one_pt(bbox[0], bbox[3], 0.0).unwrap());
         for each in pts {
-            if (each.len() < 2) || (each.len() > 3) {
-                panic!(
-                    "Point {:?} should be 2D or 3D (and is now {}D).",
-                    each,
-                    each.len()
-                );
-            } else {
-                let re;
-                if each.len() == 2 {
-                    re = self.insert_one_pt(each[0], each[1], 0.0);
-                } else {
-                    re = self.insert_one_pt(each[0], each[1], each[2]);
-                }
-                match re {
-                    Ok(_x) => continue,
-                    Err(_e) => duplicates = duplicates + 1,
-                }
-            }
+            let _re = self.insert_one_pt(each[0], each[1], 0.0);
         }
-        if c4.is_empty() == false {
-            //-- remove the 4 corners
-            for each in &c4 {
-                let _re = self.remove(*each);
-            }
+        //-- remove the 4 corners
+        for each in &c4 {
+            let _re = self.remove(*each);
         }
     }
 
