@@ -15,7 +15,7 @@ fn simple() {
     pts.push(vec![4.0, 5.15, 33.0]);
     let mut dt = startin::Triangulation::new();
     dt.set_jump_and_walk(false);
-    dt.insert(&pts);
+    dt.insert(&pts, None);
     let _re = dt.remove(7);
     assert_eq!(8, dt.number_of_vertices());
     assert_eq!(8, dt.number_of_triangles());
@@ -33,7 +33,7 @@ fn insert_delete() {
     }
     let mut dt = startin::Triangulation::new();
     dt.set_jump_and_walk(false);
-    dt.insert(&pts);
+    dt.insert(&pts, None);
     let _re = dt.insert_one_pt(3.05, 3.1, 33.0);
     let re = dt.remove(dt.number_of_vertices() - 1);
     assert_eq!(true, re.is_ok());
@@ -53,7 +53,7 @@ fn insert_delete_them_many() {
     }
     let mut dt = startin::Triangulation::new();
     dt.set_jump_and_walk(false);
-    dt.insert(&pts);
+    dt.insert(&pts, None);
     assert_eq!(10, dt.number_of_vertices());
     for i in 5..10 {
         let _re = dt.remove(i);
@@ -73,7 +73,7 @@ fn collinear() {
     pts.push(vec![3.0, 0.0, 33.0]);
     pts.push(vec![4.0, 0.0, 33.0]);
     let mut dt = startin::Triangulation::new();
-    dt.insert(&pts);
+    dt.insert(&pts, None);
     assert_eq!(5, dt.number_of_vertices());
     assert_eq!(0, dt.number_of_triangles());
     let _re = dt.insert_one_pt(3.0, 3.0, 33.0);
@@ -89,7 +89,7 @@ fn convexhull() {
     pts.push(vec![2.0, 2.0, 33.0]);
     pts.push(vec![0.0, 2.0, 33.0]);
     let mut dt = startin::Triangulation::new();
-    dt.insert(&pts);
+    dt.insert(&pts, None);
     let _re = dt.remove(3);
     assert_eq!(3, dt.number_of_vertices());
     assert_eq!(1, dt.number_of_triangles());
@@ -110,7 +110,7 @@ fn cocircular() {
     pts.push(vec![0.5, 0.5, 33.0]);
     let mut dt = startin::Triangulation::new();
     dt.set_jump_and_walk(false);
-    dt.insert(&pts);
+    dt.insert(&pts, None);
     let _re = dt.remove(6);
     assert_eq!(5, dt.number_of_vertices());
     assert_eq!(3, dt.number_of_triangles());
@@ -125,7 +125,7 @@ fn deletion_impossible() {
     pts.push(vec![1.0, 11.0, 21.0]);
     pts.push(vec![9.0, 5.0, 21.0]);
     let mut dt = startin::Triangulation::new();
-    dt.insert(&pts);
+    dt.insert(&pts, None);
     assert_eq!(Err("Cannot remove the infinite vertex"), dt.remove(0));
     assert_eq!(Err("Vertex does not exist"), dt.remove(7));
     let _re = dt.remove(5);
@@ -155,7 +155,7 @@ fn simple_grid() {
     pts.push(vec![0.0, 1.0, 21.0]);
     let mut dt = startin::Triangulation::new();
     dt.set_jump_and_walk(false);
-    dt.insert(&pts);
+    dt.insert(&pts, None);
     let _re = dt.remove(1);
     let _re = dt.remove(3);
     assert_eq!(2, dt.number_of_vertices());

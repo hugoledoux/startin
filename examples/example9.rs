@@ -18,7 +18,6 @@ fn main() {
     pts.push(vec![0.1, 0.8, 0.440]);
 
     let mut dt = startin::Triangulation::new();
-    // dt.insert(&pts, None);
     dt.insert(&pts, Some(vec![-10.0, -10.0, 10.0, 10.0]));
 
     // let re = dt.interpolate_nn(2., 1.);

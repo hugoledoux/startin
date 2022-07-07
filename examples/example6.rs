@@ -26,7 +26,7 @@ fn main() {
 
     let mut dt = startin::Triangulation::new();
     dt.set_jump_and_walk(false);
-    dt.insert(&pts);
+    dt.insert(&pts, None);
     println!("{}", dt.printme(true));
     // let _re = dt.write_obj("/Users/hugo/temp/0.obj".to_string(), true);
 

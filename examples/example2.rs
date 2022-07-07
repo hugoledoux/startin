@@ -10,7 +10,7 @@ fn main() {
     pts.push(vec![60.0, 60.0, 33.0]);
 
     let mut dt = startin::Triangulation::new();
-    dt.insert(&pts);
+    dt.insert(&pts, None);
 
     println!("*****");
     println!("Number of points in DT: {}", dt.number_of_vertices());

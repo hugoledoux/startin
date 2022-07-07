@@ -14,7 +14,7 @@ fn main() {
 
     let mut dt = startin::Triangulation::new();
     dt.set_jump_and_walk(false);
-    dt.insert(&pts);
+    dt.insert(&pts, None);
     println!("{}", dt.printme(false));
 
     //-- delete 5 vertices on convex hull

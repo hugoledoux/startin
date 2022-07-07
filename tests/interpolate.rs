@@ -8,7 +8,7 @@ fn four_points() -> Triangulation {
     pts.push(vec![10.0, 10.0, 3.0]);
     pts.push(vec![0.0, 10.0, 4.0]);
     let mut dt = startin::Triangulation::new();
-    dt.insert(&pts);
+    dt.insert(&pts, None);
     dt
 }
 

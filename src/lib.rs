@@ -2,7 +2,7 @@
 //!
 //! [![crates.io](https://img.shields.io/crates/v/startin.svg)](https://crates.io/crates/startin)
 //!
-//! A Delaunay triangulator where the input are 2.5D points, the DT is computed in 2D but the elevation of the vertices are kept.
+//! A Delaunay triangulator where the input are 2.5D points, the Delaunay triangulation (DT) is computed in 2D but the elevations of the vertices are kept.
 //! This is used mostly for the modelling of terrains.
 //!
 //! The construction algorithm used is an incremental insertion based on flips, and the data structure is a cheap implementation of the star-based structure defined in [Blandford et al. (2003)](https://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.9.6823), cheap because the link of each vertex is stored a simple array (`Vec`) and not in an optimised blob like they did.
@@ -16,13 +16,13 @@
 //!
 //! # Python bindings
 //!
-//! If you prefer Python, I made bindings: [https://github.com/hugoledoux/startin_python/](https://github.com/hugoledoux/startin_python/)
+//! If you prefer Python, I made bindings: [https://github.com/hugoledoux/startinpy/](https://github.com/hugoledoux/startinpy/)
 //!
 //! # Web-demo with WebAssembly
 //!
 //! Rust can be compiled easily to [WebAssembly](https://www.rust-lang.org/what/wasm), and you see a demo of the possibilities of startin (all computations are done locally and it's fast!).
 //!
-//! [web-demo](https://hugoledoux.github.io/startin_wasm/www/dist/)
+//! [web-demo](https://hugoledoux.github.io/startin_wasm/)
 //!
 //! # Usage
 //!
@@ -38,7 +38,7 @@
 //!     pts.push(vec![60.0, 60.0, 33.0]);
 //!
 //!     let mut dt = startin::Triangulation::new();
-//!     dt.insert(&pts);
+//!     dt.insert(&pts, None);
 //!
 //!     println!("*****");
 //!     println!("Number of points in DT: {}", dt.number_of_vertices());

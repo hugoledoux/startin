@@ -44,7 +44,7 @@ fn main() {
     }
 
     let mut dt = startin::Triangulation::new();
-    dt.set_jump_and_walk(true);
+    // dt.set_jump_and_walk(true);
     let bbox = vec![
         crs[0],
         crs[3] + (ysize as f64 * crs[5]),

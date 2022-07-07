@@ -11,7 +11,7 @@ fn main() {
     pts.push(vec![0.67, 0.66, 33.0]);
     let mut dt = startin::Triangulation::new();
     dt.set_jump_and_walk(false);
-    dt.insert(&pts);
+    dt.insert(&pts, None);
     println!("{}", dt.printme(true));
 
     // let _re = dt.remove(3);
