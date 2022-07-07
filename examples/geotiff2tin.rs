@@ -22,7 +22,7 @@ fn main() {
     println!("rasterband y-size: {:?}", rasterband.y_size());
     println!("no_data: {:?}", rasterband.no_data_value());
 
-    let mut pts: Vec<Vec<f64>> = Vec::new();
+    let mut pts: Vec<[f64; 3]> = Vec::new();
 
     let nodatavalue = rasterband.no_data_value().unwrap();
     let xsize = rasterband.x_size();
@@ -37,7 +37,7 @@ fn main() {
                 let y = crs[3] + (j as f64 * crs[5]) + crs[5];
                 let z = each;
                 if *z != nodatavalue {
-                    pts.push(vec![x, y, *z]);
+                    pts.push([x, y, *z]);
                 }
             }
         }
@@ -45,13 +45,13 @@ fn main() {
 
     let mut dt = startin::Triangulation::new();
     // dt.set_jump_and_walk(true);
-    let bbox = vec![
+    let bbox = [
         crs[0],
         crs[3] + (ysize as f64 * crs[5]),
         crs[0] + (xsize as f64 * crs[1]),
         crs[3],
     ];
-    dt.insert(&pts, Some(bbox));
+    dt.insert_with_bbox(&pts, &bbox);
 
     println!("Number of points in DT: {}", dt.number_of_vertices());
     println!("Number of triangles in DT: {}", dt.number_of_triangles());

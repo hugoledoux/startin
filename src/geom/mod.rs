@@ -147,3 +147,22 @@ pub fn incircle_fast(a: &[f64], b: &[f64], c: &[f64], p: &[f64]) -> i8 {
         return -1;
     }
 }
+
+pub fn bbox2d(pts: &Vec<[f64; 3]>) -> [f64; 4] {
+    let mut re: [f64; 4] = [std::f64::MAX, std::f64::MAX, std::f64::MIN, std::f64::MIN];
+    for each in pts {
+        if each[0] < re[0] {
+            re[0] = each[0];
+        }
+        if each[1] < re[1] {
+            re[1] = each[1];
+        }
+        if each[0] > re[2] {
+            re[2] = each[0];
+        }
+        if each[1] > re[3] {
+            re[3] = each[1];
+        }
+    }
+    re
+}

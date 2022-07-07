@@ -2,13 +2,13 @@ use crate::startin::Triangulation;
 use startin;
 
 fn four_points() -> Triangulation {
-    let mut pts: Vec<Vec<f64>> = Vec::new();
-    pts.push(vec![0.0, 0.0, 1.0]);
-    pts.push(vec![10.0, 0.0, 2.0]);
-    pts.push(vec![10.0, 10.0, 3.0]);
-    pts.push(vec![0.0, 10.0, 4.0]);
+    let mut pts: Vec<[f64; 3]> = Vec::new();
+    pts.push([0.0, 0.0, 1.0]);
+    pts.push([10.0, 0.0, 2.0]);
+    pts.push([10.0, 10.0, 3.0]);
+    pts.push([0.0, 10.0, 4.0]);
     let mut dt = startin::Triangulation::new();
-    dt.insert(&pts, None);
+    dt.insert(&pts, startin::InsertionStrategy::AsIs);
     dt
 }
 

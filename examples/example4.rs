@@ -3,18 +3,18 @@ use rand::prelude::*;
 
 fn main() {
     let num_pts = 1000;
-    let mut pts: Vec<Vec<f64>> = Vec::new();
+    let mut pts: Vec<[f64; 3]> = Vec::new();
 
     let mut rng = rand::thread_rng();
     for _i in 0..num_pts {
         let x: f64 = rng.gen();
         let y: f64 = rng.gen();
-        pts.push(vec![x * 100.0, y * 100.0, 2.0]);
+        pts.push([x * 100.0, y * 100.0, 2.0]);
     }
 
     let mut dt = startin::Triangulation::new();
     dt.set_jump_and_walk(false);
-    dt.insert(&pts, None);
+    dt.insert(&pts, startin::InsertionStrategy::AsIs);
     println!("{}", dt.printme(false));
 
     //-- delete 5 vertices on convex hull
