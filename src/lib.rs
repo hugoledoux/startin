@@ -439,7 +439,12 @@ impl Triangulation {
         match strategy {
             InsertionStrategy::BBox => {
                 //-- find the bbox
-                let bbox = geom::bbox2d(&pts);
+                let mut bbox = geom::bbox2d(&pts);
+                //-- "padding" of the bbox to avoid conflicts
+                bbox[0] = bbox[0] - 10.0;
+                bbox[1] = bbox[1] - 10.0;
+                bbox[2] = bbox[2] + 10.0;
+                bbox[3] = bbox[3] + 10.0 ;
                 self.insert_with_bbox(&pts, &bbox);
             }
             InsertionStrategy::AsIs => {
@@ -456,7 +461,7 @@ impl Triangulation {
         }
     }
 
-    pub fn insert_with_bbox(&mut self, pts: &Vec<[f64; 3]>, bbox: &[f64; 4]) {
+    fn insert_with_bbox(&mut self, pts: &Vec<[f64; 3]>, bbox: &[f64; 4]) {
         let mut c4: Vec<usize> = Vec::new();
         //-- insert the 4 corners
         c4.push(self.insert_one_pt(bbox[0], bbox[1], 0.0).unwrap());

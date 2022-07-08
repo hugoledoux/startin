@@ -45,13 +45,14 @@ fn main() {
 
     let mut dt = startin::Triangulation::new();
     // dt.set_jump_and_walk(true);
-    let bbox = [
-        crs[0],
-        crs[3] + (ysize as f64 * crs[5]),
-        crs[0] + (xsize as f64 * crs[1]),
-        crs[3],
-    ];
-    dt.insert_with_bbox(&pts, &bbox);
+    // let bbox = [
+    //     crs[0],
+    //     crs[3] + (ysize as f64 * crs[5]),
+    //     crs[0] + (xsize as f64 * crs[1]),
+    //     crs[3],
+    // ];
+    // dt.insert_with_bbox(&pts, &bbox);
+    dt.insert(&pts, startin::InsertionStrategy::BBox);
 
     println!("Number of points in DT: {}", dt.number_of_vertices());
     println!("Number of triangles in DT: {}", dt.number_of_triangles());
