@@ -637,7 +637,7 @@ impl Triangulation {
         }
     }
 
-    /// Returns the coordinates of the vertex v in a Vec [x,y,z]
+    /// Returns the coordinates of the vertex v
     pub fn get_point(&self, v: usize) -> Option<Vec<f64>> {
         if self.vertex_exists(v) == false {
             None
@@ -1633,7 +1633,7 @@ impl Triangulation {
         Some(z / newarea)
     }
 
-    /// Interpolation with Laplace (http://dilbert.engr.ucdavis.edu/~suku/nem/index.html)
+    /// Interpolation with Laplace <http://dilbert.engr.ucdavis.edu/~suku/nem/index.html>
     /// (variation of nni with distances instead of stolen areas; faster in practice)
     /// None if outside the convex hull, other the value
     pub fn interpolate_laplace(&mut self, px: f64, py: f64) -> Option<f64> {
