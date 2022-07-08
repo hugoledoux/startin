@@ -1269,7 +1269,7 @@ impl Triangulation {
     }
 
     /// write an OBJ file to disk
-    pub fn write_obj(&self, path: String, twod: bool) -> std::io::Result<()> {
+    pub fn write_obj(&self, path: String) -> std::io::Result<()> {
         let trs = self.all_triangles();
         let mut f = File::create(path)?;
         let mut s = String::new();
@@ -1291,12 +1291,21 @@ impl Triangulation {
                 ));
                 continue;
             }
-            if twod == true {
-                s.push_str(&format!(
-                    "v {} {} {}\n",
-                    self.stars[i].pt[0], self.stars[i].pt[1], 0
-                ));
-            } else {
+            s.push_str(&format!(
+                "v {} {} {}\n",
+                self.stars[i].pt[0], self.stars[i].pt[1], self.stars[i].pt[2]
+            ));
+        }
+        write!(f, "{}", s).unwrap();
+        let mut s = String::new();
+        for tr in trs.iter() {
+            s.push_str(&format!("f {} {} {}\n", tr.v[0], tr.v[1], tr.v[2]));
+        }
+        write!(f, "{}", s).unwrap();
+        // println!("write fobj: {:.2?}", starttime.elapsed());
+        Ok(())
+    }
+
     /// write a PLY file to disk
     pub fn write_ply(&self, path: String) -> std::io::Result<()> {
         let trs = self.all_triangles();

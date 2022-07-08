@@ -36,11 +36,11 @@ fn main() {
 
     // let _re = dt.write_geojson("/Users/hugo/temp/g1.geojson".to_string());
 
-    // let pathout = "/Users/hugo/temp/out.obj";
-    // println!("Writing OBJ file...");
-    // let re = dt.write_obj(pathout.to_string(), false);
-    // match re {
-    //     Ok(_x) => println!("--> OBJ output saved to: {}", pathout),
-    //     Err(_x) => println!("ERROR: path {} doesn't exist, abort.", pathout),
-    // }
+    let pathout = "/Users/hugo/temp/out.ply";
+    println!("Writing PLY file...");
+    let re = dt.write_ply(pathout.to_string());
+    match re {
+        Ok(_x) => println!("--> PLY output saved to: {}", pathout),
+        Err(_x) => println!("ERROR: path {} doesn't exist, abort.", pathout),
+    }
 }
