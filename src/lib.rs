@@ -469,7 +469,7 @@ impl Triangulation {
         c4.push(self.insert_one_pt(bbox[2], bbox[3], 0.0).unwrap());
         c4.push(self.insert_one_pt(bbox[0], bbox[3], 0.0).unwrap());
         for each in pts {
-            let _re = self.insert_one_pt(each[0], each[1], 0.0);
+            let _re = self.insert_one_pt(each[0], each[1], each[2]);
         }
         //-- remove the 4 corners
         for each in &c4 {
