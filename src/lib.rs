@@ -1297,19 +1297,56 @@ impl Triangulation {
                     self.stars[i].pt[0], self.stars[i].pt[1], 0
                 ));
             } else {
-                s.push_str(&format!(
-                    "v {} {} {}\n",
-                    self.stars[i].pt[0], self.stars[i].pt[1], self.stars[i].pt[2]
-                ));
+    /// write a PLY file to disk
+    pub fn write_ply(&self, path: String) -> std::io::Result<()> {
+        let trs = self.all_triangles();
+        let mut f = File::create(path)?;
+        //-- header
+        write!(f, "ply\n").unwrap();
+        write!(f, "format ascii 1.0\n").unwrap();
+        write!(f, "comment made by startin\n").unwrap();
+        write!(f, "element vertex {}\n", self.stars.len() - 1).unwrap();
+        write!(f, "property float x\n").unwrap();
+        write!(f, "property float y\n").unwrap();
+        write!(f, "property float z\n").unwrap();
+        write!(f, "element face {}\n", trs.len()).unwrap();
+        write!(f, "property list uchar int vertex_index\n").unwrap();
+        write!(f, "end_header\n").unwrap();
+        //-- find one good vertice to replace the deleted one
+        let mut onegoodpt = vec![1.0, 1.0, 1.0];
+        for i in 1..self.stars.len() {
+            if self.stars[i].is_deleted() == false {
+                onegoodpt[0] = self.stars[i].pt[0];
+                onegoodpt[1] = self.stars[i].pt[1];
+                onegoodpt[2] = self.stars[i].pt[2];
+                break;
             }
+        }
+        let mut s = String::new();
+        for i in 1..self.stars.len() {
+            if self.stars[i].is_deleted() == true {
+                s.push_str(&format!(
+                    "{} {} {}\n",
+                    onegoodpt[0], onegoodpt[1], onegoodpt[2]
+                ));
+                continue;
+            }
+            s.push_str(&format!(
+                "{} {} {}\n",
+                self.stars[i].pt[0], self.stars[i].pt[1], self.stars[i].pt[2]
+            ));
         }
         write!(f, "{}", s).unwrap();
         let mut s = String::new();
         for tr in trs.iter() {
-            s.push_str(&format!("f {} {} {}\n", tr.v[0], tr.v[1], tr.v[2]));
+            s.push_str(&format!(
+                "3 {} {} {}\n",
+                tr.v[0] - 1,
+                tr.v[1] - 1,
+                tr.v[2] - 1
+            ));
         }
         write!(f, "{}", s).unwrap();
-        // println!("write fobj: {:.2?}", starttime.elapsed());
         Ok(())
     }
 
