@@ -58,12 +58,13 @@ fn main() {
     println!("Number of triangles in DT: {}", dt.number_of_triangles());
     println!("bbox: {:?}", dt.get_bbox());
 
+    dt.vertical_exaggeration(5.0);
     // let _re = dt.write_geojson("/Users/hugo/temp/g1.geojson".to_string());
-    // let pathout = "/Users/hugo/temp/out.obj";
-    // println!("Writing OBJ file...");
-    // let re = dt.write_obj(pathout.to_string(), false);
-    // match re {
-    //     Ok(_x) => println!("--> OBJ output saved to: {}", pathout),
-    //     Err(_x) => println!("ERROR: path {} doesn't exist, abort.", pathout),
-    // }
+    let pathout = "/Users/hugo/temp/out2.obj";
+    println!("Writing OBJ file...");
+    let re = dt.write_obj(pathout.to_string(), false);
+    match re {
+        Ok(_x) => println!("--> OBJ output saved to: {}", pathout),
+        Err(_x) => println!("ERROR: path {} doesn't exist, abort.", pathout),
+    }
 }
