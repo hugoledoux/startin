@@ -1704,6 +1704,25 @@ impl Triangulation {
         }
         vec![minx, miny, maxx, maxy]
     }
+
+    pub fn vertical_exaggeration(&mut self, factor: f64) {
+        let mut minz: f64 = std::f64::MAX;
+        for i in 1..self.stars.len() {
+            if self.stars[i].is_deleted() == true {
+                continue;
+            }
+            if self.stars[i].pt[2] < minz {
+                minz = self.stars[i].pt[2];
+            }
+        }
+        for i in 1..self.stars.len() {
+            if self.stars[i].is_deleted() == true {
+                continue;
+            }
+            let z2 = ((self.stars[i].pt[2] - minz) * factor) + minz;
+            self.stars[i].pt[2] = z2;
+        }
+    }
 }
 
 impl fmt::Display for Triangulation {
