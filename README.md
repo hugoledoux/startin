@@ -30,6 +30,15 @@ Rust can be compiled to [WebAssembly](https://www.rust-lang.org/what/wasm), and 
 [--> web-demo](https://hugoledoux.github.io/startin_wasm/)
 
 
+# C interface
+
+A basic C interface is available in `src/c_interface.rs`, to compile it:
+
+```bash
+cargo build --features c_api
+```
+
+
 # Documentation
 
 You can read the complete documentation [here](https://docs.rs/startin)
