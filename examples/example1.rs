@@ -104,7 +104,7 @@ fn main() {
 
     let pathout = "/Users/hugo/temp/out.obj";
     println!("Writing OBJ file...");
-    let re = dt.write_obj(pathout.to_string(), false);
+    let re = dt.write_obj(pathout.to_string());
     match re {
         Ok(_x) => println!("--> OBJ output saved to: {}", pathout),
         Err(_x) => println!("ERROR: path {} doesn't exist, abort.", pathout),
