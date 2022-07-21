@@ -3,6 +3,7 @@ use std::ffi::CStr;
 use std::os::raw::c_char;
 use std::os::raw::c_double;
 use std::os::raw::c_int;
+use std::os::raw::c_ulong;
 
 #[no_mangle]
 pub extern "C" fn new_triangulation() -> *mut Triangulation {
@@ -33,12 +34,9 @@ pub extern "C" fn insert_one_pt(
 }
 
 #[no_mangle]
-pub extern "C" fn remove(
-    ptr: *mut Triangulation,
-    pointid: usize,
-) -> c_int {
+pub extern "C" fn remove(ptr: *mut Triangulation, vi: c_ulong) -> c_int {
     let t = unsafe { ptr.as_mut().unwrap() };
-    let re = Triangulation::remove(t, pointid);
+    let re = Triangulation::remove(t, vi as usize);
     match re {
         Ok(_) => return 0,
         Err(_) => return 1,
