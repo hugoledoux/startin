@@ -107,7 +107,21 @@ pub extern "C" fn write_obj(ptr: *mut Triangulation, s: *const c_char) -> c_int 
         assert!(!s.is_null());
         CStr::from_ptr(s)
     };
-    let re = Triangulation::write_obj(t, path.to_str().unwrap().to_string(), false);
+    let re = Triangulation::write_obj(t, path.to_str().unwrap().to_string());
+    if re.is_err() {
+        return 1;
+    }
+    return 0;
+}
+
+#[no_mangle]
+pub extern "C" fn write_ply(ptr: *mut Triangulation, s: *const c_char) -> c_int {
+    let t = unsafe { ptr.as_mut().unwrap() };
+    let path = unsafe {
+        assert!(!s.is_null());
+        CStr::from_ptr(s)
+    };
+    let re = Triangulation::write_ply(t, path.to_str().unwrap().to_string());
     if re.is_err() {
         return 1;
     }
