@@ -46,15 +46,23 @@ pub extern "C" fn remove(
 }
 
 #[no_mangle]
-pub extern "C" fn insert(ptr: *mut Triangulation, length: c_int, arr: *mut c_double) -> c_int {
-    let mut duplicates = 0;
+pub extern "C" fn adjacent_vertices_to_vertex(ptr: *mut Triangulation, vi: c_ulong) -> *mut u64 {
     let t = unsafe { ptr.as_mut().unwrap() };
-    let pts = unsafe { std::slice::from_raw_parts_mut(arr, length as usize) };
-    for i in (0..length as usize).step_by(3) {
-        let re = Triangulation::insert_one_pt(t, pts[i], pts[i + 1], pts[i + 2]);
-        match re {
-            Ok(_) => continue,
-            Err(_) => duplicates = duplicates + 1,
+    let re = Triangulation::adjacent_vertices_to_vertex(t, vi as usize);
+    let mut adjs: Vec<u64> = Vec::new();
+    if re.is_some() {
+        let a = re.unwrap();
+        adjs.push(a.len() as u64);
+        for each in a {
+            adjs.push(each as u64);
+        }
+    } else {
+        adjs.push(0);
+    }
+    let ptr = adjs.as_mut_ptr();
+    std::mem::forget(adjs); // so that it is not destructed at the end of the scope
+    ptr
+}
         }
     }
     return duplicates;
