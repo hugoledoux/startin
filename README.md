@@ -18,16 +18,16 @@ Robust arithmetic for the geometric predicates are used ([Shewchuk's predicates]
 There are a few interpolation functions implemented (based on the DT): (1) nearest-neighbour, (2) linear in TIN, (3) Laplace.
 
 
-# Python bindings
-
-If you prefer Python, I made bindings: [https://github.com/hugoledoux/startinpy/](https://github.com/hugoledoux/startinpy/)
-
-
 # Web-demo with WebAssembly
 
 Rust can be compiled to [WebAssembly](https://www.rust-lang.org/what/wasm), and you can see a demo of some of the possibilities of startin (all computations are done locally and it's fast!).
 
 [--> web-demo](https://hugoledoux.github.io/startin_wasm/)
+
+
+# Python bindings
+
+If you prefer Python, I made bindings: [https://github.com/hugoledoux/startinpy/](https://github.com/hugoledoux/startinpy/)
 
 
 # C interface
