@@ -435,7 +435,6 @@ impl Triangulation {
     }
 
     pub fn insert(&mut self, pts: &Vec<[f64; 3]>, strategy: InsertionStrategy) {
-        let mut duplicates = 0;
         match strategy {
             InsertionStrategy::BBox => {
                 //-- find the bbox
@@ -449,11 +448,7 @@ impl Triangulation {
             }
             InsertionStrategy::AsIs => {
                 for each in pts {
-                    let re = self.insert_one_pt(each[0], each[1], each[2]);
-                    match re {
-                        Ok(_x) => continue,
-                        Err(_e) => duplicates = duplicates + 1,
-                    }
+                    let _re = self.insert_one_pt(each[0], each[1], each[2]);
                 }
             }
             // InsertionStrategy::Sprinkle => println!("Sprinkle not implemented yet"),
@@ -1438,7 +1433,7 @@ impl Triangulation {
         s
     }
 
-    pub fn voronoi_cell_area_ch_add_bound(
+    fn voronoi_cell_area_ch_add_bound(
         &self,
         v: usize,
         newc1: &mut [f64],
@@ -1501,7 +1496,7 @@ impl Triangulation {
         Some(totalarea)
     }
 
-    pub fn voronoi_cell_area_ch_use_bound(
+    fn voronoi_cell_area_ch_use_bound(
         &self,
         v: usize,
         newc1: &[f64],
@@ -1540,7 +1535,7 @@ impl Triangulation {
         Some(totalarea)
     }
 
-    pub fn voronoi_cell_area(&self, v: usize) -> Option<f64> {
+    fn voronoi_cell_area(&self, v: usize) -> Option<f64> {
         if self.vertex_exists(v) == false {
             return None;
         }
