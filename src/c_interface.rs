@@ -5,7 +5,7 @@ use std::os::raw::c_double;
 use std::os::raw::c_int;
 
 #[no_mangle]
-pub extern "C" fn new() -> *mut Triangulation {
+pub extern "C" fn new_triangulation() -> *mut Triangulation {
     let x = Box::new(Triangulation::new());
     let ptr = Box::into_raw(x);
     return ptr;
@@ -79,11 +79,7 @@ pub extern "C" fn interpolate_linear(
 }
 
 #[no_mangle]
-pub extern "C" fn interpolate_nni(
-    ptr: *mut Triangulation,
-    px: c_double,
-    py: c_double,
-) -> c_double {
+pub extern "C" fn interpolate_nni(ptr: *mut Triangulation, px: c_double, py: c_double) -> c_double {
     let t = unsafe { ptr.as_mut().unwrap() };
     let re = Triangulation::interpolate_nni(t, px, py);
     return re.unwrap_or_else(|| std::f64::NAN);
@@ -132,14 +128,14 @@ pub extern "C" fn write_ply(ptr: *mut Triangulation, s: *const c_char) -> c_int 
 pub extern "C" fn get_snap_tolerance(ptr: *mut Triangulation) -> c_double {
     let t = unsafe { ptr.as_mut().unwrap() };
     let re = Triangulation::get_snap_tolerance(t);
-    return re
+    return re;
 }
 
 #[no_mangle]
 pub extern "C" fn set_snap_tolerance(ptr: *mut Triangulation, tolerance: c_double) -> c_double {
     let t = unsafe { ptr.as_mut().unwrap() };
     let re = Triangulation::set_snap_tolerance(t, tolerance);
-    return re
+    return re;
 }
 
 #[no_mangle]
