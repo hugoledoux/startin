@@ -63,9 +63,54 @@ pub extern "C" fn adjacent_vertices_to_vertex(ptr: *mut Triangulation, vi: c_ulo
     std::mem::forget(adjs); // so that it is not destructed at the end of the scope
     ptr
 }
+
+#[no_mangle]
+pub extern "C" fn insert(
+    ptr: *mut Triangulation,
+    length: c_int,
+    arr: *mut c_double,
+    strategy: *const c_char,
+) {
+    let istrategy = unsafe {
+        assert!(!strategy.is_null());
+        CStr::from_ptr(strategy)
+    };
+    let dt = unsafe { ptr.as_mut().unwrap() };
+    let slice = unsafe { std::slice::from_raw_parts(arr, length as usize) };
+    let iter = slice.chunks(3);
+    match istrategy.to_str().unwrap() {
+        "AsIs" => {
+            for p in iter {
+                let _re = Triangulation::insert_one_pt(dt, p[0], p[1], p[2]);
+            }
+        }
+        "BBox" => {
+            //-- find the bbox
+            let mut bbox = Triangulation::get_bbox(dt);
+            //-- "padding" of the bbox to avoid conflicts
+            bbox[0] = bbox[0] - 10.0;
+            bbox[1] = bbox[1] - 10.0;
+            bbox[2] = bbox[2] + 10.0;
+            bbox[3] = bbox[3] + 10.0;
+            let mut c4: Vec<usize> = Vec::new();
+            c4.push(Triangulation::insert_one_pt(dt, bbox[0], bbox[1], 0.0).unwrap());
+            c4.push(Triangulation::insert_one_pt(dt, bbox[2], bbox[1], 0.0).unwrap());
+            c4.push(Triangulation::insert_one_pt(dt, bbox[2], bbox[3], 0.0).unwrap());
+            c4.push(Triangulation::insert_one_pt(dt, bbox[0], bbox[3], 0.0).unwrap());
+            for p in iter {
+                let _re = Triangulation::insert_one_pt(dt, p[0], p[1], p[2]);
+            }
+            //-- remove the 4 corners
+            for each in &c4 {
+                let _re = Triangulation::remove(dt, *each);
+            }
+        }
+        _ => {
+            for p in iter {
+                let _re = Triangulation::insert_one_pt(dt, p[0], p[1], p[2]);
+            }
         }
     }
-    return duplicates;
 }
 
 #[no_mangle]
