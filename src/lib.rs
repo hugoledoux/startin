@@ -108,7 +108,7 @@ use geojson::{Feature, FeatureCollection, Geometry, Value};
 
 extern crate rand;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum StartinError {
     VertexUnknown,
     VertexRemoved,
