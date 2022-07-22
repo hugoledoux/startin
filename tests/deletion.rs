@@ -126,10 +126,10 @@ fn deletion_impossible() {
     pts.push([9.0, 5.0, 21.0]);
     let mut dt = startin::Triangulation::new();
     dt.insert(&pts, startin::InsertionStrategy::AsIs);
-    assert_eq!(Err("Cannot remove the infinite vertex"), dt.remove(0));
-    assert_eq!(Err("Vertex does not exist"), dt.remove(7));
+    assert_eq!(Err(startin::StartinError::VertexInfinite), dt.remove(0));
+    assert_eq!(Err(startin::StartinError::VertexUnknown), dt.remove(7));
     let _re = dt.remove(5);
-    assert_eq!(Err("Vertex does not exist"), dt.remove(5));
+    assert_eq!(Err(startin::StartinError::VertexRemoved), dt.remove(5));
 }
 
 #[test]
