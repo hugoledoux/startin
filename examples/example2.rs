@@ -44,7 +44,7 @@ fn main() {
 
     //-- fetch triangle containing (x, y)
     let re = dt.locate(50.0, 50.0);
-    if re.is_some() {
+    if re.is_ok() {
         let t = re.unwrap();
         println!("The triangle is {}", t);
         assert!(dt.is_triangle(&t));

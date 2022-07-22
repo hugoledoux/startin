@@ -17,7 +17,7 @@ fn main() {
     // let _re = dt.remove(3);
     // println!("{}", dt.printme(true));
 
-    println!("is 3 removed {}", dt.is_vertex_removed(3));
+    println!("is 3 removed {:?}", dt.is_vertex_removed(3));
     // dt.insert_one_pt(1.1, 2.2, 3.3);
     // println!("is 3 removed {}", dt.is_vertex_removed(3));
     // println!("is 4 removed {}", dt.is_vertex_removed(4));
@@ -25,20 +25,20 @@ fn main() {
     assert!(dt.is_valid());
 
     let a = dt.get_point(3);
-    if a.is_some() == true {
+    if a.is_ok() == true {
         println!("point {:?}", a.unwrap());
     }
 
     let re = dt.locate(50.0, 50.0);
     match re {
-        Some(x) => println!("Triangle: {}", x),
-        None => println!("No triangle found, outside of the CH."),
+        Ok(x) => println!("Triangle: {}", x),
+        Err(why) => println!("{:?}", why),
     }
 
     let re = dt.closest_point(1.1, 1.11);
     match re {
-        Some(x) => println!("Point: {}", x),
-        None => println!("Outside of the CH."),
+        Ok(x) => println!("Point: {}", x),
+        Err(why) => println!("{:?}", why),
     }
 
     // let _re = dt.insert_one_pt(1.5, 1.5, 33.0);

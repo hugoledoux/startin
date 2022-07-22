@@ -80,7 +80,7 @@ fn main() {
     // }
 
     let re = dt.adjacent_vertices_to_vertex(66);
-    if re.is_some() == true {
+    if re.is_ok() == true {
         for each in re.unwrap() {
             println!("Adjacent vertex {}", each);
         }
@@ -91,7 +91,7 @@ fn main() {
     let trs = dt.incident_triangles_to_vertex(6).unwrap();
 
     let re = dt.adjacent_triangles_to_triangle(&trs[0]);
-    if re.is_some() == true {
+    if re.is_ok() == true {
         println!("Adjacent to: {}", &trs[0]);
         for tr in re.unwrap().iter() {
             println!("adj: {}", tr);
