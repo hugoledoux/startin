@@ -13,9 +13,8 @@ pub extern "C" fn new_triangulation() -> *mut Triangulation {
 }
 
 #[no_mangle]
-pub extern "C" fn destroy(ptr: *mut Triangulation) -> c_int {
+pub extern "C" fn destroy(ptr: *mut Triangulation) {
     unsafe { drop(Box::from_raw(ptr)) };
-    return 0;
 }
 
 #[no_mangle]
@@ -190,7 +189,7 @@ pub extern "C" fn set_snap_tolerance(ptr: *mut Triangulation, tolerance: c_doubl
 }
 
 #[no_mangle]
-pub extern "C" fn debug(ptr: *mut Triangulation) -> c_int {
+pub extern "C" fn printme(ptr: *mut Triangulation) -> c_int {
     let t = unsafe { ptr.as_mut().unwrap() };
     println!("Vertices: {}", t.number_of_vertices());
     println!("Triangles: {}", t.number_of_triangles());
