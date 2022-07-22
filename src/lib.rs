@@ -979,7 +979,8 @@ impl Triangulation {
         self.stars[tr.v[2]].link.get_next_vertex(tr.v[1]).unwrap()
     }
 
-    /// Returns a Vec<Vec<f64>> of all the vertices (including the infinite one)
+    /// Returns a Vec<Vec<f64>> of all the vertices
+    /// (including the infinite one and the removed ones)
     pub fn all_vertices(&self) -> Vec<Vec<f64>> {
         let mut pts: Vec<Vec<f64>> = Vec::with_capacity(self.stars.len() - 1);
         for i in 0..self.stars.len() {
