@@ -108,6 +108,16 @@ use geojson::{Feature, FeatureCollection, Geometry, Value};
 
 extern crate rand;
 
+#[derive(Debug)]
+pub enum StartinError {
+    VertexUnknown,
+    VertexRemoved,
+    VertexInfinite,
+    TriangleNotPresent,
+    OutsideConvexHull,
+    NoTriangleinTIN,
+}
+
 pub enum InsertionStrategy {
     AsIs,
     BBox,
@@ -633,17 +643,22 @@ impl Triangulation {
     }
 
     /// Returns the coordinates of the vertex v
-    pub fn get_point(&self, v: usize) -> Option<Vec<f64>> {
-        if self.vertex_exists(v) == false {
-            None
-        } else {
-            Some(self.stars[v].pt.to_vec())
+    pub fn get_point(&self, vi: usize) -> Result<Vec<f64>, StartinError> {
+        match self.is_vertex_removed(vi) {
+            Err(why) => return Err(why),
+            Ok(b) => match b {
+                true => return Err(StartinError::VertexRemoved),
+                false => Ok(self.stars[vi].pt.to_vec()),
+            },
         }
     }
 
-    pub fn adjacent_triangles_to_triangle(&self, tr: &Triangle) -> Option<Vec<Triangle>> {
+    pub fn adjacent_triangles_to_triangle(
+        &self,
+        tr: &Triangle,
+    ) -> Result<Vec<Triangle>, StartinError> {
         if self.is_triangle(&tr) == false || tr.is_infinite() == true {
-            return None;
+            return Err(StartinError::TriangleNotPresent);
         }
         let mut trs: Vec<Triangle> = Vec::new();
         let mut opp = self.stars[tr.v[2]].link.get_next_vertex(tr.v[1]).unwrap();
@@ -664,44 +679,55 @@ impl Triangulation {
                 v: [tr.v[0], opp, tr.v[1]],
             });
         }
-        Some(trs)
+        Ok(trs)
     }
 
     /// Returns a Vec of Triangles (finite + infinite) to the vertex v.
-    /// If v doesn't exist, then [`None`] is returned.
-    pub fn incident_triangles_to_vertex(&self, v: usize) -> Option<Vec<Triangle>> {
-        if self.vertex_exists(v) == false {
-            return None;
+    pub fn incident_triangles_to_vertex(&self, vi: usize) -> Result<Vec<Triangle>, StartinError> {
+        match self.is_vertex_removed(vi) {
+            Err(why) => return Err(why),
+            Ok(b) => match b {
+                true => return Err(StartinError::VertexRemoved),
+                false => {
+                    let mut trs: Vec<Triangle> = Vec::new();
+                    for (i, each) in self.stars[vi].link.iter().enumerate() {
+                        let j = self.stars[vi].link.next_index(i);
+                        trs.push(Triangle {
+                            v: [vi, *each, self.stars[vi].link[j]],
+                        });
+                    }
+                    Ok(trs)
+                }
+            },
         }
-        let mut trs: Vec<Triangle> = Vec::new();
-        for (i, each) in self.stars[v].link.iter().enumerate() {
-            let j = self.stars[v].link.next_index(i);
-            trs.push(Triangle {
-                v: [v, *each, self.stars[v].link[j]],
-            });
-        }
-        Some(trs)
     }
 
-    /// Returns the degree of a vertex, [`None`] is it doesn't exist.
-    pub fn degree(&self, v: usize) -> Option<usize> {
-        if self.vertex_exists(v) == false {
-            return None;
+    /// Returns the degree of a vertex
+    pub fn degree(&self, vi: usize) -> Result<usize, StartinError> {
+        match self.is_vertex_removed(vi) {
+            Err(why) => return Err(why),
+            Ok(b) => match b {
+                true => return Err(StartinError::VertexRemoved),
+                false => return Ok(self.stars[vi].link.len()),
+            },
         }
-        Some(self.stars[v].link.len())
     }
 
     /// Returns a list (`Vec<usize>`) (ordered CCW) of the adjacent vertices.
-    /// [`None`] if the vertex is not part of the triangulation.
-    pub fn adjacent_vertices_to_vertex(&self, v: usize) -> Option<Vec<usize>> {
-        if self.vertex_exists(v) == false {
-            return None;
+    pub fn adjacent_vertices_to_vertex(&self, vi: usize) -> Result<Vec<usize>, StartinError> {
+        match self.is_vertex_removed(vi) {
+            Err(why) => return Err(why),
+            Ok(b) => match b {
+                true => return Err(StartinError::VertexRemoved),
+                false => {
+                    let mut adjs: Vec<usize> = Vec::new();
+                    for each in self.stars[vi].link.iter() {
+                        adjs.push(*each);
+                    }
+                    return Ok(adjs);
+                }
+            },
         }
-        let mut adjs: Vec<usize> = Vec::new();
-        for each in self.stars[v].link.iter() {
-            adjs.push(*each);
-        }
-        Some(adjs)
     }
 
     /// Returns whether a triplet of indices is a Triangle in the triangulation.
@@ -767,13 +793,11 @@ impl Triangulation {
         self.removed_indices.len()
     }
 
-    pub fn is_vertex_removed(&self, v: usize) -> bool {
-        let re = self.removed_indices.iter().position(|&x| x == v);
-        if re == None {
-            false
-        } else {
-            true
+    pub fn is_vertex_removed(&self, v: usize) -> Result<bool, StartinError> {
+        if v >= self.stars.len() {
+            return Err(StartinError::VertexUnknown);
         }
+        Ok(self.stars[v].is_deleted())
     }
 
     /// Returns the convex hull of the dataset, oriented CCW.
@@ -810,21 +834,21 @@ impl Triangulation {
 
     /// Returns, if it exists, the Triangle containing (px,py).
     /// If it is direction on a vertex/edge, then one is randomly chosen.
-    pub fn locate(&self, px: f64, py: f64) -> Option<Triangle> {
+    pub fn locate(&self, px: f64, py: f64) -> Result<Triangle, StartinError> {
         let p: [f64; 3] = [px, py, 0.0];
         let re = self.walk(&p);
         match re.is_infinite() {
-            true => None,
-            false => Some(re),
+            true => return Err(StartinError::OutsideConvexHull),
+            false => return Ok(re),
         }
     }
 
     // Returns closest point (in 2D) to a query point (x,y).
     // if (x,y) is outside the convex hull [`None`]
-    pub fn closest_point(&self, px: f64, py: f64) -> Option<usize> {
+    pub fn closest_point(&self, px: f64, py: f64) -> Result<usize, StartinError> {
         let re = self.locate(px, py);
-        if re.is_none() == true {
-            return None;
+        if re.is_err() == true {
+            return Err(re.err().unwrap());
         }
         let p: [f64; 3] = [px, py, 0.0];
         let tr = re.unwrap();
@@ -853,7 +877,7 @@ impl Triangulation {
                 break;
             }
         }
-        Some(closest)
+        Ok(closest)
     }
 
     fn walk(&self, x: &[f64]) -> Triangle {
@@ -1076,7 +1100,7 @@ impl Triangulation {
         return re;
     }
 
-    fn remove_on_convex_hull(&mut self, v: usize) -> Result<usize, &'static str> {
+    fn remove_on_convex_hull(&mut self, v: usize) -> Result<usize, StartinError> {
         // println!("!!! REMOVE ON CONVEX HULL");
         let mut adjs: Vec<usize> = Vec::new();
         //-- necessary because assumptions below for start-end line on CH
@@ -1191,23 +1215,28 @@ impl Triangulation {
             // } else {
             //     self.cur = adjs[1];
             // }
-            return Ok(self.stars.len() - 1);
+            Ok(self.stars.len() - 1)
         }
     }
 
-    pub fn remove(&mut self, v: usize) -> Result<usize, &'static str> {
+    pub fn remove(&mut self, vi: usize) -> Result<usize, StartinError> {
         // println!("REMOVE vertex {}", v);
-        if v == 0 {
-            return Err("Cannot remove the infinite vertex");
+        if vi == 0 {
+            return Err(StartinError::VertexInfinite);
         }
-        if self.vertex_exists(v) == false {
-            return Err("Vertex does not exist");
+        match self.is_vertex_removed(vi) {
+            Err(why) => return Err(why),
+            Ok(b) => {
+                if b == true {
+                    return Err(StartinError::VertexRemoved);
+                }
+            }
         }
-        if self.is_vertex_convex_hull(v) {
-            return self.remove_on_convex_hull(v);
+        if self.is_vertex_convex_hull(vi) {
+            return self.remove_on_convex_hull(vi);
         }
         let mut adjs: Vec<usize> = Vec::new();
-        for each in self.stars[v].link.iter() {
+        for each in self.stars[vi].link.iter() {
             adjs.push(*each);
         }
         // println!("adjs: {:?}", adjs);
@@ -1226,7 +1255,7 @@ impl Triangulation {
                 && (geom::orient2d(
                     &self.stars[adjs[a]].pt,
                     &self.stars[adjs[c]].pt,
-                    &self.stars[v].pt,
+                    &self.stars[vi].pt,
                     self.robust_predicates,
                 ) >= 0)
             {
@@ -1251,7 +1280,7 @@ impl Triangulation {
                 if isdel == true {
                     // println!("flip22");
                     let t = Triangle {
-                        v: [adjs[a], adjs[b], v],
+                        v: [adjs[a], adjs[b], vi],
                     };
                     self.flip22(&t, adjs[c]);
                     adjs.remove((cur + 1) % adjs.len());
@@ -1260,8 +1289,8 @@ impl Triangulation {
             cur = cur + 1;
         }
         //-- flip31 to remove the vertex
-        self.flip31(v);
-        return Ok(self.stars.len() - 1);
+        self.flip31(vi);
+        Ok(self.stars.len() - 1)
     }
 
     /// write an OBJ file to disk
@@ -1566,39 +1595,37 @@ impl Triangulation {
 
     fn vertex_exists(&self, v: usize) -> bool {
         let mut re = true;
-        if v >= self.stars.len() || self.is_vertex_removed(v) == true {
+        if v >= self.stars.len() || self.stars[v].is_deleted() == true {
             re = false;
         }
         re
     }
 
     /// Interpolation: nearest/closest neighbour
-    /// None if outside the convex hull, other the value
-    pub fn interpolate_nn(&self, px: f64, py: f64) -> Option<f64> {
+    pub fn interpolate_nn(&self, px: f64, py: f64) -> Result<f64, StartinError> {
         //-- cannot interpolation if no TIN
         if self.is_init == false {
-            return None;
+            return Err(StartinError::NoTriangleinTIN);
         }
-        let re = self.closest_point(px, py);
-        if re.is_some() {
-            Some(self.stars[re.unwrap()].pt[2])
-        } else {
-            None
+        match self.closest_point(px, py) {
+            Ok(vi) => Ok(self.stars[vi].pt[2]),
+            Err(why) => Err(why),
         }
     }
 
     /// Interpolation: linear in TIN
-    /// None if outside the convex hull, other the value
-    pub fn interpolate_tin_linear(&self, px: f64, py: f64) -> Option<f64> {
+    pub fn interpolate_tin_linear(&self, px: f64, py: f64) -> Result<f64, StartinError> {
         //-- cannot interpolation if no TIN
         if self.is_init == false {
-            return None;
+            return Err(StartinError::NoTriangleinTIN);
+        }
+        //-- no extrapolation
+        let re = self.locate(px, py);
+        if re.is_err() == true {
+            return Err(re.err().unwrap());
         }
         let p: [f64; 3] = [px, py, 0.0];
-        let tr = self.walk(&p);
-        if tr.is_infinite() {
-            return None;
-        }
+        let tr = re.unwrap();
         let a0: f64 = geom::area_triangle(&p, &self.stars[tr.v[1]].pt, &self.stars[tr.v[2]].pt);
         let a1: f64 = geom::area_triangle(&p, &self.stars[tr.v[2]].pt, &self.stars[tr.v[0]].pt);
         let a2: f64 = geom::area_triangle(&p, &self.stars[tr.v[0]].pt, &self.stars[tr.v[1]].pt);
@@ -1606,18 +1633,19 @@ impl Triangulation {
         total += self.stars[tr.v[0]].pt[2] * a0;
         total += self.stars[tr.v[1]].pt[2] * a1;
         total += self.stars[tr.v[2]].pt[2] * a2;
-        Some(total / (a0 + a1 + a2))
+        Ok(total / (a0 + a1 + a2))
     }
 
     /// Interpolation with natural neighbour interpolation (nni)
-    pub fn interpolate_nni(&mut self, px: f64, py: f64) -> Option<f64> {
+    pub fn interpolate_nni(&mut self, px: f64, py: f64) -> Result<f64, StartinError> {
         //-- cannot interpolation if no TIN
         if self.is_init == false {
-            return None;
+            return Err(StartinError::NoTriangleinTIN);
         }
         //-- no extrapolation
-        if self.locate(px, py).is_none() {
-            return None;
+        let re = self.locate(px, py);
+        if re.is_err() == true {
+            return Err(re.err().unwrap());
         }
         let re = self.insert_one_pt(px, py, 0.);
         let pi: usize;
@@ -1625,7 +1653,7 @@ impl Triangulation {
             pi = re.unwrap();
         } else {
             //-- return the value of the vertex if closer than self.snaptol
-            return Some(self.stars[re.unwrap_err()].pt[2]);
+            return Ok(self.stars[re.unwrap_err()].pt[2]);
         }
         let mut addedcentres: HashMap<usize, Vec<Vec<f64>>> = HashMap::new();
         let nns = self.adjacent_vertices_to_vertex(pi).unwrap();
@@ -1650,7 +1678,7 @@ impl Triangulation {
             //-- interpolation point was added on boundary of CH
             //-- nothing to be done, Voronoi cell is unbounded
             let _rr = self.remove(pi);
-            return None;
+            return Err(StartinError::OutsideConvexHull);
         }
         let _rr = self.remove(pi);
         for (i, nn) in nns.iter().enumerate() {
@@ -1672,19 +1700,21 @@ impl Triangulation {
         for (i, nn) in nns.iter().enumerate() {
             z += weights[i] * self.stars[*nn].pt[2];
         }
-        Some(z / newarea)
+        Ok(z / newarea)
     }
 
     /// Interpolation with Laplace <http://dilbert.engr.ucdavis.edu/~suku/nem/index.html>
     /// (variation of nni with distances instead of stolen areas; faster in practice)
     /// None if outside the convex hull, other the value
-    pub fn interpolate_laplace(&mut self, px: f64, py: f64) -> Option<f64> {
+    pub fn interpolate_laplace(&mut self, px: f64, py: f64) -> Result<f64, StartinError> {
         //-- cannot interpolation if no TIN
         if self.is_init == false {
-            return None;
+            return Err(StartinError::NoTriangleinTIN);
         }
-        if self.locate(px, py).is_none() {
-            return None;
+        //-- no extrapolation
+        let re = self.locate(px, py);
+        if re.is_err() == true {
+            return Err(re.err().unwrap());
         }
         let re = self.insert_one_pt(px, py, 0.);
         let pi: usize;
@@ -1692,7 +1722,7 @@ impl Triangulation {
             pi = re.unwrap();
         } else {
             //-- return the value of the vertex if closer than self.snaptol
-            return Some(self.stars[re.unwrap_err()].pt[2]);
+            return Ok(self.stars[re.unwrap_err()].pt[2]);
         }
         let l = &self.stars[pi].link;
         let mut centres: Vec<Vec<f64>> = Vec::new();
@@ -1718,7 +1748,7 @@ impl Triangulation {
         let sumweights: f64 = weights.iter().sum();
         //-- delete the interpolation location point
         let _rr = self.remove(pi);
-        Some(z / sumweights)
+        Ok(z / sumweights)
     }
 
     /// bbox
@@ -1728,7 +1758,7 @@ impl Triangulation {
         let mut maxx: f64 = std::f64::MIN;
         let mut maxy: f64 = std::f64::MIN;
         for i in 1..self.stars.len() {
-            if self.stars[i].is_deleted() == true {
+            if self.is_vertex_removed(i).unwrap() == true {
                 continue;
             }
             if self.stars[i].pt[0] < minx {
