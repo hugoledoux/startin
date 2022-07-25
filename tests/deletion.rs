@@ -161,3 +161,36 @@ fn simple_grid() {
     assert_eq!(2, dt.number_of_vertices());
     assert_eq!(0, dt.number_of_triangles());
 }
+
+#[test]
+fn get_point() {
+    let mut pts: Vec<[f64; 3]> = Vec::new();
+    let mut rng = rand::thread_rng();
+    let size = 10.0_f64;
+    for _i in 0..100 {
+        let x: f64 = rng.gen();
+        let y: f64 = rng.gen();
+        pts.push([x * size, y * size, 2.0]);
+    }
+    let mut dt = startin::Triangulation::new();
+    dt.insert(&pts, startin::InsertionStrategy::AsIs);
+    let _re = dt.remove(33);
+    assert_eq!(Err(startin::StartinError::VertexRemoved), dt.get_point(33));
+}
+
+#[test]
+fn number_vertices() {
+    let mut pts: Vec<[f64; 3]> = Vec::new();
+    let mut rng = rand::thread_rng();
+    let size = 10.0_f64;
+    for _i in 0..100 {
+        let x: f64 = rng.gen();
+        let y: f64 = rng.gen();
+        pts.push([x * size, y * size, 2.0]);
+    }
+    let mut dt = startin::Triangulation::new();
+    dt.insert(&pts, startin::InsertionStrategy::AsIs);
+    let _re = dt.remove(33);
+    let _re = dt.remove(32);
+    assert_eq!(101, dt.all_vertices().len());
+}
