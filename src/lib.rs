@@ -96,6 +96,7 @@ use geojson::{Feature, FeatureCollection, Geometry, Value};
 
 extern crate rand;
 
+/// Errors that arise while using startin
 #[derive(Debug, PartialEq)]
 pub enum StartinError {
     VertexUnknown,
@@ -106,6 +107,7 @@ pub enum StartinError {
     NoTriangleinTIN,
 }
 
+/// Possibilities for the insertion (with `insert()`)
 pub enum InsertionStrategy {
     AsIs,
     BBox,
@@ -307,7 +309,7 @@ impl Star {
     }
 }
 
-//----------------------
+/// Represents a triangulation
 #[repr(C)]
 pub struct Triangulation {
     stars: Vec<Star>,
@@ -419,19 +421,31 @@ impl Triangulation {
     }
 
     /// Activate/deactive the jump-and-walk strategy for locate().
+    /// (deactivated by default)
     /// If deactivated, then the walk starts from the last inserted triangle.
     pub fn set_jump_and_walk(&mut self, b: bool) {
         self.jump_and_walk = b;
     }
 
+    /// Is using robut predicates? (<https://docs.rs/robust>)
+    /// (activated by default)
     pub fn is_using_robust_predicates(&self) -> bool {
         self.robust_predicates
     }
 
+    /// Activate/deactivate robust predictates (<https://docs.rs/robust>)
     pub fn use_robust_predicates(&mut self, b: bool) {
         self.robust_predicates = b;
     }
 
+    /// Insert a Vec of arrays (`[x,y,z]`) values.
+    /// If [InsertionStrategy::AsIs] is used, then [`insert_one_pt()`][Self::insert_one_pt()] is called
+    /// for each point in the order given.
+    ///
+    /// # Arguments
+    ///
+    /// * `pts` - a [Vec] of arrays
+    /// * `strategy` - the strategy to use for the insertion
     pub fn insert(&mut self, pts: &Vec<[f64; 3]>, strategy: InsertionStrategy) {
         match strategy {
             InsertionStrategy::BBox => {
@@ -470,7 +484,10 @@ impl Triangulation {
         }
     }
 
-    //-- insert_one_pt
+    /// Insert the point (`px`, `py`, `pz`) in the triangulation.
+    /// Returns the vertex ID of the point if the vertex didn't exist.
+    /// If there was a vertex at that location, an Error is thrown with the already
+    /// existing vertex ID.
     pub fn insert_one_pt(&mut self, px: f64, py: f64, pz: f64) -> Result<usize, usize> {
         if self.is_init == false {
             return self.insert_one_pt_init_phase(px, py, pz);
@@ -630,7 +647,9 @@ impl Triangulation {
         }
     }
 
-    /// Returns the coordinates of the vertex v
+    /// Returns the coordinates of the vertex v.
+    /// A [StartinError] is returned if `vi` doesn't exist
+    /// or is a removed vertex.
     pub fn get_point(&self, vi: usize) -> Result<Vec<f64>, StartinError> {
         match self.is_vertex_removed(vi) {
             Err(why) => return Err(why),
@@ -690,7 +709,7 @@ impl Triangulation {
         }
     }
 
-    /// Returns the degree of a vertex
+    /// Returns the degree of the vertex with ID `vi`.
     pub fn degree(&self, vi: usize) -> Result<usize, StartinError> {
         match self.is_vertex_removed(vi) {
             Err(why) => return Err(why),
@@ -701,7 +720,7 @@ impl Triangulation {
         }
     }
 
-    /// Returns a list (`Vec<usize>`) (ordered CCW) of the adjacent vertices.
+    /// Returns a list (`Vec<usize>`) (ordered CCW) of the adjacent vertices to `vi`.
     pub fn adjacent_vertices_to_vertex(&self, vi: usize) -> Result<Vec<usize>, StartinError> {
         match self.is_vertex_removed(vi) {
             Err(why) => return Err(why),
@@ -733,6 +752,7 @@ impl Triangulation {
         }
     }
 
+    /// Returns some statistics about the triangulation.
     pub fn statistics_degree(&self) -> (f64, usize, usize) {
         let mut total: f64 = 0.0;
         let mut min: usize = usize::max_value();
@@ -751,6 +771,7 @@ impl Triangulation {
     }
 
     /// Returns number of finite vertices in the triangulation.
+    /// The removed vertices are not counted.
     pub fn number_of_vertices(&self) -> usize {
         //-- number of finite vertices
         self.stars.len() - 1 - self.removed_indices.len()
@@ -781,11 +802,12 @@ impl Triangulation {
         self.removed_indices.len()
     }
 
-    pub fn is_vertex_removed(&self, v: usize) -> Result<bool, StartinError> {
-        if v >= self.stars.len() {
+    /// Returns whether the vertex `vi` is removed or not.
+    pub fn is_vertex_removed(&self, vi: usize) -> Result<bool, StartinError> {
+        if vi >= self.stars.len() {
             return Err(StartinError::VertexUnknown);
         }
-        Ok(self.stars[v].is_deleted())
+        Ok(self.stars[vi].is_deleted())
     }
 
     /// Returns the convex hull of the dataset, oriented CCW.
@@ -814,13 +836,13 @@ impl Triangulation {
         if v == 0 {
             return false;
         }
-        if self.vertex_exists(v) == false {
+        if self.is_vertex_valid(v) == false {
             return false;
         }
         self.stars[v].link.contains_infinite_vertex()
     }
 
-    /// Returns, if it exists, the Triangle containing (px,py).
+    /// Returns, if it exists, the [`Triangle`] containing (px,py).
     /// If it is direction on a vertex/edge, then one is randomly chosen.
     pub fn locate(&self, px: f64, py: f64) -> Result<Triangle, StartinError> {
         let p: [f64; 3] = [px, py, 0.0];
@@ -831,8 +853,8 @@ impl Triangulation {
         }
     }
 
-    // Returns closest point (in 2D) to a query point (x,y).
-    // if (x,y) is outside the convex hull [`None`]
+    /// Returns closest point (in 2D) to a query point (x,y).
+    /// if (`px`, `py`) is outside the convex hull then [StartinError::OutsideConvexHull] is raise
     pub fn closest_point(&self, px: f64, py: f64) -> Result<usize, StartinError> {
         let re = self.locate(px, py);
         if re.is_err() == true {
@@ -991,7 +1013,7 @@ impl Triangulation {
         self.stars[tr.v[2]].link.get_next_vertex(tr.v[1]).unwrap()
     }
 
-    /// Returns a Vec<Vec<f64>> of all the vertices
+    /// Returns a `Vec<Vec<f64>>` of all the vertices
     /// (including the infinite one and the removed ones)
     pub fn all_vertices(&self) -> Vec<Vec<f64>> {
         let mut pts: Vec<Vec<f64>> = Vec::with_capacity(self.stars.len() - 1);
@@ -1001,7 +1023,7 @@ impl Triangulation {
         pts
     }
 
-    /// Returns a <Vec<usize> of all the finite edges (implicitly grouped by 2)
+    /// Returns a `<Vec<usize>` of all the finite edges (implicitly grouped by 2)
     pub fn all_edges(&self) -> Vec<usize> {
         let mut edges: Vec<usize> = Vec::new();
         for i in 1..self.stars.len() {
@@ -1015,7 +1037,7 @@ impl Triangulation {
         edges
     }
 
-    /// Returns a <Vec<Triangle> of all the finite triangles
+    /// Returns a `<Vec<Triangle>` of all the finite triangles
     pub fn all_triangles(&self) -> Vec<Triangle> {
         let mut trs: Vec<Triangle> = Vec::new();
         for (i, star) in self.stars.iter().enumerate() {
@@ -1207,6 +1229,12 @@ impl Triangulation {
         }
     }
 
+    /// Removes the vertex `vi` from the Triangulation and updates for the "Delaunay-ness".
+    ///
+    /// The vertex is not removed from memory but flagged as removed, thus all the other vertices
+    /// keep their IDs.
+    /// The following insertion of a point will reuse this ID.
+    /// It is therefore possible to have an array that contains unused/removed vertices.
     pub fn remove(&mut self, vi: usize) -> Result<usize, StartinError> {
         // println!("REMOVE vertex {}", v);
         if vi == 0 {
@@ -1281,7 +1309,7 @@ impl Triangulation {
         Ok(self.stars.len() - 1)
     }
 
-    /// write an OBJ file to disk
+    /// Write an OBJ file to disk.
     pub fn write_obj(&self, path: String) -> std::io::Result<()> {
         let trs = self.all_triangles();
         let mut f = File::create(path)?;
@@ -1319,7 +1347,7 @@ impl Triangulation {
         Ok(())
     }
 
-    /// write a PLY file to disk
+    /// Write a PLY file to disk.
     pub fn write_ply(&self, path: String) -> std::io::Result<()> {
         let trs = self.all_triangles();
         let mut f = File::create(path)?;
@@ -1372,7 +1400,7 @@ impl Triangulation {
         Ok(())
     }
 
-    /// write a GeoJSON file of the triangles/vertices to disk
+    /// Write a GeoJSON file of the triangles/vertices to disk.
     pub fn write_geojson(&self, path: String) -> std::io::Result<()> {
         let mut fc = FeatureCollection {
             bbox: None,
@@ -1433,6 +1461,7 @@ impl Triangulation {
         Ok(())
     }
 
+    /// Returns a [`String`] containing different statistics about the triangulation.
     pub fn printme(&self, withxyz: bool) -> String {
         let mut s = String::from("**********\n");
         // s.push_str(&format!("#pts: {}\n", self.number_pts()));
@@ -1554,7 +1583,7 @@ impl Triangulation {
     }
 
     fn voronoi_cell_area(&self, v: usize) -> Option<f64> {
-        if self.vertex_exists(v) == false {
+        if self.is_vertex_valid(v) == false {
             return None;
         }
         if self.is_vertex_convex_hull(v) == true {
@@ -1581,7 +1610,7 @@ impl Triangulation {
         Some(totalarea)
     }
 
-    fn vertex_exists(&self, v: usize) -> bool {
+    fn is_vertex_valid(&self, v: usize) -> bool {
         let mut re = true;
         if v >= self.stars.len() || self.stars[v].is_deleted() == true {
             re = false;
@@ -1589,7 +1618,7 @@ impl Triangulation {
         re
     }
 
-    /// Interpolation: nearest/closest neighbour
+    /// Estimation of z-value with interpolation: nearest/closest neighbour
     pub fn interpolate_nn(&self, px: f64, py: f64) -> Result<f64, StartinError> {
         //-- cannot interpolation if no TIN
         if self.is_init == false {
@@ -1601,7 +1630,7 @@ impl Triangulation {
         }
     }
 
-    /// Interpolation: linear in TIN
+    /// Estimation of z-value with interpolation: linear in TIN
     pub fn interpolate_tin_linear(&self, px: f64, py: f64) -> Result<f64, StartinError> {
         //-- cannot interpolation if no TIN
         if self.is_init == false {
@@ -1624,7 +1653,7 @@ impl Triangulation {
         Ok(total / (a0 + a1 + a2))
     }
 
-    /// Interpolation with natural neighbour interpolation (nni)
+    /// Estimation of z-value with interpolation: natural neighbour interpolation (nni)
     pub fn interpolate_nni(&mut self, px: f64, py: f64) -> Result<f64, StartinError> {
         //-- cannot interpolation if no TIN
         if self.is_init == false {
@@ -1691,9 +1720,11 @@ impl Triangulation {
         Ok(z / newarea)
     }
 
-    /// Interpolation with Laplace <http://dilbert.engr.ucdavis.edu/~suku/nem/index.html>
-    /// (variation of nni with distances instead of stolen areas; faster in practice)
-    /// None if outside the convex hull, other the value
+    /// Estimation of z-value with interpolation: Laplace interpolation
+    ///
+    /// Details about Laplace: <http://dilbert.engr.ucdavis.edu/~suku/nem/index.html>, which
+    /// is a variation of nni with distances instead of stolen areas, which yields a much
+    /// faster implementation.
     pub fn interpolate_laplace(&mut self, px: f64, py: f64) -> Result<f64, StartinError> {
         //-- cannot interpolation if no TIN
         if self.is_init == false {
@@ -1739,7 +1770,7 @@ impl Triangulation {
         Ok(z / sumweights)
     }
 
-    /// bbox
+    /// Returns the (axis-aligned) bounding box of the triangulation.
     pub fn get_bbox(&self) -> Vec<f64> {
         let mut minx: f64 = std::f64::MAX;
         let mut miny: f64 = std::f64::MAX;
@@ -1765,6 +1796,9 @@ impl Triangulation {
         vec![minx, miny, maxx, maxy]
     }
 
+    /// Exaggerates vertically the z-values, used for visualisation mostly.
+    ///
+    /// The value can be <1.0 to have negative exaggeration.
     pub fn vertical_exaggeration(&mut self, factor: f64) {
         let mut minz: f64 = std::f64::MAX;
         for i in 1..self.stars.len() {
