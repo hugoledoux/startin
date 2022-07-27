@@ -1360,7 +1360,7 @@ impl Triangulation {
         write!(f, "property float y\n").unwrap();
         write!(f, "property float z\n").unwrap();
         write!(f, "element face {}\n", trs.len()).unwrap();
-        write!(f, "property list uchar int vertex_index\n").unwrap();
+        write!(f, "property list uchar int vertex_indices\n").unwrap();
         write!(f, "end_header\n").unwrap();
         //-- find one good vertice to replace the deleted one
         let mut onegoodpt = vec![1.0, 1.0, 1.0];
