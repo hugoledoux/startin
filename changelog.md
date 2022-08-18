@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [0.5.3] - 2021-12-24
+### Changed
+- added wrapper in c_api around some interpolation functions
+- changed slightly the c_api with better return types
+
 ## [0.5.2] - 2021-12-16
 ### Changed
 - fixed a bug that returned the wrong nearest neighbour (and thus wrong interpolate_nn() results)
