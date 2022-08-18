@@ -47,7 +47,7 @@ pub extern "C" fn adjacent_vertices_to_vertex(ptr: *mut Triangulation, vi: c_ulo
     let t = unsafe { ptr.as_mut().unwrap() };
     let re = Triangulation::adjacent_vertices_to_vertex(t, vi as usize);
     let mut adjs: Vec<u64> = Vec::new();
-    if re.is_some() {
+    if re.is_ok() {
         let a = re.unwrap();
         adjs.push(a.len() as u64);
         for each in a {
