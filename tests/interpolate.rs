@@ -1,4 +1,5 @@
 use crate::startin::Triangulation;
+use rand::prelude::*;
 use startin;
 
 fn four_points() -> Triangulation {
@@ -9,6 +10,18 @@ fn four_points() -> Triangulation {
     pts.push([0.0, 10.0, 4.0]);
     let mut dt = startin::Triangulation::new();
     dt.insert(&pts, startin::InsertionStrategy::AsIs);
+    dt
+}
+
+fn random_points_500() -> Triangulation {
+    let mut dt = startin::Triangulation::new();
+    let mut rng = rand::thread_rng();
+    for _i in 0..500 {
+        let x: f64 = rng.gen();
+        let y: f64 = rng.gen();
+        let z: f64 = rng.gen();
+        let _re = dt.insert_one_pt(x * 100.0, y * 100.0, z * 10.0);
+    }
     dt
 }
 
@@ -90,4 +103,14 @@ fn nn() {
 fn tin_linear() {
     let dt = four_points();
     assert_eq!(Ok(1.5), dt.interpolate_tin_linear(5.0, 0.0));
+}
+
+#[test]
+fn tin_linear_random() {
+    let dt = random_points_500();
+    assert_eq!(
+        Err(startin::StartinError::OutsideConvexHull),
+        dt.interpolate_tin_linear(144.0, 48.0)
+    );
+    assert_eq!(true, dt.interpolate_tin_linear(44.0, 48.0).is_ok());
 }

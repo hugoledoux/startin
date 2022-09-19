@@ -1638,7 +1638,7 @@ impl Triangulation {
         }
         //-- no extrapolation
         let re = self.locate(px, py);
-        if re.is_err() == true {
+        if re.is_err() {
             return Err(re.err().unwrap());
         }
         let p: [f64; 3] = [px, py, 0.0];
@@ -1661,7 +1661,7 @@ impl Triangulation {
         }
         //-- no extrapolation
         let re = self.locate(px, py);
-        if re.is_err() == true {
+        if re.is_err() {
             return Err(re.err().unwrap());
         }
         let re = self.insert_one_pt(px, py, 0.);
@@ -1732,7 +1732,7 @@ impl Triangulation {
         }
         //-- no extrapolation
         let re = self.locate(px, py);
-        if re.is_err() == true {
+        if re.is_err() {
             return Err(re.err().unwrap());
         }
         let re = self.insert_one_pt(px, py, 0.);
