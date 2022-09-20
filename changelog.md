@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [0.6.0] - XXXX
+## [0.6.0] - 2022-09-20
 ### Added
 - get_bbox() function, an AABB one that is
 - insert() now as insertion strategies: as is (order given is inserted), and BBox where a square containing all points is first inserted (and deleted at the end), this speeds up points in raster runlength order a lot.
