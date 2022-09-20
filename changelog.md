@@ -13,10 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - get_bbox() function, an AABB one that is
 - insert() now as insertion strategies: as is (order given is inserted), and BBox where a square containing all points is first inserted (and deleted at the end), this speeds up points in raster runlength order a lot.
 - a few functions added to c_api
+- export to PLY format
 ### Changed
 - a Point is not a Vec anymore, but an array [f64;3]. If you want 2D, add 0.0 as z-value for your points.
-- fixed some minor bugs
-- most functions now return a Result if something outside the convexhull is done or if a vertex ID doesn't exist
+- fixed some minor bugs, eg with the OBJ export when points had been deleted
+- uses now Rust 2021
+- most functions now return a Result if something outside the convexhull is done or if a vertex ID doesn't exist, and `StartinError` are defined: VertexUnknown, VertexRemoved, VertexInfinite, TriangleNotPresent, OutsideConvexHull, NoTriangleinTIN, 
 - docs was improved
 
 ## [0.5.3] - 2021-12-24
