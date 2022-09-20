@@ -847,7 +847,7 @@ impl Triangulation {
     }
 
     /// Returns true if the vertex v is part of the boundary of the convex
-    /// hull of the dataset. False otherwise.
+    /// hull of the dataset; false otherwise.
     pub fn is_vertex_convex_hull(&self, v: usize) -> bool {
         if v == 0 {
             return false;
@@ -873,7 +873,7 @@ impl Triangulation {
     /// if (`px`, `py`) is outside the convex hull then [StartinError::OutsideConvexHull] is raise
     pub fn closest_point(&self, px: f64, py: f64) -> Result<usize, StartinError> {
         let re = self.locate(px, py);
-        if re.is_err() == true {
+        if re.is_err() {
             return Err(re.err().unwrap());
         }
         let p: [f64; 3] = [px, py, 0.0];
