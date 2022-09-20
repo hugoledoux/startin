@@ -6,7 +6,7 @@
 
 A Delaunay triangulator where the input are 2.5D points, the DT is computed in 2D but the elevation of the vertices are kept.
 This is used mostly for the modelling of terrains.
-2D Delaunay triangulation is also possible.
+Constructing a 2D Delaunay triangulation is also possible.
 
 The construction algorithm used is an incremental insertion based on flips, and the data structure is a cheap implementation of the star-based structure defined in [Blandford et al. (2003)](https://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.9.6823), cheap because the link of each vertex is stored a simple array (`Vec`) and not in an optimised blob like they did.
 It results in a pretty fast library (comparison will come at some point), but it uses more space than the optimised one.
