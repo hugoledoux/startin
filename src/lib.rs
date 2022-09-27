@@ -217,7 +217,6 @@ impl Link {
     fn clear(&mut self) {
         self.0.clear();
     }
-
     fn contains_infinite_vertex(&self) -> bool {
         let pos = self.0.iter().position(|&x| x == 0);
         if pos == None {
@@ -226,7 +225,6 @@ impl Link {
             return true;
         }
     }
-
     fn next_index(&self, i: usize) -> usize {
         if i == (self.0.len() - 1) {
             0
@@ -234,7 +232,6 @@ impl Link {
             i + 1
         }
     }
-
     fn prev_index(&self, i: usize) -> usize {
         if i == 0 {
             self.0.len() - 1
@@ -242,11 +239,9 @@ impl Link {
             i - 1
         }
     }
-
     fn get_index(&self, v: usize) -> Option<usize> {
         return self.0.iter().position(|&x| x == v);
     }
-
     fn get_next_vertex(&self, v: usize) -> Option<usize> {
         let re = self.get_index(v);
         if re.is_none() {
@@ -259,7 +254,6 @@ impl Link {
             return Some(self.0[(pos + 1)]);
         }
     }
-
     fn get_prev_vertex(&self, v: usize) -> Option<usize> {
         let re = self.get_index(v);
         if re.is_none() {
