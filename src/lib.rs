@@ -272,9 +272,15 @@ impl Link {
             return Some(self.0[(pos - 1)]);
         }
     }
-
     fn iter(&self) -> Iter {
         Iter(Box::new(self.0.iter()))
+    }
+    fn shift(&mut self, shift: usize) {
+        for vi in self.0.iter_mut() {
+            if *vi != 0 {
+                *vi -= shift;
+            }
+        }
     }
 }
 
@@ -497,6 +503,14 @@ impl Triangulation {
         //-- remove the 4 corners
         for each in &c4 {
             let _re = self.remove(*each);
+        }
+        //-- collect garbage: remove the 4 added vertices and "shift" all the vertex ids
+        for _i in 1..5 {
+            self.stars.remove(1);
+            self.removed_indices.pop();
+        }
+        for i in 1..self.stars.len() {
+            self.stars[i].link.shift(4);
         }
     }
 
