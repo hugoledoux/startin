@@ -269,13 +269,6 @@ impl Link {
     fn iter(&self) -> Iter {
         Iter(Box::new(self.0.iter()))
     }
-    fn shift(&mut self, shift: usize) {
-        for vi in self.0.iter_mut() {
-            if *vi != 0 {
-                *vi -= shift;
-            }
-        }
-    }
 }
 
 //-- taken from https://stackoverflow.com/questions/40668074/am-i-incorrectly-implementing-intoiterator-for-a-reference-or-is-this-a-rust-bug
@@ -499,13 +492,7 @@ impl Triangulation {
             let _re = self.remove(*each);
         }
         //-- collect garbage: remove the 4 added vertices and "shift" all the vertex ids
-        for _i in 1..5 {
-            self.stars.remove(1);
-            self.removed_indices.pop();
-        }
-        for i in 1..self.stars.len() {
-            self.stars[i].link.shift(4);
-        }
+        self.collect_garbage();
     }
 
     /// Insert the point (`px`, `py`, `pz`) in the triangulation.
@@ -1840,6 +1827,36 @@ impl Triangulation {
             let z2 = ((self.stars[i].pt[2] - minz) * factor) + minz;
             self.stars[i].pt[2] = z2;
         }
+    }
+
+    pub fn has_garbage(&self) -> bool {
+        if self.number_of_removed_vertices() > 0 {
+            true
+        } else {
+            false
+        }
+    }
+
+    /// Collect garbage, that is remove from memory (the Vec of stars) the vertices
+    /// marked as removed.
+    ///
+    /// Watch out: the vertices get new IDs (and thus the triangles) too. And this can
+    /// be a slow operation.
+    pub fn collect_garbage(&mut self) {
+        self.removed_indices.sort_unstable();
+        for star in self.stars.iter_mut() {
+            for value in star.link.0.iter_mut() {
+                let pos = self.removed_indices.binary_search(value).unwrap_err();
+                let newv = *value - pos;
+                *value = newv;
+            }
+        }
+        let mut offset = 0;
+        for each in &self.removed_indices {
+            self.stars.remove(each - offset);
+            offset += 1;
+        }
+        self.removed_indices.clear();
     }
 }
 
