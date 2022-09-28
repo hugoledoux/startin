@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.6.1] - 2022-09-28
+## Added
+- collect_garbage() to remove from memory/array the vertices/stars marked as to be removed
+- has_garbage() to know if above should be used
+## Changed
+- insert() with BBow now performs automatically collect_garbage(), otherwise one had 4 vertices they never seen there in the array and that was problematic
+
 ## [0.6.0] - 2022-09-20
 ### Added
 - get_bbox() function, an AABB one that is
