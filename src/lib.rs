@@ -1260,6 +1260,12 @@ impl Triangulation {
         if vi == 0 {
             return Err(StartinError::VertexInfinite);
         }
+        if self.is_init == false {
+            self.stars[vi].pt[0] = -999.9;
+            self.stars[vi].pt[1] = -999.9;
+            self.stars[vi].pt[2] = -999.9;
+            self.removed_indices.push(vi);
+        }
         match self.is_vertex_removed(vi) {
             Err(why) => return Err(why),
             Ok(b) => {
