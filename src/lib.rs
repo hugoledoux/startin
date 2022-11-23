@@ -1231,11 +1231,6 @@ impl Triangulation {
                     break;
                 }
             }
-            // if adjs[0] != 0 {
-            //     self.cur = adjs[0];
-            // } else {
-            //     self.cur = adjs[1];
-            // }
             Ok(self.stars.len() - 1)
         }
     }
