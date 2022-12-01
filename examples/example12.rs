@@ -36,25 +36,30 @@ fn main() {
     let mut dt = startin::Triangulation::new();
     dt.insert(&pts, startin::InsertionStrategy::AsIs);
     // println!("{}", dt.printme(true));
-    // print!("0{}", dt);
+
+    print!("{}", dt);
+    let _ = dt.remove(1);
+    println!("{}", dt.printme(true));
+    print!("{}", dt);
 
     let new_pt = dt.insert_one_pt(1.0, 1.0, 1.0);
-    // print!("1{}", dt);
+    print!("1{}", dt);
 
-    let _re = dt.remove(new_pt.unwrap());
+    // let _re = dt.remove(new_pt.unwrap());
     assert!(dt.is_valid());
-    // print!("2{}", dt);
-
-    let _ = dt.insert_one_pt(1.0, 1.0, 0.0);
-    assert!(dt.is_valid());
-    // print!("3{}", dt);
-
-
-    let _ = dt.insert_one_pt(11.0, 11.0, 11.0);
-    // print!("3{}", dt);
-    let _ = dt.insert_one_pt(1.0, 2.0, 11.0);
-    assert!(dt.is_valid());
-    // print!("3{}", dt);
-
-    assert!(dt.is_valid());
+    println!("{}", dt.printme(true));
+    // // print!("2{}", dt);
+    //
+    // let _ = dt.insert_one_pt(1.0, 1.0, 0.0);
+    // assert!(dt.is_valid());
+    // // print!("3{}", dt);
+    //
+    //
+    // let _ = dt.insert_one_pt(11.0, 11.0, 11.0);
+    // // print!("3{}", dt);
+    // let _ = dt.insert_one_pt(1.0, 2.0, 11.0);
+    // assert!(dt.is_valid());
+    // // print!("3{}", dt);
+    //
+    // assert!(dt.is_valid());
 }
