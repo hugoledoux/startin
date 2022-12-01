@@ -1593,6 +1593,34 @@ impl Triangulation {
         Some(totalarea)
     }
 
+    fn voronoi_cell_area_2(&self, v: usize) -> Option<f64> {
+        if self.is_vertex_valid(v) == false {
+            return None;
+        }
+        // if self.is_vertex_convex_hull(v) == true {
+        //     return Some(f64::INFINITY);
+        // }
+        //-- process non-CH points that exists
+        let mut centres: Vec<Vec<f64>> = Vec::new();
+        let l = &self.stars[v].link;
+        for (i, n) in l.iter().enumerate() {
+            let j = l.next_index(i);
+            centres.push(geom::circle_centre(
+                &self.stars[v].pt,
+                &self.stars[*n].pt,
+                &self.stars[l[j]].pt,
+            ));
+        }
+        //-- copy first to make circular
+        centres.push(vec![centres[0][0], centres[0][1]]);
+        // println!("{:?}", centres);
+        let mut totalarea = 0.0_f64;
+        for c in centres.windows(2) {
+            totalarea += geom::area_triangle(&self.stars[v].pt, &c[0], &c[1]);
+        }
+        Some(totalarea)
+    }
+
     fn voronoi_cell_area(&self, v: usize) -> Option<f64> {
         if self.is_vertex_valid(v) == false {
             return None;
@@ -1664,6 +1692,51 @@ impl Triangulation {
         Ok(total / (a0 + a1 + a2))
     }
 
+    /// Estimation of z-value with interpolation: natural neighbour interpolation (nni)
+    pub fn interpolate_nni_2(&mut self, px: f64, py: f64) -> Result<f64, StartinError> {
+        //-- cannot interpolation if no TIN
+        if self.is_init == false {
+            return Err(StartinError::NoTriangleinTIN);
+        }
+        //-- no extrapolation
+        let re = self.locate(px, py);
+        if re.is_err() {
+            return Err(re.err().unwrap());
+        }
+        let re = self.insert_one_pt(px, py, 0.);
+        let pi: usize;
+        if re.is_ok() {
+            pi = re.unwrap();
+        } else {
+            //-- return the value of the vertex if closer than self.snaptol
+            return Ok(self.stars[re.unwrap_err()].pt[2]);
+        }
+        let mut addedcentres: HashMap<usize, Vec<Vec<f64>>> = HashMap::new();
+        let nns = self.adjacent_vertices_to_vertex(pi).unwrap();
+        let mut weights: Vec<f64> = Vec::new();
+        for nn in &nns {
+            let a = self.voronoi_cell_area_2(*nn).unwrap();
+            weights.push(a);
+        }
+        let newarea = self.voronoi_cell_area(pi).unwrap();
+        //-- no extrapolation
+        if newarea == f64::INFINITY {
+            //-- interpolation point was added on boundary of CH
+            //-- nothing to be done, Voronoi cell is unbounded
+            let _rr = self.remove(pi);
+            return Err(StartinError::OutsideConvexHull);
+        }
+        let _rr = self.remove(pi);
+        for (i, nn) in nns.iter().enumerate() {
+            weights[i] = self.voronoi_cell_area_2(*nn).unwrap() - weights[i];
+        }
+        // println!("weights {:?}", weights);
+        let mut z: f64 = 0.0;
+        for (i, nn) in nns.iter().enumerate() {
+            z += weights[i] * self.stars[*nn].pt[2];
+        }
+        Ok(z / newarea)
+    }
     /// Estimation of z-value with interpolation: natural neighbour interpolation (nni)
     pub fn interpolate_nni(&mut self, px: f64, py: f64) -> Result<f64, StartinError> {
         //-- cannot interpolation if no TIN
