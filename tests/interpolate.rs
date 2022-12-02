@@ -114,3 +114,10 @@ fn tin_linear_random() {
     );
     assert_eq!(true, dt.interpolate_tin_linear(44.0, 48.0).is_ok());
 }
+
+#[test]
+fn nni_boundary_ch() {
+    let mut dt = four_points();
+    let re = dt.interpolate_nni_2(10.0, 5.0);
+    assert_eq!(false, re.is_ok());
+}

@@ -1597,12 +1597,12 @@ impl Triangulation {
         if self.is_vertex_valid(v) == false {
             return None;
         }
-        // if self.is_vertex_convex_hull(v) == true {
-        //     return Some(f64::INFINITY);
-        // }
         //-- process non-CH points that exists
         let mut centres: Vec<Vec<f64>> = Vec::new();
-        let l = &self.stars[v].link;
+        let mut l = self.stars[v].link.clone();
+        if l.contains_infinite_vertex() {
+            l.delete(0);
+        }
         for (i, n) in l.iter().enumerate() {
             let j = l.next_index(i);
             centres.push(geom::circle_centre(
@@ -1613,7 +1613,6 @@ impl Triangulation {
         }
         //-- copy first to make circular
         centres.push(vec![centres[0][0], centres[0][1]]);
-        // println!("{:?}", centres);
         let mut totalarea = 0.0_f64;
         for c in centres.windows(2) {
             totalarea += geom::area_triangle(&self.stars[v].pt, &c[0], &c[1]);
@@ -1711,26 +1710,24 @@ impl Triangulation {
             //-- return the value of the vertex if closer than self.snaptol
             return Ok(self.stars[re.unwrap_err()].pt[2]);
         }
-        let mut addedcentres: HashMap<usize, Vec<Vec<f64>>> = HashMap::new();
+        //-- no extrapolation
+        if self.is_vertex_convex_hull(pi) {
+            //-- interpolation point was added on boundary of CH
+            //-- nothing to be done, Voronoi cell is unbounded
+            let _rr = self.remove(pi);
+            return Err(StartinError::OutsideConvexHull);
+        }
         let nns = self.adjacent_vertices_to_vertex(pi).unwrap();
         let mut weights: Vec<f64> = Vec::new();
         for nn in &nns {
             let a = self.voronoi_cell_area_2(*nn).unwrap();
             weights.push(a);
         }
-        let newarea = self.voronoi_cell_area(pi).unwrap();
-        //-- no extrapolation
-        if newarea == f64::INFINITY {
-            //-- interpolation point was added on boundary of CH
-            //-- nothing to be done, Voronoi cell is unbounded
-            let _rr = self.remove(pi);
-            return Err(StartinError::OutsideConvexHull);
-        }
+        let newarea = self.voronoi_cell_area_2(pi).unwrap();
         let _rr = self.remove(pi);
         for (i, nn) in nns.iter().enumerate() {
             weights[i] = self.voronoi_cell_area_2(*nn).unwrap() - weights[i];
         }
-        // println!("weights {:?}", weights);
         let mut z: f64 = 0.0;
         for (i, nn) in nns.iter().enumerate() {
             z += weights[i] * self.stars[*nn].pt[2];
