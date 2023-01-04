@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.6.2] - 2023-01-04
+## Changed
+- interpolate_nni() is now faster and better and more stable: the unbounded Voronoi cells are not bounded anymore, instead a trick is used to calculate a fake area and then since the trick is used twice (and values subtracted) then everything cancels out.
+- fixed a bug when remove() meant that the DT was formed of only collinear points. Thanks @OliverJPost for finding that bug.
+
 ## [0.6.1] - 2022-09-28
 ## Added
 - collect_garbage() to remove from memory/array the vertices/stars marked as to be removed
@@ -113,3 +118,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - first release and upload to crates.io
 
+[0.6.2]: https://github.com/hugoledoux/startin/compare/0.6.1...0.6.2
+[0.6.1]: https://github.com/hugoledoux/startin/compare/0.6.0...0.6.1
+[0.6.0]: https://github.com/hugoledoux/startin/compare/0.5.3...0.6.0
