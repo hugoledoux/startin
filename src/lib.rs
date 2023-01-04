@@ -106,6 +106,7 @@ use std::fs::File;
 use std::io::Write;
 
 use serde_json::{to_value, Map};
+use std::collections::HashMap;
 
 use geojson::{Feature, FeatureCollection, Geometry, Value};
 
