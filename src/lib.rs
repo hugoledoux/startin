@@ -355,6 +355,7 @@ impl Triangulation {
                 return Err(i);
             }
         }
+        self.collect_garbage();
         //-- add point to Triangulation and create its empty star
         self.stars.push(Star::new(x, y, z));
         //-- form the first triangles (finite + infinite)
@@ -1210,6 +1211,19 @@ impl Triangulation {
             self.stars[adjs[1]].link.delete(v);
             self.stars[*(adjs.last().unwrap())].link.delete(v);
             for i in 2..(adjs.len() - 1) {
+                if self.is_vertex_convex_hull(adjs[i]) == true {
+                    //-- going back to a line, no triangles
+                    //-- wipe it all and start the insert_init_phase again
+                    for i in 0..self.stars.len() {
+                        self.stars[i].link.clear();
+                    }
+                    self.stars[v].pt[0] = -999.9;
+                    self.stars[v].pt[1] = -999.9;
+                    self.stars[v].pt[2] = -999.9;
+                    self.removed_indices.push(v);
+                    self.is_init = false;
+                    return Ok(self.stars.len() - 1);
+                }
                 self.stars[adjs[i]].link.replace(v, 0);
                 self.stars[adjs[i]].link.infinite_first();
             }
@@ -1231,11 +1245,6 @@ impl Triangulation {
                     break;
                 }
             }
-            // if adjs[0] != 0 {
-            //     self.cur = adjs[0];
-            // } else {
-            //     self.cur = adjs[1];
-            // }
             Ok(self.stars.len() - 1)
         }
     }
@@ -1250,6 +1259,12 @@ impl Triangulation {
         // println!("REMOVE vertex {}", v);
         if vi == 0 {
             return Err(StartinError::VertexInfinite);
+        }
+        if self.is_init == false {
+            self.stars[vi].pt[0] = -999.9;
+            self.stars[vi].pt[1] = -999.9;
+            self.stars[vi].pt[2] = -999.9;
+            self.removed_indices.push(vi);
         }
         match self.is_vertex_removed(vi) {
             Err(why) => return Err(why),
