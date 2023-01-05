@@ -1641,15 +1641,19 @@ impl Triangulation {
     pub fn interpolate_nni_2(
         &mut self,
         locations: &Vec<[f64; 2]>,
+        precompute: bool,
     ) -> Vec<Result<f64, StartinError>> {
         //-- store temporarily all the Voronoi cells areas
-        let mut vorareas: Vec<f64> = Vec::with_capacity(self.stars.len());
-        vorareas.push(0.);
-        for vi in 1..self.stars.len() {
-            if self.stars[vi].is_deleted() == false {
-                vorareas.push(self.voronoi_cell_area(vi, true).unwrap());
-            } else {
-                vorareas.push(0.);
+        let mut vorareas: Vec<f64> = Vec::new();
+        if precompute {
+            vorareas.reserve_exact(self.stars.len());
+            vorareas.push(0.);
+            for vi in 1..self.stars.len() {
+                if self.stars[vi].is_deleted() == false {
+                    vorareas.push(self.voronoi_cell_area(vi, true).unwrap());
+                } else {
+                    vorareas.push(0.);
+                }
             }
         }
         let mut re: Vec<Result<f64, StartinError>> = Vec::new();
@@ -1681,10 +1685,13 @@ impl Triangulation {
                                 let newarea = self.voronoi_cell_area(pi, true).unwrap();
                                 let _rr = self.remove(pi);
                                 for (i, nn) in nns.iter().enumerate() {
-                                    weights[i] = vorareas[*nn] - weights[i];
-                                    //-- TODO : is it faster to save them?!
-                                    // weights[i] =
-                                    // self.voronoi_cell_area(*nn, true).unwrap() - weights[i];
+                                    if precompute {
+                                        weights[i] = vorareas[*nn] - weights[i];
+                                    } else {
+                                        //-- TODO : is it faster to save them?!
+                                        weights[i] =
+                                            self.voronoi_cell_area(*nn, true).unwrap() - weights[i];
+                                    }
                                 }
                                 let mut z: f64 = 0.0;
                                 for (i, nn) in nns.iter().enumerate() {
