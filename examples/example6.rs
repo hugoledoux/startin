@@ -1,6 +1,7 @@
 extern crate las;
 extern crate startin;
 
+use assert_approx_eq::assert_approx_eq;
 use las::{Read, Reader};
 use rand::distributions::{Distribution, Uniform};
 use rand::{thread_rng, Rng};
@@ -43,46 +44,66 @@ fn main() {
     let rx = Uniform::from(b.min.x..b.max.x);
     let ry = Uniform::from(b.min.y..b.max.y);
     let mut locs = Vec::new();
-    for _ in 0..100000 {
+    for _ in 0..10000 {
         locs.push([rx.sample(&mut rng), ry.sample(&mut rng)]);
     }
 
-    {
-        let now = Instant::now();
-        {
-            for loc in &locs {
-                let re = dt.interpolate_nni(loc[0], loc[1]);
-            }
-        }
-        let elapsed = now.elapsed();
-        println!("nni: {:.2?}", elapsed);
-    }
-    {
-        let now = Instant::now();
-        {
-            let re = dt.interpolate_nni_2(&locs);
-        }
-        let elapsed = now.elapsed();
-        println!("nni_2: {:.2?}", elapsed);
-    }
+    // {
+    //     let re_laplace = dt.interpolate_laplace_2(&locs);
+    //     let re_nni = dt.interpolate_nni_2(&locs, true);
+    //     for (i, _each) in re_laplace.iter().enumerate() {
+    //         if re_laplace[i].is_ok() && re_nni[i].is_ok() {
+    //             println!(
+    //                 "{}",
+    //                 (re_laplace[i].as_ref().unwrap() - re_nni[i].as_ref().unwrap()).abs()
+    //             );
+    //         }
+    //     }
+    // }
+
+    // {
+    //     let now = Instant::now();
+    //     {
+    //         let mut re = Vec::new();
+    //         for loc in &locs {
+    //             re.push(dt.interpolate_nn(loc[0], loc[1]));
+    //         }
+    //         let re2 = dt.interpolate_nn_2(&locs);
+    //         for (i, _each) in re.iter().enumerate() {
+    //             if re[i].is_ok() && re2[i].is_ok() {
+    //                 assert_approx_eq!(re[i].as_ref().unwrap(), re2[i].as_ref().unwrap(), 1e-3f64);
+    //             } else {
+    //                 assert_eq!(re[i].as_ref(), re2[i].as_ref());
+    //             }
+    //         }
+    //     }
+    //     let elapsed = now.elapsed();
+    //     println!("nni: {:.2?}", elapsed);
+    // }
+    // {
+    //     let now = Instant::now();
+    //     {
+    //         let re = dt.interpolate_nni_2(&locs, true);
+    //     }
+    //     let elapsed = now.elapsed();
+    //     println!("nni_2: {:.2?}", elapsed);
+    // }
 
     {
         let now = Instant::now();
         {
-            for loc in &locs {
-                let re = dt.interpolate_laplace(loc[0], loc[1]);
-            }
+            let re = dt.interpolate_nni_2(&locs, false);
         }
         let elapsed = now.elapsed();
-        println!("laplace: {:.2?}", elapsed);
+        println!("w/o: {:.2?}", elapsed);
     }
     {
         let now = Instant::now();
         {
-            let re = dt.interpolate_tin_linear_2(&locs);
+            let re = dt.interpolate_nni_2(&locs, true);
         }
         let elapsed = now.elapsed();
-        println!("tin_linear_2: {:.2?}", elapsed);
+        println!("with: {:.2?}", elapsed);
     }
 
     // println!("{:?}", re);
