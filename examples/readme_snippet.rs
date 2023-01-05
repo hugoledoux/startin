@@ -39,10 +39,14 @@ fn main() {
         Ok(tr) => println!("The triangle is {}", tr),
         Err(why) => println!("Error: {:?}", why),
     }
-    //-- interpolate with TIN
-    match dt.interpolate_tin_linear(51.0, 22.0) {
-        Ok(z) => println!("z estimation with TIN linear interpolation is: {}", z),
-        Err(why) => println!("Interplation impossible: {:?}", why),
+    //-- interpolate with natural neighbour interpolation
+    let locs = vec![[51.0, 22.0], [50.3, 19.9]];
+    let zs = dt.interpolate_nni(&locs, true);
+    for z in &zs {
+        match z {
+            Ok(value) => println!("z = {}", value),
+            Err(why) => println!("Interplation impossible: {:?}", why),
+        }
     }
 
     //-- save the triangulation in geojson for debug purposes

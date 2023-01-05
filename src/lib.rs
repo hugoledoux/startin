@@ -13,7 +13,7 @@
 //!
 //! Robust arithmetic for the geometric predicates are used ([Shewchuk's predicates](https://www.cs.cmu.edu/~quake/robust.html), well the [Rust port of the code (robust crate)](https://crates.io/crates/robust)), so startin is robust and shouldn't crash (touch wood).
 //!
-//! There are a few interpolation functions implemented (based on the DT): (1) nearest-neighbour, (2) linear in TIN, (3) Laplace, (4) natural neighbour (aka Sibson's interpolation).
+//! There are a few interpolation functions implemented: (1) nearest-neighbour, (2) linear in TIN, (3) Laplace, (4) natural neighbour (aka Sibson's interpolation), (5) IDW.
 //!
 //!
 //! # Web-demo with WebAssembly
@@ -82,10 +82,14 @@
 //!         Ok(tr) => println!("The triangle is {}", tr),
 //!         Err(why) => println!("Error: {:?}", why),
 //!     }
-//!     //-- interpolate with TIN
-//!     match dt.interpolate_tin_linear(51.0, 22.0) {
-//!         Ok(z) => println!("z estimation with TIN linear interpolation is: {}", z),
-//!         Err(why) => println!("Interplation impossible: {:?}", why),
+//!     //-- interpolate with natural neighbour interpolation
+//!     let locs = vec![[51.0, 22.0], [50.3, 19.9]];
+//!     let zs = dt.interpolate_nni(&locs, true);
+//!     for z in &zs {
+//!         match z {
+//!             Ok(value) => println!("z = {}", value),
+//!             Err(why) => println!("Interplation impossible: {:?}", why),
+//!         }
 //!     }
 //!
 //!     //-- save the triangulation in geojson for debug purposes
@@ -1553,7 +1557,7 @@ impl Triangulation {
     }
 
     /// Estimation of z-value with interpolation: nearest/closest neighbour
-    pub fn interpolate_nn_2(&self, locations: &Vec<[f64; 2]>) -> Vec<Result<f64, StartinError>> {
+    pub fn interpolate_nn(&self, locations: &Vec<[f64; 2]>) -> Vec<Result<f64, StartinError>> {
         let mut re: Vec<Result<f64, StartinError>> = Vec::new();
         for p in locations {
             //-- cannot interpolation if no TIN
@@ -1570,20 +1574,8 @@ impl Triangulation {
         re
     }
 
-    /// Estimation of z-value with interpolation: nearest/closest neighbour
-    pub fn interpolate_nn(&self, px: f64, py: f64) -> Result<f64, StartinError> {
-        //-- cannot interpolation if no TIN
-        if self.is_init == false {
-            return Err(StartinError::NoTriangleinTIN);
-        }
-        match self.closest_point(px, py) {
-            Ok(vi) => Ok(self.stars[vi].pt[2]),
-            Err(why) => Err(why),
-        }
-    }
-
     /// Estimation of z-value with interpolation: linear in TIN
-    pub fn interpolate_tin_linear_2(
+    pub fn interpolate_tin_linear(
         &self,
         locations: &Vec<[f64; 2]>,
     ) -> Vec<Result<f64, StartinError>> {
@@ -1655,31 +1647,8 @@ impl Triangulation {
         re
     }
 
-    /// Estimation of z-value with interpolation: linear in TIN
-    pub fn interpolate_tin_linear(&self, px: f64, py: f64) -> Result<f64, StartinError> {
-        //-- cannot interpolation if no TIN
-        if self.is_init == false {
-            return Err(StartinError::NoTriangleinTIN);
-        }
-        //-- no extrapolation
-        let re = self.locate(px, py);
-        if re.is_err() {
-            return Err(re.err().unwrap());
-        }
-        let p: [f64; 3] = [px, py, 0.0];
-        let tr = re.unwrap();
-        let a0: f64 = geom::area_triangle(&p, &self.stars[tr.v[1]].pt, &self.stars[tr.v[2]].pt);
-        let a1: f64 = geom::area_triangle(&p, &self.stars[tr.v[2]].pt, &self.stars[tr.v[0]].pt);
-        let a2: f64 = geom::area_triangle(&p, &self.stars[tr.v[0]].pt, &self.stars[tr.v[1]].pt);
-        let mut total = 0.;
-        total += self.stars[tr.v[0]].pt[2] * a0;
-        total += self.stars[tr.v[1]].pt[2] * a1;
-        total += self.stars[tr.v[2]].pt[2] * a2;
-        Ok(total / (a0 + a1 + a2))
-    }
-
     /// Estimation of z-value with interpolation: natural neighbour interpolation (nni)
-    pub fn interpolate_nni_2(
+    pub fn interpolate_nni(
         &mut self,
         locations: &Vec<[f64; 2]>,
         precompute: bool,
@@ -1750,56 +1719,12 @@ impl Triangulation {
         re
     }
 
-    /// Estimation of z-value with interpolation: natural neighbour interpolation (nni)
-    pub fn interpolate_nni(&mut self, px: f64, py: f64) -> Result<f64, StartinError> {
-        //-- cannot interpolation if no TIN
-        if self.is_init == false {
-            return Err(StartinError::NoTriangleinTIN);
-        }
-        //-- no extrapolation
-        let re = self.locate(px, py);
-        if re.is_err() {
-            return Err(re.err().unwrap());
-        }
-        let re = self.insert_one_pt(px, py, 0.);
-        let pi: usize;
-        if re.is_ok() {
-            pi = re.unwrap();
-        } else {
-            //-- return the value of the vertex if closer than self.snaptol
-            return Ok(self.stars[re.unwrap_err()].pt[2]);
-        }
-        //-- no extrapolation
-        if self.is_vertex_convex_hull(pi) {
-            //-- interpolation point was added on boundary of CH
-            //-- nothing to be done, Voronoi cell is unbounded
-            let _rr = self.remove(pi);
-            return Err(StartinError::OutsideConvexHull);
-        }
-        let nns = self.adjacent_vertices_to_vertex(pi).unwrap();
-        let mut weights: Vec<f64> = Vec::new();
-        for nn in &nns {
-            let a = self.voronoi_cell_area(*nn, true).unwrap();
-            weights.push(a);
-        }
-        let newarea = self.voronoi_cell_area(pi, true).unwrap();
-        let _rr = self.remove(pi);
-        for (i, nn) in nns.iter().enumerate() {
-            weights[i] = self.voronoi_cell_area(*nn, true).unwrap() - weights[i];
-        }
-        let mut z: f64 = 0.0;
-        for (i, nn) in nns.iter().enumerate() {
-            z += weights[i] * self.stars[*nn].pt[2];
-        }
-        Ok(z / newarea)
-    }
-
     /// Estimation of z-value with interpolation: Laplace interpolation
     ///
     /// Details about Laplace: <http://dilbert.engr.ucdavis.edu/~suku/nem/index.html>, which
     /// is a variation of nni with distances instead of stolen areas, which yields a much
     /// faster implementation.    
-    pub fn interpolate_laplace_2(
+    pub fn interpolate_laplace(
         &mut self,
         locations: &Vec<[f64; 2]>,
     ) -> Vec<Result<f64, StartinError>> {
@@ -1859,56 +1784,6 @@ impl Triangulation {
             }
         }
         re
-    }
-
-    /// Estimation of z-value with interpolation: Laplace interpolation
-    ///
-    /// Details about Laplace: <http://dilbert.engr.ucdavis.edu/~suku/nem/index.html>, which
-    /// is a variation of nni with distances instead of stolen areas, which yields a much
-    /// faster implementation.
-    pub fn interpolate_laplace(&mut self, px: f64, py: f64) -> Result<f64, StartinError> {
-        //-- cannot interpolation if no TIN
-        if self.is_init == false {
-            return Err(StartinError::NoTriangleinTIN);
-        }
-        //-- no extrapolation
-        let re = self.locate(px, py);
-        if re.is_err() {
-            return Err(re.err().unwrap());
-        }
-        let re = self.insert_one_pt(px, py, 0.);
-        let pi: usize;
-        if re.is_ok() {
-            pi = re.unwrap();
-        } else {
-            //-- return the value of the vertex if closer than self.snaptol
-            return Ok(self.stars[re.unwrap_err()].pt[2]);
-        }
-        let l = &self.stars[pi].link;
-        let mut centres: Vec<Vec<f64>> = Vec::new();
-        for (i, v) in l.iter().enumerate() {
-            let j = l.next_index(i);
-            centres.push(geom::circle_centre(
-                &self.stars[pi].pt,
-                &self.stars[*v].pt,
-                &self.stars[l[j]].pt,
-            ));
-        }
-        let mut weights: Vec<f64> = Vec::new();
-        for (i, v) in l.iter().enumerate() {
-            // fetch 2 voronoi centres
-            let e = geom::distance2d(&centres[i], &centres[l.prev_index(i)]);
-            let w = geom::distance2d(&self.stars[pi].pt, &self.stars[*v].pt);
-            weights.push(e / w);
-        }
-        let mut z: f64 = 0.0;
-        for (i, v) in l.iter().enumerate() {
-            z += weights[i] * self.stars[*v].pt[2];
-        }
-        let sumweights: f64 = weights.iter().sum();
-        //-- delete the interpolation location point
-        let _rr = self.remove(pi);
-        Ok(z / sumweights)
     }
 
     /// Returns the (axis-aligned) bounding box of the triangulation.
