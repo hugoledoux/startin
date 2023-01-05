@@ -111,6 +111,8 @@ use geojson::{Feature, FeatureCollection, Geometry, Value};
 
 extern crate rand;
 
+use kdbush::KDBush;
+
 /// Errors that arise while using startin
 #[derive(Debug, PartialEq)]
 pub enum StartinError {
@@ -120,6 +122,7 @@ pub enum StartinError {
     TriangleNotPresent,
     OutsideConvexHull,
     NoTriangleinTIN,
+    SearchCircleEmpty,
 }
 
 /// Possibilities for the insertion (with `insert()`)
@@ -1609,6 +1612,44 @@ impl Triangulation {
                     re.push(Ok(total / (a0 + a1 + a2)));
                 }
                 Err(_e) => re.push(Err(StartinError::OutsideConvexHull)),
+            }
+        }
+        re
+    }
+
+    /// Estimation of z-value with interpolation: IDW
+    /// (this function doesn't use the TIN at all, added here for
+    /// convenience and teaching purposes)
+    pub fn interpolate_idw(
+        &self,
+        locations: &Vec<[f64; 2]>,
+        radius: f64,
+        power: f64,
+    ) -> Vec<Result<f64, StartinError>> {
+        //-- build a kd-tree
+        let mut allpts: Vec<(f64, f64)> = Vec::new();
+        for i in 0..self.stars.len() {
+            allpts.push((self.stars[i].pt[0], self.stars[i].pt[1]));
+        }
+        let index = KDBush::create(allpts, kdbush::DEFAULT_NODE_SIZE);
+        //-- perform interpolations
+        let mut re: Vec<Result<f64, StartinError>> = Vec::new();
+        for p in locations {
+            let mut ns: Vec<usize> = Vec::new();
+            index.within(p[0], p[1], radius, |id| ns.push(id));
+            if ns.is_empty() {
+                re.push(Err(StartinError::SearchCircleEmpty));
+            } else {
+                let mut weights: Vec<f64> = Vec::new();
+                for each in &ns {
+                    let d = geom::distance2d(p, &self.stars[*each].pt);
+                    weights.push(d.powf(-power));
+                }
+                let mut z = 0_f64;
+                for (i, w) in weights.iter().enumerate() {
+                    z += self.stars[ns[i]].pt[2] * w;
+                }
+                re.push(Ok(z / weights.iter().sum::<f64>()));
             }
         }
         re
