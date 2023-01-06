@@ -1,23 +1,63 @@
+extern crate las;
 extern crate startin;
 
+use assert_approx_eq::assert_approx_eq;
+use las::{Read, Reader};
+use rand::distributions::{Distribution, Uniform};
+use rand::{thread_rng, Rng};
+use std::time::Instant;
+
 fn main() {
-    let mut pts: Vec<[f64; 3]> = Vec::new();
-    pts.push([20 as f64, 30.0, 0.0]);
-    pts.push([20 as f64, 30.0, 1.1]);
-    pts.push([120.0, 33.0, 12.5]);
-    pts.push([124.0, 222.0, 7.65]);
-    pts.push([20.0, 133.0, 21.0]);
-    pts.push([60.0, 60.0, 33.0]);
+    let path = std::env::args()
+        .skip(1)
+        .next()
+        .expect("Must provide a path to a LAS/LAZ file");
+    let mut reader = Reader::from_path(path).expect("Wrong file name");
+
+    let header = reader.header();
+    println!("Reading LAS file version: {}", header.version());
+    println!("{} points.", header.number_of_points());
+
+    let b = header.bounds();
+    println!(
+        "({}, {}, {}) --> ({}, {}, {})",
+        b.min.x, b.min.y, b.min.z, b.max.x, b.max.y, b.max.z
+    );
 
     let mut dt = startin::Triangulation::new();
-    dt.insert(&pts, startin::InsertionStrategy::AsIs);
 
-    println!("{}", dt);
+    let mut rng = thread_rng();
+    let thin_factor = 1;
+    for laspt in reader.points() {
+        if rng.gen_ratio(1, thin_factor) == true {
+            let p = laspt.unwrap();
+            let _re = dt.insert_one_pt(p.x, p.y, p.z);
+        }
+    }
 
-    let re = startin::interpolation::nni(&mut dt, &vec![[54., 54.]], true);
-    println!("{:?}", re);
-    let re = startin::interpolation::laplace(&mut dt, &vec![[54., 54.]]);
-    println!("{:?}", re);
+    println!("Number of points in DT: {}", dt.number_of_vertices());
+    println!("Number of triangles in DT: {}", dt.number_of_triangles());
+    println!("bbox: {:?}", dt.get_bbox());
 
-    // println!("{:?}", dt.stars.len());
+    let rx = Uniform::from(b.min.x..b.max.x);
+    let ry = Uniform::from(b.min.y..b.max.y);
+    let mut locs = Vec::new();
+    for _ in 0..10 {
+        locs.push([rx.sample(&mut rng), ry.sample(&mut rng)]);
+    }
+
+    let idw = startin::interpolation::IDW {
+        radius: 1.0,
+        power: 2.0,
+    };
+    let re1 = startin::interpolation::interpolate(&idw, &mut dt, &locs);
+    // println!("{:?}", re.len());
+
+    let lap = startin::interpolation::Laplace {};
+    let re2 = startin::interpolation::interpolate(&lap, &mut dt, &locs);
+    // println!("{:?}", re.len());
+
+    for (i, each) in re1.iter().enumerate() {
+        println!("{:?}--{:?}", re1[i], re2[i]);
+    }
 }
