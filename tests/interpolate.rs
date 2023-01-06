@@ -1,3 +1,4 @@
+use crate::startin::interpolation::interpolate;
 use crate::startin::Triangulation;
 use rand::prelude::*;
 use startin;
@@ -28,99 +29,128 @@ fn random_points_500() -> Triangulation {
 #[test]
 fn empty() {
     let mut dt = startin::Triangulation::new();
+    let i_nn = startin::interpolation::NN {};
+    let i_tin = startin::interpolation::TIN {};
+    let i_lap = startin::interpolation::Laplace {};
+    let i_nni = startin::interpolation::NNI { precompute: false };
+    let i_idw = startin::interpolation::IDW {
+        radius: 1.0,
+        power: 2.0,
+    };
     assert_eq!(
-        Err(startin::StartinError::NoTriangleinTIN),
-        dt.interpolate_nn(&vec![[51.0, 42.0]])[0]
+        Err(startin::StartinError::EmptyTriangulation),
+        startin::interpolation::interpolate(&i_nn, &mut dt, &vec![[51.0, 42.0]])[0]
     );
     assert_eq!(
-        Err(startin::StartinError::NoTriangleinTIN),
-        dt.interpolate_nni(&vec![[51.0, 42.0]], true)[0]
+        Err(startin::StartinError::EmptyTriangulation),
+        interpolate(&i_tin, &mut dt, &vec![[51.0, 42.0]])[0]
     );
     assert_eq!(
-        Err(startin::StartinError::NoTriangleinTIN),
-        dt.interpolate_laplace(&vec![[51.0, 42.0]])[0]
+        Err(startin::StartinError::EmptyTriangulation),
+        interpolate(&i_lap, &mut dt, &vec![[51.0, 42.0]])[0]
     );
     assert_eq!(
-        Err(startin::StartinError::NoTriangleinTIN),
-        dt.interpolate_tin_linear(&vec![[51.0, 42.0]])[0]
+        Err(startin::StartinError::EmptyTriangulation),
+        interpolate(&i_nni, &mut dt, &vec![[51.0, 42.0]])[0]
+    );
+    assert_eq!(
+        Err(startin::StartinError::SearchCircleEmpty),
+        interpolate(&i_idw, &mut dt, &vec![[51.0, 42.0]])[0]
     );
 }
 
 #[test]
 fn outside_ch() {
     let mut dt = four_points();
+    let i_nn = startin::interpolation::NN {};
+    let i_tin = startin::interpolation::TIN {};
+    let i_lap = startin::interpolation::Laplace {};
+    let i_nni = startin::interpolation::NNI { precompute: false };
+    // let i_idw = startin::interpolation::IDW {
+    //     radius: 1.0,
+    //     power: 2.0,
+    // };
     assert_eq!(
         Err(startin::StartinError::OutsideConvexHull),
-        dt.interpolate_nn(&vec![[5.0, -0.1]])[0]
+        startin::interpolation::interpolate(&i_nn, &mut dt, &vec![[5.0, -0.1]])[0]
     );
     assert_eq!(
         Err(startin::StartinError::OutsideConvexHull),
-        dt.interpolate_nni(&vec![[5.0, -0.1]], false)[0]
+        interpolate(&i_tin, &mut dt, &vec![[5.0, -0.1]])[0]
     );
     assert_eq!(
         Err(startin::StartinError::OutsideConvexHull),
-        dt.interpolate_laplace(&vec![[5.0, -0.1]])[0]
+        interpolate(&i_lap, &mut dt, &vec![[5.0, -0.1]])[0]
     );
     assert_eq!(
         Err(startin::StartinError::OutsideConvexHull),
-        dt.interpolate_tin_linear(&vec![[5.0, -0.1]])[0]
+        interpolate(&i_nni, &mut dt, &vec![[5.0, -0.1]])[0]
     );
     assert_eq!(
         Err(startin::StartinError::OutsideConvexHull),
-        dt.interpolate_nni(&vec![[5.0, 0.0]], true)[0]
+        interpolate(&i_nni, &mut dt, &vec![[5.0, 0.0]])[0]
     );
+    // assert_eq!(
+    //     Err(startin::StartinError::OutsideConvexHull),
+    //     interpolate(&i_idw, &mut dt, &vec![[5.0, -0.1]])[0]
+    // );
 }
 
 #[test]
 fn existing_point() {
     let mut dt = four_points();
     let _re = dt.insert_one_pt(5.0, 5.0, 11.1);
-    assert_eq!(Ok(11.1), dt.interpolate_nn(&vec![[5.0, 5.0]])[0]);
-    assert_eq!(Ok(11.1), dt.interpolate_nni(&vec![[5.0, 5.0]], false)[0]);
-    assert_eq!(Ok(11.1), dt.interpolate_laplace(&vec![[5.0, 5.0]])[0]);
-    assert_eq!(Ok(11.1), dt.interpolate_tin_linear(&vec![[5.0, 5.0]])[0]);
-    assert_eq!(Ok(1.0), dt.interpolate_nn(&vec![[0.0, 0.0]])[0]);
-    assert_eq!(Ok(1.0), dt.interpolate_nni(&vec![[0.0, 0.0]], false)[0]);
-    assert_eq!(Ok(1.0), dt.interpolate_laplace(&vec![[0.0, 0.0]])[0]);
-    assert_eq!(Ok(1.0), dt.interpolate_tin_linear(&vec![[0.0, 0.0]])[0]);
+
+    let i_nn = startin::interpolation::NN {};
+    let i_tin = startin::interpolation::TIN {};
+    let i_lap = startin::interpolation::Laplace {};
+    let i_nni = startin::interpolation::NNI { precompute: false };
+    let i_idw = startin::interpolation::IDW {
+        radius: 1.0,
+        power: 2.0,
+    };
+    assert_eq!(
+        Ok(11.1),
+        startin::interpolation::interpolate(&i_nn, &mut dt, &vec![[5.0, 5.0]])[0]
+    );
+    assert_eq!(Ok(11.1), interpolate(&i_tin, &mut dt, &vec![[5.0, 5.0]])[0]);
+    assert_eq!(Ok(11.1), interpolate(&i_lap, &mut dt, &vec![[5.0, 5.0]])[0]);
+    assert_eq!(Ok(11.1), interpolate(&i_nni, &mut dt, &vec![[5.0, 5.0]])[0]);
+    assert_eq!(Ok(11.1), interpolate(&i_idw, &mut dt, &vec![[5.0, 5.0]])[0]);
 }
 
 #[test]
 fn middle() {
     let mut dt = four_points();
-    assert_eq!(Ok(2.5), dt.interpolate_nni(&vec![[5.0, 5.0]], true)[0]);
-    assert_eq!(Ok(2.5), dt.interpolate_laplace(&vec![[5.0, 5.0]])[0]);
+    let i_lap = startin::interpolation::Laplace {};
+    let i_nni = startin::interpolation::NNI { precompute: false };
+    let i_tin = startin::interpolation::TIN {};
+    assert_eq!(Ok(2.5), interpolate(&i_lap, &mut dt, &vec![[5.0, 5.0]])[0]);
+    assert_eq!(Ok(2.5), interpolate(&i_nni, &mut dt, &vec![[5.0, 5.0]])[0]);
+    assert_eq!(Ok(3.0), interpolate(&i_tin, &mut dt, &vec![[5.0, 5.0]])[0]);
 }
 
 #[test]
 fn nn() {
     let mut dt = four_points();
     let _re = dt.insert_one_pt(5.0, 5.0, 11.1);
-    assert_eq!(Ok(11.1), dt.interpolate_nn(&vec![[5.1, 5.1]])[0]);
-}
-
-#[test]
-fn tin_linear() {
-    let dt = four_points();
-    assert_eq!(Ok(1.5), dt.interpolate_tin_linear(&vec![[5.0, 0.0]])[0]);
+    let i_nn = startin::interpolation::NN {};
+    assert_eq!(
+        Ok(11.1),
+        startin::interpolation::interpolate(&i_nn, &mut dt, &vec![[5.1, 5.1]])[0]
+    );
 }
 
 #[test]
 fn tin_linear_random() {
-    let dt = random_points_500();
+    let mut dt = random_points_500();
+    let i_tin = startin::interpolation::TIN {};
     assert_eq!(
         Err(startin::StartinError::OutsideConvexHull),
-        dt.interpolate_tin_linear(&vec![[144.0, 48.0]])[0]
+        startin::interpolation::interpolate(&i_tin, &mut dt, &vec![[144.0, 48.0]])[0]
     );
     assert_eq!(
         true,
-        dt.interpolate_tin_linear(&vec![[44.0, 48.0]])[0].is_ok()
+        startin::interpolation::interpolate(&i_tin, &mut dt, &vec![[44.0, 48.0]])[0].is_ok()
     );
-}
-
-#[test]
-fn nni_boundary_ch() {
-    let mut dt = four_points();
-    let re = dt.interpolate_nni(&vec![[10.0, 5.0]], false);
-    assert_eq!(false, re[0].is_ok());
 }

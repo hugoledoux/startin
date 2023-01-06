@@ -82,9 +82,10 @@
 //!         Ok(tr) => println!("The triangle is {}", tr),
 //!         Err(why) => println!("Error: {:?}", why),
 //!     }
-//!     //-- interpolate with natural neighbour interpolation
+//!     //-- interpolate with Laplace interpolation at 2 locations
 //!     let locs = vec![[51.0, 22.0], [50.3, 19.9]];
-//!     let zs = dt.interpolate_nni(&locs, true);
+//!     let interpolant = startin::interpolation::Laplace {};
+//!     let zs = startin::interpolation::interpolate(&interpolant, &mut dt, &locs);
 //!     for z in &zs {
 //!         match z {
 //!             Ok(value) => println!("z = {}", value),

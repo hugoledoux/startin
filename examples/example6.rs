@@ -89,22 +89,22 @@ fn main() {
     //     println!("nni_2: {:.2?}", elapsed);
     // }
 
-    {
-        let now = Instant::now();
-        {
-            let re = dt.interpolate_nni_2(&locs, false);
-        }
-        let elapsed = now.elapsed();
-        println!("w/o: {:.2?}", elapsed);
-    }
-    {
-        let now = Instant::now();
-        {
-            let re = dt.interpolate_nni_2(&locs, true);
-        }
-        let elapsed = now.elapsed();
-        println!("with: {:.2?}", elapsed);
-    }
+    // {
+    //     let now = Instant::now();
+    //     {
+    //         let re = dt.interpolate_nni_2(&locs, false);
+    //     }
+    //     let elapsed = now.elapsed();
+    //     println!("w/o: {:.2?}", elapsed);
+    // }
+    // {
+    //     let now = Instant::now();
+    //     {
+    //         let re = dt.interpolate_nni_2(&locs, true);
+    //     }
+    //     let elapsed = now.elapsed();
+    //     println!("with: {:.2?}", elapsed);
+    // }
 
     // println!("{:?}", re);
 
