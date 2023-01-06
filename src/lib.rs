@@ -116,13 +116,13 @@ use serde_json::{to_value, Map};
 /// Errors that arise while using startin
 #[derive(Debug, PartialEq)]
 pub enum StartinError {
-    VertexUnknown,
-    VertexRemoved,
-    VertexInfinite,
-    TriangleNotPresent,
+    EmptyTriangulation,
     OutsideConvexHull,
-    NoTriangleinTIN,
     SearchCircleEmpty,
+    TriangleNotPresent,
+    VertexInfinite,
+    VertexRemoved,
+    VertexUnknown,
 }
 
 /// Possibilities for the insertion (with `insert()`)
