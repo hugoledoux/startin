@@ -251,7 +251,7 @@ impl Link {
         if pos == (self.0.len() - 1) {
             return Some(self.0[0]);
         } else {
-            return Some(self.0[(pos + 1)]);
+            return Some(self.0[pos + 1]);
         }
     }
     fn get_prev_vertex(&self, v: usize) -> Option<usize> {
@@ -261,9 +261,9 @@ impl Link {
         }
         let pos = re.unwrap();
         if pos == 0 {
-            return Some(self.0[(self.0.len() - 1)]);
+            return Some(self.0[self.0.len() - 1]);
         } else {
-            return Some(self.0[(pos - 1)]);
+            return Some(self.0[pos - 1]);
         }
     }
     fn iter(&self) -> Iter {
