@@ -764,6 +764,15 @@ impl Triangulation {
         }
     }
 
+    /// Returns whether a Triangle is finite, or not
+    pub fn is_finite(&self, tr: &Triangle) -> bool {
+        if tr.is_infinite() {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
     /// Returns some statistics about the triangulation.
     pub fn statistics_degree(&self) -> (f64, usize, usize) {
         let mut total: f64 = 0.0;
