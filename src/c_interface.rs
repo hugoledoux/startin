@@ -1,3 +1,4 @@
+use crate::interpolation;
 use crate::Triangulation;
 use std::ffi::CStr;
 use std::os::raw::c_char;
@@ -113,8 +114,10 @@ pub extern "C" fn insert(
 #[no_mangle]
 pub extern "C" fn interpolate_nn(ptr: *mut Triangulation, px: c_double, py: c_double) -> c_double {
     let t = unsafe { ptr.as_mut().unwrap() };
-    let re = Triangulation::interpolate_nn(t, px, py);
-    return re.unwrap_or(std::f64::NAN);
+    let interpol = interpolation::NN {};
+    let mut re = interpolation::interpolate(&interpol, t, &vec![[px, py]]);
+    let re1 = re.pop().expect("no results");
+    return re1.unwrap_or(std::f64::NAN);
 }
 
 #[no_mangle]
@@ -124,15 +127,19 @@ pub extern "C" fn interpolate_linear(
     py: c_double,
 ) -> c_double {
     let t = unsafe { ptr.as_mut().unwrap() };
-    let re = Triangulation::interpolate_tin_linear(t, px, py);
-    return re.unwrap_or(std::f64::NAN);
+    let interpol = interpolation::TIN {};
+    let mut re = interpolation::interpolate(&interpol, t, &vec![[px, py]]);
+    let re1 = re.pop().expect("no results");
+    return re1.unwrap_or(std::f64::NAN);
 }
 
 #[no_mangle]
 pub extern "C" fn interpolate_nni(ptr: *mut Triangulation, px: c_double, py: c_double) -> c_double {
     let t = unsafe { ptr.as_mut().unwrap() };
-    let re = Triangulation::interpolate_nni(t, px, py);
-    return re.unwrap_or(std::f64::NAN);
+    let interpol = interpolation::NNI { precompute: false };
+    let mut re = interpolation::interpolate(&interpol, t, &vec![[px, py]]);
+    let re1 = re.pop().expect("no results");
+    return re1.unwrap_or(std::f64::NAN);
 }
 
 #[no_mangle]
@@ -142,8 +149,10 @@ pub extern "C" fn interpolate_laplace(
     py: c_double,
 ) -> c_double {
     let t = unsafe { ptr.as_mut().unwrap() };
-    let re = Triangulation::interpolate_laplace(t, px, py);
-    return re.unwrap_or(std::f64::NAN);
+    let interpol = interpolation::Laplace {};
+    let mut re = interpolation::interpolate(&interpol, t, &vec![[px, py]]);
+    let re1 = re.pop().expect("no results");
+    return re1.unwrap_or(std::f64::NAN);
 }
 
 #[no_mangle]
