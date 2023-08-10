@@ -135,6 +135,7 @@ pub enum InsertionStrategy {
 }
 
 /// A Triangle is a triplet of indices
+#[derive(Debug, PartialEq)]
 pub struct Triangle {
     pub v: [usize; 3],
 }
@@ -869,6 +870,9 @@ impl Triangulation {
     /// Returns, if it exists, the [`Triangle`] containing (px,py).
     /// If it is direction on a vertex/edge, then one is randomly chosen.
     pub fn locate(&self, px: f64, py: f64) -> Result<Triangle, StartinError> {
+        if self.is_init == false {
+            return Err(StartinError::EmptyTriangulation);
+        }
         let p: [f64; 3] = [px, py, 0.0];
         let re = self.walk(&p);
         match re.is_infinite() {

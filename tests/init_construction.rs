@@ -15,6 +15,10 @@ fn one_pt() {
     assert_eq!(1, re.unwrap());
     assert_eq!(1, dt.number_of_vertices());
     assert_eq!(0, dt.number_of_triangles());
+    assert_eq!(
+        Err(startin::StartinError::EmptyTriangulation),
+        dt.locate(0.5, 0.5)
+    );
 }
 
 #[test]
