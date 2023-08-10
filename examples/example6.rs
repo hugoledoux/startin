@@ -1,11 +1,9 @@
 extern crate las;
 extern crate startin;
 
-use assert_approx_eq::assert_approx_eq;
 use las::{Read, Reader};
 use rand::distributions::{Distribution, Uniform};
 use rand::{thread_rng, Rng};
-use std::time::Instant;
 
 fn main() {
     let path = std::env::args()
