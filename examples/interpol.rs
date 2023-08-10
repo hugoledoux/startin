@@ -1,11 +1,9 @@
 extern crate las;
 extern crate startin;
 
-use assert_approx_eq::assert_approx_eq;
 use las::{Read, Reader};
 use rand::distributions::{Distribution, Uniform};
 use rand::{thread_rng, Rng};
-use std::time::Instant;
 
 fn main() {
     let path = std::env::args()
@@ -57,7 +55,7 @@ fn main() {
     let re2 = startin::interpolation::interpolate(&lap, &mut dt, &locs);
     // println!("{:?}", re.len());
 
-    for (i, each) in re1.iter().enumerate() {
+    for i in 0..re1.len() {
         println!("{:?}--{:?}", re1[i], re2[i]);
     }
 }
