@@ -751,7 +751,10 @@ impl Triangulation {
 
     /// Returns whether a triplet of indices is a Triangle in the triangulation.
     pub fn is_triangle(&self, tr: &Triangle) -> bool {
-        // TODO: what about infinite triangles?
+        if tr.v[0] >= self.stars.len() || tr.v[1] >= self.stars.len() || tr.v[2] >= self.stars.len()
+        {
+            return false;
+        }
         let re = self.stars[tr.v[0]].link.get_next_vertex(tr.v[1]);
         if re.is_none() {
             return false;
