@@ -60,16 +60,29 @@ fn empty() {
 }
 
 #[test]
+fn idw() {
+    let mut dt = four_points();
+    let i_idw = startin::interpolation::IDW {
+        radius: 3.0,
+        power: 2.0,
+    };
+    assert_eq!(
+        Err(startin::StartinError::SearchCircleEmpty),
+        startin::interpolation::interpolate(&i_idw, &mut dt, &vec![[5.0, 5.0]])[0]
+    );
+    assert_eq!(
+        Ok(3.0),
+        startin::interpolation::interpolate(&i_idw, &mut dt, &vec![[9.0, 9.0]])[0]
+    );
+}
+
+#[test]
 fn outside_ch() {
     let mut dt = four_points();
     let i_nn = startin::interpolation::NN {};
     let i_tin = startin::interpolation::TIN {};
     let i_lap = startin::interpolation::Laplace {};
     let i_nni = startin::interpolation::NNI { precompute: false };
-    // let i_idw = startin::interpolation::IDW {
-    //     radius: 1.0,
-    //     power: 2.0,
-    // };
     assert_eq!(
         Err(startin::StartinError::OutsideConvexHull),
         startin::interpolation::interpolate(&i_nn, &mut dt, &vec![[5.0, -0.1]])[0]
@@ -90,10 +103,6 @@ fn outside_ch() {
         Err(startin::StartinError::OutsideConvexHull),
         interpolate(&i_nni, &mut dt, &vec![[5.0, 0.0]])[0]
     );
-    // assert_eq!(
-    //     Err(startin::StartinError::OutsideConvexHull),
-    //     interpolate(&i_idw, &mut dt, &vec![[5.0, -0.1]])[0]
-    // );
 }
 
 #[test]
