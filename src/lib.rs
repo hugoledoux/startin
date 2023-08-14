@@ -336,7 +336,7 @@ impl Triangulation {
         // TODO: allocate a certain number?
         // let mut l: Vec<Star> = Vec::with_capacity(100000);
         let mut l: Vec<Star> = Vec::new();
-        l.push(Star::new(-99999.99999, -99999.99999, -99999.99999));
+        l.push(Star::new(f64::INFINITY, f64::INFINITY, f64::INFINITY));
         let es: Vec<usize> = Vec::new();
         Triangulation {
             stars: l,
