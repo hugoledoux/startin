@@ -647,9 +647,9 @@ impl Triangulation {
             self.stars[*n].link.delete(v);
         }
         self.stars[v].link.clear();
-        self.stars[v].pt[0] = -999.9;
-        self.stars[v].pt[1] = -999.9;
-        self.stars[v].pt[2] = -999.9;
+        self.stars[v].pt[0] = f64::NAN;
+        self.stars[v].pt[1] = f64::NAN;
+        self.stars[v].pt[2] = f64::NAN;
         self.removed_indices.push(v);
         if ns[0] != 0 {
             self.cur = ns[0];
@@ -1233,9 +1233,9 @@ impl Triangulation {
                     for i in 0..self.stars.len() {
                         self.stars[i].link.clear();
                     }
-                    self.stars[v].pt[0] = -999.9;
-                    self.stars[v].pt[1] = -999.9;
-                    self.stars[v].pt[2] = -999.9;
+                    self.stars[v].pt[0] = f64::NAN;
+                    self.stars[v].pt[1] = f64::NAN;
+                    self.stars[v].pt[2] = f64::NAN;
                     self.removed_indices.push(v);
                     self.is_init = false;
                     return Ok(self.stars.len() - 1);
@@ -1250,9 +1250,9 @@ impl Triangulation {
             }
             self.stars[adjs[0]].link.delete(v);
             self.stars[v].link.clear();
-            self.stars[v].pt[0] = -999.9;
-            self.stars[v].pt[1] = -999.9;
-            self.stars[v].pt[2] = -999.9;
+            self.stars[v].pt[0] = f64::NAN;
+            self.stars[v].pt[1] = f64::NAN;
+            self.stars[v].pt[2] = f64::NAN;
             self.removed_indices.push(v);
 
             for i in 0..1000 {
@@ -1277,9 +1277,9 @@ impl Triangulation {
             return Err(StartinError::VertexInfinite);
         }
         if self.is_init == false {
-            self.stars[vi].pt[0] = -999.9;
-            self.stars[vi].pt[1] = -999.9;
-            self.stars[vi].pt[2] = -999.9;
+            self.stars[vi].pt[0] = f64::NAN;
+            self.stars[vi].pt[1] = f64::NAN;
+            self.stars[vi].pt[2] = f64::NAN;
             self.removed_indices.push(vi);
         }
         match self.is_vertex_removed(vi) {
