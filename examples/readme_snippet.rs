@@ -49,8 +49,6 @@ fn main() {
             Err(why) => println!("Interplation impossible: {:?}", why),
         }
     }
-
-    //-- save the triangulation in geojson for debug purposes
-    //-- do not attempt on large DT
-    let _re = dt.write_geojson("/home/elvis/tr.geojson".to_string());
+    //-- save the triangulation in OBJ for debug purposes
+    let _re = dt.write_obj("/home/elvis/tr.obj".to_string());
 }
