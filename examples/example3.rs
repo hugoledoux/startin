@@ -33,5 +33,5 @@ fn main() {
     println!("# vertices {}", dt.number_of_vertices());
     println!("# triangles {}", dt.number_of_triangles());
 
-    println!("{:?}", dt.all_edges());
+    println!("{:?}", dt.all_finite_edges());
 }
