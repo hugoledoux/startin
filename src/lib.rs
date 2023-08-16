@@ -27,7 +27,7 @@
 //!
 //! If you prefer Python, I made bindings: [https://github.com/hugoledoux/startinpy/](https://github.com/hugoledoux/startinpy/)
 //!
-//! There are a few more functions (eg reading GeoTIFF, LAZ) and it works with Numpy.
+//! There are a few more functions (eg reading GeoTIFF/LAZ, exporting GeoJSON/CityJSON) and it works with Numpy.
 //!
 //!
 //! # C interface
