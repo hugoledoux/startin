@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.7.0] - XXX
+## Changed
+- interpolate methods are now in a separate module and thus the way to call them is totally different. Not backwards compatible either, see `/examples/interpol.rs` for how to use them.
+- IDW was added to the list of interpolation, the simplest version with a search radius.
+- functions are now clearer: `all_triangles()` and `all_finite_triangles()`
+- a few bugs were fixed, related to functions used before the triangulation was initialised.
+## Removed
+- the export to GeoJSON was removed in order to keep the dependencies of the library as little as possible. The Python bindings now have that function, you can fetch the code if you need to do this (https://github.com/hugoledoux/startinpy/blob/develop/src/lib.rs#L762)
+
 ## [0.6.2] - 2023-01-04
 ## Changed
 - interpolate_nni() is now faster and better and more stable: the unbounded Voronoi cells are not bounded anymore, instead a trick is used to calculate a fake area and then since the trick is used twice (and values subtracted) then everything cancels out.
