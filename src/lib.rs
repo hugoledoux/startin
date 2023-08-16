@@ -427,7 +427,7 @@ impl Triangulation {
         self.snaptol
     }
 
-    /// Activate/deactive the jump-and-walk strategy for [`locate()`].
+    /// Activate/deactive the jump-and-walk strategy for [`Triangulation::locate()`].
     /// (deactivated by default)
     /// If deactivated, then the walk starts from the last inserted triangle.
     pub fn set_jump_and_walk(&mut self, b: bool) {
@@ -446,7 +446,7 @@ impl Triangulation {
     }
 
     /// Insert a [`Vec`] of [`array`] (`[f64; 3]`) values.
-    /// If [InsertionStrategy::AsIs] is used, then [`insert_one_pt()`] is called
+    /// If [`InsertionStrategy::AsIs`] is used, then [`Triangulation::insert_one_pt()`] is called
     /// for each point in the order given.
     ///
     /// # Arguments
