@@ -22,6 +22,21 @@ fn one_pt() {
 }
 
 #[test]
+fn infinite() {
+    let mut dt = startin::Triangulation::new();
+    let _re = dt.insert_one_pt(1., 1., 1.);
+    let _re = dt.insert_one_pt(2., 1., 2.);
+    let _re = dt.insert_one_pt(2., 2., 3.);
+    let _re = dt.insert_one_pt(1., 2., 4.);
+    let _re = dt.insert_one_pt(1.5, 1.5, 5.);
+
+    assert_eq!(5, dt.number_of_vertices());
+    assert_eq!(4, dt.number_of_triangles());
+    assert_eq!(8, dt.all_triangles().len());
+    assert_eq!(4, dt.all_finite_triangles().len());
+}
+
+#[test]
 fn duplicates() {
     let mut dt = startin::Triangulation::new();
     let _re = dt.insert_one_pt(2.5, 6.3, 4.5);
