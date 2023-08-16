@@ -131,7 +131,7 @@ pub enum InsertionStrategy {
 }
 
 /// A Triangle is a triplet of indices
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Triangle {
     pub v: [usize; 3],
 }
@@ -1061,8 +1061,8 @@ impl Triangulation {
         edges
     }
 
-    /// Returns a `<Vec<Triangle>` of all the finite triangles
-    pub fn all_finite_triangles(&self) -> Vec<Triangle> {
+    /// Returns a `<Vec<Triangle>` of all the (finite + infinite) triangles
+    pub fn all_triangles(&self) -> Vec<Triangle> {
         let mut trs: Vec<Triangle> = Vec::new();
         for (i, star) in self.stars.iter().enumerate() {
             //-- reconstruct triangles
@@ -1071,16 +1071,24 @@ impl Triangulation {
                     // let k = star.l[self.nexti(star.link.len(), j)];
                     let k = star.link[star.link.next_index(j)];
                     if i < k {
-                        let tr = Triangle { v: [i, *value, k] };
-                        if tr.is_infinite() == false {
-                            // println!("{}", tr);
-                            trs.push(tr);
-                        }
+                        trs.push(Triangle { v: [i, *value, k] });
                     }
                 }
             }
         }
         trs
+    }
+
+    /// Returns a `<Vec<Triangle>` of all the finite triangles
+    pub fn all_finite_triangles(&self) -> Vec<Triangle> {
+        let alltrs = self.all_triangles();
+        let mut re: Vec<Triangle> = Vec::new();
+        for t in &alltrs {
+            if t.is_infinite() == false {
+                re.push(t.clone());
+            }
+        }
+        re
     }
 
     /// Validates the Delaunay triangulation:
