@@ -413,7 +413,7 @@ impl Triangulation {
     }
 
     /// Set a snap tolerance when inserting new points: if the newly inserted
-    /// one is closer than snap_tolerance to another one, then it is not inserted.
+    /// one is closer than `snap_tol` to another one, then it is not inserted.
     /// Avoids having very close vertices (like at 0.00007mm)
     /// Default is 0.001unit (thus 1mm for most datasets).
     pub fn set_snap_tolerance(&mut self, snaptol: f64) -> f64 {
@@ -427,32 +427,32 @@ impl Triangulation {
         self.snaptol
     }
 
-    /// Activate/deactive the jump-and-walk strategy for locate().
+    /// Activate/deactive the jump-and-walk strategy for [`locate()`].
     /// (deactivated by default)
     /// If deactivated, then the walk starts from the last inserted triangle.
     pub fn set_jump_and_walk(&mut self, b: bool) {
         self.jump_and_walk = b;
     }
 
-    /// Is using robut predicates? (<https://docs.rs/robust>)
+    /// Is using robut predicates (with [crate robust](https://docs.rs/robust))?
     /// (activated by default)
     pub fn is_using_robust_predicates(&self) -> bool {
         self.robust_predicates
     }
 
-    /// Activate/deactivate robust predictates (<https://docs.rs/robust>)
+    /// Activate/deactivate [robust predictates](https://docs.rs/robust)
     pub fn use_robust_predicates(&mut self, b: bool) {
         self.robust_predicates = b;
     }
 
-    /// Insert a Vec of arrays (`[x,y,z]`) values.
-    /// If [InsertionStrategy::AsIs] is used, then [`insert_one_pt()`][Self::insert_one_pt()] is called
+    /// Insert a [`Vec`] of [`array`] (`[f64; 3]`) values.
+    /// If [InsertionStrategy::AsIs] is used, then [`insert_one_pt()`] is called
     /// for each point in the order given.
     ///
     /// # Arguments
     ///
-    /// * `pts` - a [Vec] of arrays
-    /// * `strategy` - the strategy to use for the insertion
+    /// * `pts` - a [`Vec`] of `[f64; 3]`
+    /// * `strategy` - the [`InsertionStrategy`] to use for the insertion
     pub fn insert(&mut self, pts: &Vec<[f64; 3]>, strategy: InsertionStrategy) {
         match strategy {
             InsertionStrategy::BBox => {
@@ -657,7 +657,7 @@ impl Triangulation {
     }
 
     /// Returns the coordinates of the vertex v.
-    /// A [StartinError] is returned if `vi` doesn't exist
+    /// A [`StartinError`] is returned if `vi` doesn't exist
     /// or is a removed vertex.
     pub fn get_point(&self, vi: usize) -> Result<Vec<f64>, StartinError> {
         match self.is_vertex_removed(vi) {
@@ -669,6 +669,7 @@ impl Triangulation {
         }
     }
 
+    /// Returns the 3 adjacents (finite + infinite) [`Triangle`] to a triangle.
     pub fn adjacent_triangles_to_triangle(
         &self,
         tr: &Triangle,
@@ -698,7 +699,7 @@ impl Triangulation {
         Ok(trs)
     }
 
-    /// Returns a Vec of Triangles (finite + infinite) to the vertex v.
+    /// Returns a [`Vec`] of [`Triangle`]s (finite + infinite) to the vertex `vi`.
     pub fn incident_triangles_to_vertex(&self, vi: usize) -> Result<Vec<Triangle>, StartinError> {
         match self.is_vertex_removed(vi) {
             Err(why) => return Err(why),
@@ -746,7 +747,7 @@ impl Triangulation {
         }
     }
 
-    /// Returns whether a triplet of indices is a Triangle in the triangulation.
+    /// Returns whether a triplet of indices is a [`Triangle`] in the triangulation.
     pub fn is_triangle(&self, tr: &Triangle) -> bool {
         if tr.v[0] >= self.stars.len() || tr.v[1] >= self.stars.len() || tr.v[2] >= self.stars.len()
         {
@@ -764,7 +765,7 @@ impl Triangulation {
         }
     }
 
-    /// Returns whether a Triangle is finite, or not
+    /// Returns whether a [`Triangle`] is finite, or not
     pub fn is_finite(&self, tr: &Triangle) -> bool {
         if tr.is_infinite() {
             return false;
@@ -851,19 +852,19 @@ impl Triangulation {
         return self.stars[0].link.len();
     }
 
-    /// Returns true if the vertex v is part of the boundary of the convex
-    /// hull of the dataset; false otherwise.
-    pub fn is_vertex_convex_hull(&self, v: usize) -> bool {
-        if v == 0 {
+    /// Returns `true` if the vertex `vi` is part of the boundary of the convex
+    /// hull of the dataset; `false` otherwise.
+    pub fn is_vertex_convex_hull(&self, vi: usize) -> bool {
+        if vi == 0 {
             return false;
         }
-        if self.is_vertex_valid(v) == false {
+        if self.is_vertex_valid(vi) == false {
             return false;
         }
-        self.stars[v].link.contains_infinite_vertex()
+        self.stars[vi].link.contains_infinite_vertex()
     }
 
-    /// Returns, if it exists, the [`Triangle`] containing (px,py).
+    /// Returns, if it exists, the [`Triangle`] containing `(px, py)`.
     /// If it is direction on a vertex/edge, then one is randomly chosen.
     pub fn locate(&self, px: f64, py: f64) -> Result<Triangle, StartinError> {
         if self.is_init == false {
@@ -877,8 +878,8 @@ impl Triangulation {
         }
     }
 
-    /// Returns closest point (in 2D) to a query point (x,y).
-    /// if (`px`, `py`) is outside the convex hull then [StartinError::OutsideConvexHull] is raise
+    /// Returns closest point (in 2D) to a query point `(x, y)`.
+    /// if `(px, py)` is outside the convex hull then [`StartinError::OutsideConvexHull`] is raised.
     pub fn closest_point(&self, px: f64, py: f64) -> Result<usize, StartinError> {
         let re = self.locate(px, py);
         if re.is_err() {
@@ -1037,7 +1038,7 @@ impl Triangulation {
         self.stars[tr.v[2]].link.get_next_vertex(tr.v[1]).unwrap()
     }
 
-    /// Returns a `Vec<Vec<f64>>` of all the vertices
+    /// Returns a [`Vec`]<[`Vec`]<[`f64`]>> of all the vertices
     /// (including the infinite one and the removed ones)
     pub fn all_vertices(&self) -> Vec<Vec<f64>> {
         let mut pts: Vec<Vec<f64>> = Vec::with_capacity(self.stars.len() - 1);
@@ -1047,7 +1048,7 @@ impl Triangulation {
         pts
     }
 
-    /// Returns a `<Vec<usize>` of all the finite edges (implicitly grouped by 2)
+    /// Returns a [`Vec`]<[`usize`]> of all the finite edges (implicitly grouped by 2)
     pub fn all_finite_edges(&self) -> Vec<usize> {
         let mut edges: Vec<usize> = Vec::new();
         for i in 1..self.stars.len() {
@@ -1061,7 +1062,7 @@ impl Triangulation {
         edges
     }
 
-    /// Returns a `<Vec<Triangle>` of all the (finite + infinite) triangles
+    /// Returns a [`Vec`]<[`Triangle`]> of all the (finite + infinite) triangles
     pub fn all_triangles(&self) -> Vec<Triangle> {
         let mut trs: Vec<Triangle> = Vec::new();
         for (i, star) in self.stars.iter().enumerate() {
@@ -1079,7 +1080,7 @@ impl Triangulation {
         trs
     }
 
-    /// Returns a `<Vec<Triangle>` of all the finite triangles
+    /// Returns a [`Vec`]<[`Triangle`]> of all the finite triangles
     pub fn all_finite_triangles(&self) -> Vec<Triangle> {
         let alltrs = self.all_triangles();
         let mut re: Vec<Triangle> = Vec::new();
@@ -1269,7 +1270,7 @@ impl Triangulation {
         }
     }
 
-    /// Removes the vertex `vi` from the Triangulation and updates for the "Delaunay-ness".
+    /// Removes the vertex `vi` from the [`Triangulation`] and updates for the "Delaunay-ness".
     ///
     /// The vertex is not removed from memory but flagged as removed, thus all the other vertices
     /// keep their IDs.
@@ -1355,7 +1356,7 @@ impl Triangulation {
         Ok(self.stars.len() - 1)
     }
 
-    /// Write an OBJ file to disk.
+    /// Write an [OBJ file](https://en.wikipedia.org/wiki/Wavefront_.obj_file) to disk.
     pub fn write_obj(&self, path: String) -> std::io::Result<()> {
         let trs = self.all_finite_triangles();
         let mut f = File::create(path)?;
@@ -1393,7 +1394,7 @@ impl Triangulation {
         Ok(())
     }
 
-    /// Write a PLY file to disk.
+    /// Write a [PLY file](https://en.wikipedia.org/wiki/PLY_(file_format)) to disk.
     pub fn write_ply(&self, path: String) -> std::io::Result<()> {
         let trs = self.all_finite_triangles();
         let mut f = File::create(path)?;
@@ -1471,7 +1472,7 @@ impl Triangulation {
     ///
     /// * `vi` - the index of the vertex
     /// * `ignore_infinity` - calculate the area even is `vi` is on the convex hull.
-    ///    This is used by interpolate_nni() when neighbours have no area, this bounds
+    ///    This is used by [`interpolation::NNI`] when neighbours have no area, this bounds
     ///    arbitrarily the area and because we take the different the interpolated value
     ///    is the same at the end.
     pub fn voronoi_cell_area(&self, vi: usize, ignore_infinity: bool) -> Option<f64> {
@@ -1568,7 +1569,7 @@ impl Triangulation {
         }
     }
 
-    /// Collect garbage, that is remove from memory (the Vec of stars) the vertices
+    /// Collect garbage, that is remove from memory the vertices
     /// marked as removed.
     ///
     /// Watch out: the vertices get new IDs (and thus the triangles) too. And this can
