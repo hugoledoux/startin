@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [0.7.0] - XXX
+## [0.7.0] - 2023-08-16
 ## Changed
 - interpolate methods are now in a separate module and thus the way to call them is totally different. Not backwards compatible either, see `/examples/interpol.rs` for how to use them.
 - IDW was added to the list of interpolation, the simplest version with a search radius.
@@ -127,6 +127,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - first release and upload to crates.io
 
+[0.7.0]: https://github.com/hugoledoux/startin/compare/0.6.1...0.7.0
 [0.6.2]: https://github.com/hugoledoux/startin/compare/0.6.1...0.6.2
 [0.6.1]: https://github.com/hugoledoux/startin/compare/0.6.0...0.6.1
 [0.6.0]: https://github.com/hugoledoux/startin/compare/0.5.3...0.6.0
