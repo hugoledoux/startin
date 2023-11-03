@@ -297,16 +297,18 @@ impl fmt::Display for Link {
 /// A triangulation is a collection of Stars, each Star has its (x,y,z)
 /// and a Link (an array of adjacent vertices, ordered CCW)
 #[repr(C)]
-struct Star {
-    pt: [f64; 3],
+struct Star<T> {
+    pt: [f64; 2],
+    data: T,
     link: Link,
 }
 
-impl Star {
-    fn new(x: f64, y: f64, z: f64) -> Star {
+impl<T: Default> Star<T> {
+    fn new(x: f64, y: f64, d: T) -> Star<T> {
         let l = Link::new();
         Star {
-            pt: [x, y, z],
+            pt: [x, y],
+            data: d,
             link: l,
         }
     }
@@ -317,8 +319,8 @@ impl Star {
 
 /// Represents a triangulation
 #[repr(C)]
-pub struct Triangulation {
-    stars: Vec<Star>,
+pub struct Triangulation<T> {
+    stars: Vec<Star<T>>,
     snaptol: f64,
     cur: usize,
     is_init: bool,
@@ -327,12 +329,12 @@ pub struct Triangulation {
     removed_indices: Vec<usize>,
 }
 
-impl Triangulation {
-    pub fn new() -> Triangulation {
+impl<T: Default> Triangulation<T> {
+    pub fn new() -> Triangulation<T> {
         // TODO: allocate a certain number?
         // let mut l: Vec<Star> = Vec::with_capacity(100000);
-        let mut l: Vec<Star> = Vec::new();
-        l.push(Star::new(f64::INFINITY, f64::INFINITY, f64::INFINITY));
+        let mut l: Vec<Star<T>> = Vec::new();
+        l.push(Star::new(f64::INFINITY, f64::INFINITY, T::default()));
         let es: Vec<usize> = Vec::new();
         Triangulation {
             stars: l,
@@ -345,8 +347,8 @@ impl Triangulation {
         }
     }
 
-    fn insert_one_pt_init_phase(&mut self, x: f64, y: f64, z: f64) -> Result<usize, usize> {
-        let p: [f64; 3] = [x, y, z];
+    fn insert_one_pt_init_phase(&mut self, x: f64, y: f64, data: T) -> Result<usize, usize> {
+        let p: [f64; 2] = [x, y];
         for i in 1..self.stars.len() {
             if geom::distance2d_squared(&self.stars[i].pt, &p) <= (self.snaptol * self.snaptol) {
                 return Err(i);
@@ -354,7 +356,7 @@ impl Triangulation {
         }
         self.collect_garbage();
         //-- add point to Triangulation and create its empty star
-        self.stars.push(Star::new(x, y, z));
+        self.stars.push(Star::new(x, y, data));
         //-- form the first triangles (finite + infinite)
         let l = self.stars.len();
         if l >= 4 {
@@ -453,21 +455,23 @@ impl Triangulation {
     ///
     /// * `pts` - a [`Vec`] of `[f64; 3]`
     /// * `strategy` - the [`InsertionStrategy`] to use for the insertion
-    pub fn insert(&mut self, pts: &Vec<[f64; 3]>, strategy: InsertionStrategy) {
+    pub fn insert(&mut self, pts: Vec<(f64, f64, T)>, strategy: InsertionStrategy) {
         match strategy {
             InsertionStrategy::BBox => {
                 //-- find the bbox
-                let mut bbox = geom::bbox2d(&pts);
+
+                let pts_2d = pts.iter().map(|(x,y,_)| [*x,*y]).collect::<Vec<_>>();
+                let mut bbox = geom::bbox2d(&pts_2d);
                 //-- "padding" of the bbox to avoid conflicts
                 bbox[0] = bbox[0] - 10.0;
                 bbox[1] = bbox[1] - 10.0;
                 bbox[2] = bbox[2] + 10.0;
                 bbox[3] = bbox[3] + 10.0 ;
-                self.insert_with_bbox(&pts, &bbox);
+                self.insert_with_bbox(pts, &bbox);
             }
             InsertionStrategy::AsIs => {
-                for each in pts {
-                    let _re = self.insert_one_pt(each[0], each[1], each[2]);
+                for (x, y, data) in pts.into_iter() {
+                    let _re = self.insert_one_pt(x, y, data);
                 }
             }
             // InsertionStrategy::Sprinkle => println!("Sprinkle not implemented yet"),
@@ -475,15 +479,15 @@ impl Triangulation {
         }
     }
 
-    fn insert_with_bbox(&mut self, pts: &Vec<[f64; 3]>, bbox: &[f64; 4]) {
+    fn insert_with_bbox(&mut self, pts: Vec<(f64, f64, T)>, bbox: &[f64; 4]) {
         let mut c4: Vec<usize> = Vec::new();
         //-- insert the 4 corners
-        c4.push(self.insert_one_pt(bbox[0], bbox[1], 0.0).unwrap());
-        c4.push(self.insert_one_pt(bbox[2], bbox[1], 0.0).unwrap());
-        c4.push(self.insert_one_pt(bbox[2], bbox[3], 0.0).unwrap());
-        c4.push(self.insert_one_pt(bbox[0], bbox[3], 0.0).unwrap());
-        for each in pts {
-            let _re = self.insert_one_pt(each[0], each[1], each[2]);
+        c4.push(self.insert_one_pt(bbox[0], bbox[1], T::default()).unwrap());
+        c4.push(self.insert_one_pt(bbox[2], bbox[1], T::default()).unwrap());
+        c4.push(self.insert_one_pt(bbox[2], bbox[3], T::default()).unwrap());
+        c4.push(self.insert_one_pt(bbox[0], bbox[3], T::default()).unwrap());
+        for (x, y, data) in pts {
+            let _re = self.insert_one_pt(x, y, data);
         }
         //-- remove the 4 corners
         for each in &c4 {
@@ -497,12 +501,12 @@ impl Triangulation {
     /// Returns the vertex ID of the point if the vertex didn't exist.
     /// If there was a vertex at that location, an Error is thrown with the already
     /// existing vertex ID.
-    pub fn insert_one_pt(&mut self, px: f64, py: f64, pz: f64) -> Result<usize, usize> {
+    pub fn insert_one_pt(&mut self, px: f64, py: f64, data: T) -> Result<usize, usize> {
         if self.is_init == false {
-            return self.insert_one_pt_init_phase(px, py, pz);
+            return self.insert_one_pt_init_phase(px, py, data);
         }
         //-- walk
-        let p: [f64; 3] = [px, py, pz];
+        let p: [f64; 2] = [px, py];
         let tr = self.walk(&p);
         // println!("STARTING TR: {}", tr);
         if geom::distance2d_squared(&self.stars[tr.v[0]].pt, &p) <= (self.snaptol * self.snaptol) {
@@ -517,14 +521,14 @@ impl Triangulation {
         //-- ok we now insert the point in the data structure
         let pi: usize;
         if self.removed_indices.is_empty() == true {
-            self.stars.push(Star::new(px, py, pz));
+            self.stars.push(Star::new(px, py, data));
             pi = self.stars.len() - 1;
         } else {
             // self.stars.push(Star::new(px, py, pz));
             pi = self.removed_indices.pop().unwrap();
             self.stars[pi].pt[0] = px;
             self.stars[pi].pt[1] = py;
-            self.stars[pi].pt[2] = pz;
+            self.stars[pi].data = data;
         }
         //-- flip13()
         self.flip13(pi, &tr);
@@ -1591,8 +1595,7 @@ impl Triangulation {
         self.removed_indices.clear();
     }
 }
-
-impl fmt::Display for Triangulation {
+impl<T: Default> fmt::Display for Triangulation<T> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         fmt.write_str("======== TRIANGULATION ========\n")?;
         fmt.write_str(&format!("# vertices: {:19}\n", self.number_of_vertices()))?;
