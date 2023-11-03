@@ -2,7 +2,7 @@ use startin;
 
 #[test]
 fn empty() {
-    let dt = startin::Triangulation::new();
+    let dt = startin::Triangulation::<f64>::new();
     assert_eq!(0, dt.number_of_vertices());
     assert_eq!(0, dt.number_of_triangles());
 }

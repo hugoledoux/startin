@@ -51,7 +51,7 @@ fn read_xyz_file() -> Result<Vec<[f64; 3]>, Box<dyn Error>> {
     let mut rdr = csv::ReaderBuilder::new()
         .delimiter(b' ')
         .from_reader(io::stdin());
-    let mut vpts: Vec<[f64; 3]> = Vec::new();
+    let mut vpts = Vec::new();
     for result in rdr.deserialize() {
         let record: CSVPoint = result?;
         vpts.push([record.x, record.y, record.z]);

@@ -22,7 +22,7 @@ fn main() {
     // println!("rasterband y-size: {:?}", rasterband.y_size());
     // println!("no_data: {:?}", rasterband.no_data_value());
 
-    // let mut pts: Vec<[f64; 3]> = Vec::new();
+    // let mut pts = Vec::new();
 
     // let nodatavalue = rasterband.no_data_value().unwrap();
     // let xsize = rasterband.x_size();

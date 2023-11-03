@@ -3,18 +3,18 @@ use crate::startin::Triangulation;
 use rand::prelude::*;
 use startin;
 
-fn four_points() -> Triangulation {
-    let mut pts: Vec<[f64; 3]> = Vec::new();
-    pts.push([0.0, 0.0, 1.0]);
-    pts.push([10.0, 0.0, 2.0]);
-    pts.push([10.0, 10.0, 3.0]);
-    pts.push([0.0, 10.0, 4.0]);
+fn four_points() -> Triangulation<f64> {
+    let mut pts = Vec::new();
+    pts.push((0.0, 0.0, 1.0));
+    pts.push((10.0, 0.0, 2.0));
+    pts.push((10.0, 10.0, 3.0));
+    pts.push((0.0, 10.0, 4.0));
     let mut dt = startin::Triangulation::new();
-    dt.insert(&pts, startin::InsertionStrategy::AsIs);
+    dt.insert(pts, startin::InsertionStrategy::AsIs);
     dt
 }
 
-fn random_points_500() -> Triangulation {
+fn random_points_500() -> Triangulation<f64> {
     let mut dt = startin::Triangulation::new();
     let mut rng = rand::thread_rng();
     for _i in 0..500 {
@@ -28,7 +28,7 @@ fn random_points_500() -> Triangulation {
 
 #[test]
 fn empty() {
-    let mut dt = startin::Triangulation::new();
+    let mut dt = startin::Triangulation::<f64>::new();
     let i_nn = startin::interpolation::NN {};
     let i_tin = startin::interpolation::TIN {};
     let i_lap = startin::interpolation::Laplace {};

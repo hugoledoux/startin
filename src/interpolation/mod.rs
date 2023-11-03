@@ -1,19 +1,9 @@
-use std::ops::Add;
-use std::ops::AddAssign;
-use std::ops::Div;
-use std::ops::Mul;
-
+use crate::Attr;
 use crate::StartinError;
 use crate::Triangulation;
 use kdbush::KDBush;
 
 use crate::geom;
-
-pub trait Interpolatable:
-    AddAssign + Add + Mul<f64, Output = Self> + Div<f64, Output = Self> + Default + Clone
-{
-}
-impl Interpolatable for f64 {}
 
 pub trait Interpolant<T> {
     fn interpolate(
@@ -38,7 +28,7 @@ pub struct IDW {
     pub radius: f64,
     pub power: f64,
 }
-impl<T: Interpolatable> Interpolant<T> for IDW {
+impl<T: Attr> Interpolant<T> for IDW {
     fn interpolate(
         &self,
         dt: &mut Triangulation<T>,
@@ -65,7 +55,7 @@ impl<T: Interpolatable> Interpolant<T> for IDW {
                     let d = geom::distance2d(p, &dt.stars[*each].pt);
                     if d <= dt.get_snap_tolerance() {
                         exisiting = true;
-                        value = dt.stars[*each].data.clone();
+                        value = dt.stars[*each].attr.clone();
                         break;
                     }
                     weights.push(d.powf(-self.power));
@@ -75,7 +65,7 @@ impl<T: Interpolatable> Interpolant<T> for IDW {
                 } else {
                     let mut z = T::default();
                     for (i, w) in weights.iter().enumerate() {
-                        z += dt.stars[ns[i]].data.clone() * *w;
+                        z += dt.stars[ns[i]].attr.clone() * *w;
                     }
                     re.push(Ok(z / weights.iter().sum::<f64>()));
                 }
@@ -91,7 +81,7 @@ impl<T: Interpolatable> Interpolant<T> for IDW {
 /// is a variation of nni with distances instead of stolen areas, which yields a much
 /// faster implementation.
 pub struct Laplace {}
-impl<T: Interpolatable> Interpolant<T> for Laplace {
+impl<T: Attr> Interpolant<T> for Laplace {
     fn interpolate(
         &self,
         dt: &mut Triangulation<T>,
@@ -137,7 +127,7 @@ impl<T: Interpolatable> Interpolant<T> for Laplace {
                                 }
                                 let mut z = T::default();
                                 for (i, v) in l.iter().enumerate() {
-                                    z += dt.stars[*v].data.clone() * weights[i];
+                                    z += dt.stars[*v].attr.clone() * weights[i];
                                 }
                                 let sumweights: f64 = weights.iter().sum();
                                 //-- delete the interpolation location point
@@ -145,7 +135,7 @@ impl<T: Interpolatable> Interpolant<T> for Laplace {
                                 re.push(Ok(z / sumweights));
                             }
                         }
-                        Err(e) => re.push(Ok(dt.stars[e].data.clone())),
+                        Err(e) => re.push(Ok(dt.stars[e].attr.clone())),
                     }
                 }
                 Err(_e) => re.push(Err(StartinError::OutsideConvexHull)),
@@ -157,7 +147,7 @@ impl<T: Interpolatable> Interpolant<T> for Laplace {
 
 /// Estimation of z-value with interpolation: nearest/closest neighbour
 pub struct NN {}
-impl<T: Default + Clone> Interpolant<T> for NN {
+impl<T: Attr> Interpolant<T> for NN {
     fn interpolate(
         &self,
         dt: &mut Triangulation<T>,
@@ -172,7 +162,7 @@ impl<T: Default + Clone> Interpolant<T> for NN {
             }
             //-- TODO: should interpolate_nn() extrapolate?
             match dt.closest_point(p[0], p[1]) {
-                Ok(vi) => re.push(Ok(dt.stars[vi].data.clone())),
+                Ok(vi) => re.push(Ok(dt.stars[vi].attr.clone())),
                 Err(why) => re.push(Err(why)),
             }
         }
@@ -182,7 +172,7 @@ impl<T: Default + Clone> Interpolant<T> for NN {
 
 /// Estimation of z-value with interpolation: linear in TIN
 pub struct TIN {}
-impl<T: Interpolatable> Interpolant<T> for TIN {
+impl<T: Attr> Interpolant<T> for TIN {
     fn interpolate(
         &self,
         dt: &mut Triangulation<T>,
@@ -207,9 +197,9 @@ impl<T: Interpolatable> Interpolant<T> for TIN {
                     let a2: f64 =
                         geom::area_triangle(&q, &dt.stars[tr.v[0]].pt, &dt.stars[tr.v[1]].pt);
                     let mut total = T::default();
-                    total += dt.stars[tr.v[0]].data.clone() * a0;
-                    total += dt.stars[tr.v[1]].data.clone() * a1;
-                    total += dt.stars[tr.v[2]].data.clone() * a2;
+                    total += dt.stars[tr.v[0]].attr.clone() * a0;
+                    total += dt.stars[tr.v[1]].attr.clone() * a1;
+                    total += dt.stars[tr.v[2]].attr.clone() * a2;
                     re.push(Ok(total / (a0 + a1 + a2)));
                 }
                 Err(_e) => re.push(Err(StartinError::OutsideConvexHull)),
@@ -224,7 +214,7 @@ impl<T: Interpolatable> Interpolant<T> for TIN {
 pub struct NNI {
     pub precompute: bool,
 }
-impl<T: Interpolatable> Interpolant<T> for NNI {
+impl<T: Attr> Interpolant<T> for NNI {
     fn interpolate(
         &self,
         dt: &mut Triangulation<T>,
@@ -282,12 +272,12 @@ impl<T: Interpolatable> Interpolant<T> for NNI {
                                 }
                                 let mut z: T = T::default();
                                 for (i, nn) in nns.iter().enumerate() {
-                                    z += dt.stars[*nn].data.clone() * weights[i];
+                                    z += dt.stars[*nn].attr.clone() * weights[i];
                                 }
                                 re.push(Ok(z / newarea));
                             }
                         }
-                        Err(e) => re.push(Ok(dt.stars[e].data.clone())),
+                        Err(e) => re.push(Ok(dt.stars[e].attr.clone())),
                     }
                 }
                 Err(_e) => re.push(Err(StartinError::OutsideConvexHull)),
