@@ -679,23 +679,17 @@ impl Triangulation {
         }
         let mut trs: Vec<Triangle> = Vec::new();
         let mut opp = self.stars[tr.v[2]].link.get_next_vertex(tr.v[1]).unwrap();
-        if opp != 0 {
-            trs.push(Triangle {
-                v: [tr.v[1], opp, tr.v[2]],
-            });
-        }
+        trs.push(Triangle {
+            v: [tr.v[1], opp, tr.v[2]],
+        });
         opp = self.stars[tr.v[0]].link.get_next_vertex(tr.v[2]).unwrap();
-        if opp != 0 {
-            trs.push(Triangle {
-                v: [tr.v[2], opp, tr.v[0]],
-            });
-        }
+        trs.push(Triangle {
+            v: [tr.v[2], opp, tr.v[0]],
+        });
         opp = self.stars[tr.v[1]].link.get_next_vertex(tr.v[0]).unwrap();
-        if opp != 0 {
-            trs.push(Triangle {
-                v: [tr.v[0], opp, tr.v[1]],
-            });
-        }
+        trs.push(Triangle {
+            v: [tr.v[0], opp, tr.v[1]],
+        });
         Ok(trs)
     }
 
