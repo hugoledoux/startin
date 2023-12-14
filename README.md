@@ -21,18 +21,18 @@ Robust arithmetic for the geometric predicates are used ([Shewchuk's predicates]
 There are a few interpolation functions implemented: (1) nearest-neighbour, (2) linear in TIN, (3) Laplace, (4) natural neighbour (aka Sibson's interpolation), (5) IDW with search-radius.
 
 
+# Python bindings
+
+I also made Python bindings, called "startinpy": [https://github.com/hugoledoux/startinpy/](https://github.com/hugoledoux/startinpy/).
+
+There are a few more functions (eg reading GeoTIFF, LAZ), the docs is better, and it all input/output are NumPy arrays.
+
+
 # Web-demo with WebAssembly
 
 Rust can be compiled to [WebAssembly](https://www.rust-lang.org/what/wasm), and you can see a demo of some of the possibilities of startin (all computations are done locally and it's fast!).
 
 [--> web-demo](https://hugoledoux.github.io/startin_wasm/)
-
-
-# Python bindings
-
-If you prefer Python, I made bindings: [https://github.com/hugoledoux/startinpy/](https://github.com/hugoledoux/startinpy/)
-
-There are a few more functions (eg reading GeoTIFF, LAZ) and it works with Numpy.
 
 
 # C interface
