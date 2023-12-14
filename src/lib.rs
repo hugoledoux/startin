@@ -98,7 +98,7 @@
 //! }
 //! ```
 
-mod geom;
+pub mod geom;
 pub mod interpolation;
 
 #[cfg(feature = "c_api")]
