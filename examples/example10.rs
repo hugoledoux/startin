@@ -47,20 +47,20 @@ fn main() {
     //     println!("Duplicates? none.\n");
     // }
 
-    let _re = dt.insert(&vec, startin::InsertionStrategy::AsIs);
+    let _re = dt.insert(vec, startin::InsertionStrategy::AsIs);
     // let _re = dt.insert(&vec, Some(vec![434366.0, 19722.0, 900289.0, 337914.0]));
     println!("{}", dt);
 }
 
-fn read_xyz_file() -> Result<Vec<[f64; 3]>, Box<dyn Error>> {
+fn read_xyz_file() -> Result<Vec<(f64, f64, f64)>, Box<dyn Error>> {
     let mut rdr = csv::ReaderBuilder::new()
         .delimiter(b' ')
         .from_reader(io::stdin());
-    let mut vpts: Vec<[f64; 3]> = Vec::new();
+    let mut vpts = Vec::new();
     for result in rdr.deserialize() {
         let record: CSVPoint = result?;
         if record.z != -9999.0 {
-            vpts.push([record.x, record.y, record.z]);
+            vpts.push((record.x, record.y, record.z));
         }
     }
     Ok(vpts)

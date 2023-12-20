@@ -1,17 +1,17 @@
 extern crate startin;
 
 fn main() {
-    let mut pts: Vec<[f64; 3]> = Vec::new();
-    pts.push([0.0, 0.0, 12.5]);
-    pts.push([1.0, 0.0, 7.65]);
-    pts.push([1.1, 1.1, 33.0]);
-    pts.push([0.0, 1.0, 33.0]);
-    pts.push([0.5, 0.9, 33.0]);
-    pts.push([0.9, 0.5, 33.0]);
-    pts.push([0.67, 0.66, 33.0]);
+    let mut pts = Vec::new();
+    pts.push((0.0, 0.0, 12.5));
+    pts.push((1.0, 0.0, 7.65));
+    pts.push((1.1, 1.1, 33.0));
+    pts.push((0.0, 1.0, 33.0));
+    pts.push((0.5, 0.9, 33.0));
+    pts.push((0.9, 0.5, 33.0));
+    pts.push((0.67, 0.66, 33.0));
     let mut dt = startin::Triangulation::new();
     dt.set_jump_and_walk(false);
-    dt.insert(&pts, startin::InsertionStrategy::AsIs);
+    dt.insert(pts, startin::InsertionStrategy::AsIs);
     println!("{}", dt.printme(true));
 
     // let _re = dt.remove(3);

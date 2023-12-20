@@ -1,22 +1,23 @@
+use crate::Attr;
 use crate::StartinError;
 use crate::Triangulation;
 use kdbush::KDBush;
 
 use crate::geom;
 
-pub trait Interpolant {
+pub trait Interpolant<T> {
     fn interpolate(
         &self,
-        dt: &mut Triangulation,
+        dt: &mut Triangulation<T>,
         locations: &Vec<[f64; 2]>,
-    ) -> Vec<Result<f64, StartinError>>;
+    ) -> Vec<Result<T, StartinError>>;
 }
 
-pub fn interpolate(
-    interpolant: &impl Interpolant,
-    dt: &mut Triangulation,
+pub fn interpolate<T>(
+    interpolant: &impl Interpolant<T>,
+    dt: &mut Triangulation<T>,
     locs: &Vec<[f64; 2]>,
-) -> Vec<Result<f64, StartinError>> {
+) -> Vec<Result<T, StartinError>> {
     interpolant.interpolate(dt, locs)
 }
 
@@ -27,12 +28,12 @@ pub struct IDW {
     pub radius: f64,
     pub power: f64,
 }
-impl Interpolant for IDW {
+impl<T: Attr> Interpolant<T> for IDW {
     fn interpolate(
         &self,
-        dt: &mut Triangulation,
+        dt: &mut Triangulation<T>,
         locs: &Vec<[f64; 2]>,
-    ) -> Vec<Result<f64, StartinError>> {
+    ) -> Vec<Result<T, StartinError>> {
         //-- build a kd-tree
         let mut allpts: Vec<(f64, f64)> = Vec::new();
         for i in 0..dt.stars.len() {
@@ -40,7 +41,7 @@ impl Interpolant for IDW {
         }
         let index = KDBush::create(allpts, kdbush::DEFAULT_NODE_SIZE);
         //-- perform interpolations
-        let mut re: Vec<Result<f64, StartinError>> = Vec::new();
+        let mut re = Vec::new();
         for p in locs {
             let mut ns: Vec<usize> = Vec::new();
             index.within(p[0], p[1], self.radius, |id| ns.push(id));
@@ -49,12 +50,12 @@ impl Interpolant for IDW {
             } else {
                 let mut weights: Vec<f64> = Vec::new();
                 let mut exisiting = false;
-                let mut value: f64 = std::f64::MAX;
+                let mut value: T = T::default();
                 for each in &ns {
                     let d = geom::distance2d(p, &dt.stars[*each].pt);
                     if d <= dt.get_snap_tolerance() {
                         exisiting = true;
-                        value = dt.stars[*each].pt[2];
+                        value = dt.stars[*each].attr.clone();
                         break;
                     }
                     weights.push(d.powf(-self.power));
@@ -62,9 +63,9 @@ impl Interpolant for IDW {
                 if exisiting {
                     re.push(Ok(value));
                 } else {
-                    let mut z = 0_f64;
+                    let mut z = T::default();
                     for (i, w) in weights.iter().enumerate() {
-                        z += dt.stars[ns[i]].pt[2] * w;
+                        z += dt.stars[ns[i]].attr.clone() * *w;
                     }
                     re.push(Ok(z / weights.iter().sum::<f64>()));
                 }
@@ -80,13 +81,13 @@ impl Interpolant for IDW {
 /// is a variation of nni with distances instead of stolen areas, which yields a much
 /// faster implementation.
 pub struct Laplace {}
-impl Interpolant for Laplace {
+impl<T: Attr> Interpolant<T> for Laplace {
     fn interpolate(
         &self,
-        dt: &mut Triangulation,
+        dt: &mut Triangulation<T>,
         locs: &Vec<[f64; 2]>,
-    ) -> Vec<Result<f64, StartinError>> {
-        let mut re: Vec<Result<f64, StartinError>> = Vec::new();
+    ) -> Vec<Result<T, StartinError>> {
+        let mut re: Vec<Result<T, StartinError>> = Vec::new();
         for p in locs {
             //-- cannot interpolate if no TIN
             if dt.is_init == false {
@@ -97,7 +98,7 @@ impl Interpolant for Laplace {
             let loc = dt.locate(p[0], p[1]);
             match loc {
                 Ok(_tr) => {
-                    match dt.insert_one_pt(p[0], p[1], 0.) {
+                    match dt.insert_one_pt(p[0], p[1], T::default()) {
                         Ok(pi) => {
                             //-- no extrapolation
                             if dt.is_vertex_convex_hull(pi) {
@@ -124,9 +125,9 @@ impl Interpolant for Laplace {
                                     let w = geom::distance2d(&dt.stars[pi].pt, &dt.stars[*v].pt);
                                     weights.push(e / w);
                                 }
-                                let mut z: f64 = 0.0;
+                                let mut z = T::default();
                                 for (i, v) in l.iter().enumerate() {
-                                    z += weights[i] * dt.stars[*v].pt[2];
+                                    z += dt.stars[*v].attr.clone() * weights[i];
                                 }
                                 let sumweights: f64 = weights.iter().sum();
                                 //-- delete the interpolation location point
@@ -134,7 +135,7 @@ impl Interpolant for Laplace {
                                 re.push(Ok(z / sumweights));
                             }
                         }
-                        Err(e) => re.push(Ok(dt.stars[e].pt[2])),
+                        Err(e) => re.push(Ok(dt.stars[e].attr.clone())),
                     }
                 }
                 Err(_e) => re.push(Err(StartinError::OutsideConvexHull)),
@@ -146,13 +147,13 @@ impl Interpolant for Laplace {
 
 /// Estimation of z-value with interpolation: nearest/closest neighbour
 pub struct NN {}
-impl Interpolant for NN {
+impl<T: Attr> Interpolant<T> for NN {
     fn interpolate(
         &self,
-        dt: &mut Triangulation,
+        dt: &mut Triangulation<T>,
         locs: &Vec<[f64; 2]>,
-    ) -> Vec<Result<f64, StartinError>> {
-        let mut re: Vec<Result<f64, StartinError>> = Vec::new();
+    ) -> Vec<Result<T, StartinError>> {
+        let mut re = Vec::new();
         for p in locs {
             //-- cannot interpolation if no TIN
             if dt.is_init == false {
@@ -161,7 +162,7 @@ impl Interpolant for NN {
             }
             //-- TODO: should interpolate_nn() extrapolate?
             match dt.closest_point(p[0], p[1]) {
-                Ok(vi) => re.push(Ok(dt.stars[vi].pt[2])),
+                Ok(vi) => re.push(Ok(dt.stars[vi].attr.clone())),
                 Err(why) => re.push(Err(why)),
             }
         }
@@ -171,13 +172,13 @@ impl Interpolant for NN {
 
 /// Estimation of z-value with interpolation: linear in TIN
 pub struct TIN {}
-impl Interpolant for TIN {
+impl<T: Attr> Interpolant<T> for TIN {
     fn interpolate(
         &self,
-        dt: &mut Triangulation,
+        dt: &mut Triangulation<T>,
         locs: &Vec<[f64; 2]>,
-    ) -> Vec<Result<f64, StartinError>> {
-        let mut re: Vec<Result<f64, StartinError>> = Vec::new();
+    ) -> Vec<Result<T, StartinError>> {
+        let mut re = Vec::new();
         for p in locs {
             //-- cannot interpolate if no TIN
             if dt.is_init == false {
@@ -195,10 +196,10 @@ impl Interpolant for TIN {
                         geom::area_triangle(&q, &dt.stars[tr.v[2]].pt, &dt.stars[tr.v[0]].pt);
                     let a2: f64 =
                         geom::area_triangle(&q, &dt.stars[tr.v[0]].pt, &dt.stars[tr.v[1]].pt);
-                    let mut total = 0.;
-                    total += dt.stars[tr.v[0]].pt[2] * a0;
-                    total += dt.stars[tr.v[1]].pt[2] * a1;
-                    total += dt.stars[tr.v[2]].pt[2] * a2;
+                    let mut total = T::default();
+                    total += dt.stars[tr.v[0]].attr.clone() * a0;
+                    total += dt.stars[tr.v[1]].attr.clone() * a1;
+                    total += dt.stars[tr.v[2]].attr.clone() * a2;
                     re.push(Ok(total / (a0 + a1 + a2)));
                 }
                 Err(_e) => re.push(Err(StartinError::OutsideConvexHull)),
@@ -213,12 +214,12 @@ impl Interpolant for TIN {
 pub struct NNI {
     pub precompute: bool,
 }
-impl Interpolant for NNI {
+impl<T: Attr> Interpolant<T> for NNI {
     fn interpolate(
         &self,
-        dt: &mut Triangulation,
+        dt: &mut Triangulation<T>,
         locs: &Vec<[f64; 2]>,
-    ) -> Vec<Result<f64, StartinError>> {
+    ) -> Vec<Result<T, StartinError>> {
         //-- store temporarily all the Voronoi cells areas
         let mut vorareas: Vec<f64> = Vec::new();
         if self.precompute {
@@ -232,7 +233,7 @@ impl Interpolant for NNI {
                 }
             }
         }
-        let mut re: Vec<Result<f64, StartinError>> = Vec::new();
+        let mut re = Vec::new();
         for p in locs {
             //-- cannot interpolate if no TIN
             if dt.is_init == false {
@@ -243,7 +244,7 @@ impl Interpolant for NNI {
             let loc = dt.locate(p[0], p[1]);
             match loc {
                 Ok(_tr) => {
-                    match dt.insert_one_pt(p[0], p[1], 0.) {
+                    match dt.insert_one_pt(p[0], p[1], T::default()) {
                         Ok(pi) => {
                             //-- no extrapolation
                             if dt.is_vertex_convex_hull(pi) {
@@ -269,14 +270,14 @@ impl Interpolant for NNI {
                                             dt.voronoi_cell_area(*nn, true).unwrap() - weights[i];
                                     }
                                 }
-                                let mut z: f64 = 0.0;
+                                let mut z: T = T::default();
                                 for (i, nn) in nns.iter().enumerate() {
-                                    z += weights[i] * dt.stars[*nn].pt[2];
+                                    z += dt.stars[*nn].attr.clone() * weights[i];
                                 }
                                 re.push(Ok(z / newarea));
                             }
                         }
-                        Err(e) => re.push(Ok(dt.stars[e].pt[2])),
+                        Err(e) => re.push(Ok(dt.stars[e].attr.clone())),
                     }
                 }
                 Err(_e) => re.push(Err(StartinError::OutsideConvexHull)),

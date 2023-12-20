@@ -52,7 +52,7 @@ You can read the complete documentation [here](https://docs.rs/startin)
 ```rust
 extern crate startin;
 fn main() {
-    let mut pts: Vec<[f64; 3]> = Vec::new();
+    let mut pts = Vec::new();
     pts.push([20.0, 30.0, 2.0]);
     pts.push([120.0, 33.0, 12.5]);
     pts.push([124.0, 222.0, 7.65]);

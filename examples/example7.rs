@@ -8,18 +8,18 @@ fn main() {
             break;
         }
         let num_pts = 20;
-        let mut pts: Vec<[f64; 3]> = Vec::new();
+        let mut pts = Vec::new();
 
         let mut rng = rand::thread_rng();
         for _i in 0..num_pts {
             let x: f64 = rng.gen();
             let y: f64 = rng.gen();
-            pts.push([x * 100.0, y * 100.0, 2.0]);
+            pts.push((x * 100.0, y * 100.0, 2.0));
         }
 
         let mut dt = startin::Triangulation::new();
         dt.set_jump_and_walk(false);
-        dt.insert(&pts, startin::InsertionStrategy::AsIs);
+        dt.insert(pts.clone(), startin::InsertionStrategy::AsIs);
         // println!("{}", dt.printme(false));
 
         loop {
@@ -28,7 +28,7 @@ fn main() {
                 let _re = dt.remove(j);
                 if dt.is_valid() == false {
                     for p in pts {
-                        println!("{} {} {}", p[0], p[1], p[2]);
+                        println!("{} {} {}", p.0, p.1, p.2);
                         // s.push_str(&format!("\t{:?}\n", self.stars[i].pt));
                     }
                     println!("vertex === {}", j);

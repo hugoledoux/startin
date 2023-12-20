@@ -44,20 +44,20 @@
 //! extern crate startin;
 //!
 //! fn main() {
-//!     let mut pts: Vec<[f64; 3]> = Vec::new();
-//!     pts.push([20.0, 30.0, 2.0]);
-//!     pts.push([120.0, 33.0, 12.5]);
-//!     pts.push([124.0, 222.0, 7.65]);
-//!     pts.push([20.0, 133.0, 21.0]);
-//!     pts.push([60.0, 60.0, 33.0]);
+//!     let mut pts = Vec::new();
+//!     pts.push((20.0, 30.0, 2.0));
+//!     pts.push((120.0, 33.0, 12.5));
+//!     pts.push((124.0, 222.0, 7.65));
+//!     pts.push((20.0, 133.0, 21.0));
+//!     pts.push((60.0, 60.0, 33.0));
 //!     let mut dt = startin::Triangulation::new();
-//!     dt.insert(&pts, startin::InsertionStrategy::AsIs);
+//!     dt.insert(pts, startin::InsertionStrategy::AsIs);
 //!     println!("{}", dt);
 //!     //-- print all the vertices
 //!     for (i, each) in dt.all_vertices().iter().enumerate() {
 //!         // skip the first one, the infinite vertex
 //!         if i > 0 {
-//!             println!("#{}: ({:.3}, {:.3}, {:.3})", i, each[0], each[1], each[2]);
+//!             println!("#{}: ({:.3}, {:.3}, {:.3})", i, each.0, each.1, each.2);
 //!         }
 //!     }
 //!     //-- insert a new vertex
@@ -294,19 +294,48 @@ impl fmt::Display for Link {
     }
 }
 
+use std::ops::Add;
+use std::ops::AddAssign;
+use std::ops::Div;
+use std::ops::Mul;
+
+/// Attribute / Attributes
+pub trait Attr:
+    Default
+    + Clone
+    + std::fmt::Debug
+    + Add
+    + AddAssign
+    + Mul<f64, Output = Self>
+    + Div<f64, Output = Self>
+{
+    fn z(&self) -> &f64;
+    fn z_mut(&mut self) -> &mut f64;
+}
+impl Attr for f64 {
+    fn z(&self) -> &f64 {
+        self
+    }
+    fn z_mut(&mut self) -> &mut f64 {
+        self
+    }
+}
+
 /// A triangulation is a collection of Stars, each Star has its (x,y,z)
 /// and a Link (an array of adjacent vertices, ordered CCW)
 #[repr(C)]
-struct Star {
-    pt: [f64; 3],
+struct Star<T> {
+    pt: [f64; 2],
+    attr: T,
     link: Link,
 }
 
-impl Star {
-    fn new(x: f64, y: f64, z: f64) -> Star {
+impl<T: Attr> Star<T> {
+    fn new(x: f64, y: f64, d: T) -> Star<T> {
         let l = Link::new();
         Star {
-            pt: [x, y, z],
+            pt: [x, y],
+            attr: d,
             link: l,
         }
     }
@@ -317,8 +346,8 @@ impl Star {
 
 /// Represents a triangulation
 #[repr(C)]
-pub struct Triangulation {
-    stars: Vec<Star>,
+pub struct Triangulation<T> {
+    stars: Vec<Star<T>>,
     snaptol: f64,
     cur: usize,
     is_init: bool,
@@ -327,12 +356,12 @@ pub struct Triangulation {
     removed_indices: Vec<usize>,
 }
 
-impl Triangulation {
-    pub fn new() -> Triangulation {
+impl<T: Attr> Triangulation<T> {
+    pub fn new() -> Triangulation<T> {
         // TODO: allocate a certain number?
         // let mut l: Vec<Star> = Vec::with_capacity(100000);
-        let mut l: Vec<Star> = Vec::new();
-        l.push(Star::new(f64::INFINITY, f64::INFINITY, f64::INFINITY));
+        let mut l: Vec<Star<T>> = Vec::new();
+        l.push(Star::new(f64::INFINITY, f64::INFINITY, T::default()));
         let es: Vec<usize> = Vec::new();
         Triangulation {
             stars: l,
@@ -345,8 +374,8 @@ impl Triangulation {
         }
     }
 
-    fn insert_one_pt_init_phase(&mut self, x: f64, y: f64, z: f64) -> Result<usize, usize> {
-        let p: [f64; 3] = [x, y, z];
+    fn insert_one_pt_init_phase(&mut self, x: f64, y: f64, data: T) -> Result<usize, usize> {
+        let p: [f64; 2] = [x, y];
         for i in 1..self.stars.len() {
             if geom::distance2d_squared(&self.stars[i].pt, &p) <= (self.snaptol * self.snaptol) {
                 return Err(i);
@@ -354,7 +383,7 @@ impl Triangulation {
         }
         self.collect_garbage();
         //-- add point to Triangulation and create its empty star
-        self.stars.push(Star::new(x, y, z));
+        self.stars.push(Star::new(x, y, data));
         //-- form the first triangles (finite + infinite)
         let l = self.stars.len();
         if l >= 4 {
@@ -453,21 +482,23 @@ impl Triangulation {
     ///
     /// * `pts` - a [`Vec`] of `[f64; 3]`
     /// * `strategy` - the [`InsertionStrategy`] to use for the insertion
-    pub fn insert(&mut self, pts: &Vec<[f64; 3]>, strategy: InsertionStrategy) {
+    pub fn insert(&mut self, pts: Vec<(f64, f64, T)>, strategy: InsertionStrategy) {
         match strategy {
             InsertionStrategy::BBox => {
                 //-- find the bbox
-                let mut bbox = geom::bbox2d(&pts);
+
+                let pts_2d = pts.iter().map(|(x,y,_)| [*x,*y]).collect::<Vec<_>>();
+                let mut bbox = geom::bbox2d(&pts_2d);
                 //-- "padding" of the bbox to avoid conflicts
                 bbox[0] = bbox[0] - 10.0;
                 bbox[1] = bbox[1] - 10.0;
                 bbox[2] = bbox[2] + 10.0;
                 bbox[3] = bbox[3] + 10.0 ;
-                self.insert_with_bbox(&pts, &bbox);
+                self.insert_with_bbox(pts, &bbox);
             }
             InsertionStrategy::AsIs => {
-                for each in pts {
-                    let _re = self.insert_one_pt(each[0], each[1], each[2]);
+                for (x, y, data) in pts.into_iter() {
+                    let _re = self.insert_one_pt(x, y, data);
                 }
             }
             // InsertionStrategy::Sprinkle => println!("Sprinkle not implemented yet"),
@@ -475,15 +506,15 @@ impl Triangulation {
         }
     }
 
-    fn insert_with_bbox(&mut self, pts: &Vec<[f64; 3]>, bbox: &[f64; 4]) {
+    fn insert_with_bbox(&mut self, pts: Vec<(f64, f64, T)>, bbox: &[f64; 4]) {
         let mut c4: Vec<usize> = Vec::new();
         //-- insert the 4 corners
-        c4.push(self.insert_one_pt(bbox[0], bbox[1], 0.0).unwrap());
-        c4.push(self.insert_one_pt(bbox[2], bbox[1], 0.0).unwrap());
-        c4.push(self.insert_one_pt(bbox[2], bbox[3], 0.0).unwrap());
-        c4.push(self.insert_one_pt(bbox[0], bbox[3], 0.0).unwrap());
-        for each in pts {
-            let _re = self.insert_one_pt(each[0], each[1], each[2]);
+        c4.push(self.insert_one_pt(bbox[0], bbox[1], T::default()).unwrap());
+        c4.push(self.insert_one_pt(bbox[2], bbox[1], T::default()).unwrap());
+        c4.push(self.insert_one_pt(bbox[2], bbox[3], T::default()).unwrap());
+        c4.push(self.insert_one_pt(bbox[0], bbox[3], T::default()).unwrap());
+        for (x, y, data) in pts {
+            let _re = self.insert_one_pt(x, y, data);
         }
         //-- remove the 4 corners
         for each in &c4 {
@@ -497,12 +528,12 @@ impl Triangulation {
     /// Returns the vertex ID of the point if the vertex didn't exist.
     /// If there was a vertex at that location, an Error is thrown with the already
     /// existing vertex ID.
-    pub fn insert_one_pt(&mut self, px: f64, py: f64, pz: f64) -> Result<usize, usize> {
+    pub fn insert_one_pt(&mut self, px: f64, py: f64, data: T) -> Result<usize, usize> {
         if self.is_init == false {
-            return self.insert_one_pt_init_phase(px, py, pz);
+            return self.insert_one_pt_init_phase(px, py, data);
         }
         //-- walk
-        let p: [f64; 3] = [px, py, pz];
+        let p: [f64; 2] = [px, py];
         let tr = self.walk(&p);
         // println!("STARTING TR: {}", tr);
         if geom::distance2d_squared(&self.stars[tr.v[0]].pt, &p) <= (self.snaptol * self.snaptol) {
@@ -517,14 +548,14 @@ impl Triangulation {
         //-- ok we now insert the point in the data structure
         let pi: usize;
         if self.removed_indices.is_empty() == true {
-            self.stars.push(Star::new(px, py, pz));
+            self.stars.push(Star::new(px, py, data));
             pi = self.stars.len() - 1;
         } else {
             // self.stars.push(Star::new(px, py, pz));
             pi = self.removed_indices.pop().unwrap();
             self.stars[pi].pt[0] = px;
             self.stars[pi].pt[1] = py;
-            self.stars[pi].pt[2] = pz;
+            self.stars[pi].attr = data;
         }
         //-- flip13()
         self.flip13(pi, &tr);
@@ -645,7 +676,7 @@ impl Triangulation {
         self.stars[v].link.clear();
         self.stars[v].pt[0] = f64::NAN;
         self.stars[v].pt[1] = f64::NAN;
-        self.stars[v].pt[2] = f64::NAN;
+        self.stars[v].attr = T::default();
         self.removed_indices.push(v);
         if ns[0] != 0 {
             self.cur = ns[0];
@@ -1034,10 +1065,14 @@ impl Triangulation {
 
     /// Returns a [`Vec`]<[`Vec`]<[`f64`]>> of all the vertices
     /// (including the infinite one and the removed ones)
-    pub fn all_vertices(&self) -> Vec<Vec<f64>> {
-        let mut pts: Vec<Vec<f64>> = Vec::with_capacity(self.stars.len() - 1);
+    pub fn all_vertices(&self) -> Vec<(f64, f64, T)> {
+        let mut pts = Vec::with_capacity(self.stars.len() - 1);
         for i in 0..self.stars.len() {
-            pts.push(self.stars[i].pt.to_vec());
+            pts.push((
+                self.stars[i].pt[0],
+                self.stars[i].pt[1],
+                self.stars[i].attr.clone(),
+            ));
         }
         pts
     }
@@ -1234,7 +1269,7 @@ impl Triangulation {
                     }
                     self.stars[v].pt[0] = f64::NAN;
                     self.stars[v].pt[1] = f64::NAN;
-                    self.stars[v].pt[2] = f64::NAN;
+                    self.stars[v].attr = T::default();
                     self.removed_indices.push(v);
                     self.is_init = false;
                     return Ok(self.stars.len() - 1);
@@ -1251,7 +1286,7 @@ impl Triangulation {
             self.stars[v].link.clear();
             self.stars[v].pt[0] = f64::NAN;
             self.stars[v].pt[1] = f64::NAN;
-            self.stars[v].pt[2] = f64::NAN;
+            self.stars[v].attr = T::default();
             self.removed_indices.push(v);
 
             for i in 0..1000 {
@@ -1278,7 +1313,7 @@ impl Triangulation {
         if self.is_init == false {
             self.stars[vi].pt[0] = f64::NAN;
             self.stars[vi].pt[1] = f64::NAN;
-            self.stars[vi].pt[2] = f64::NAN;
+            self.stars[vi].attr = T::default();
             self.removed_indices.push(vi);
         }
         match self.is_vertex_removed(vi) {
@@ -1356,12 +1391,12 @@ impl Triangulation {
         let mut f = File::create(path)?;
         let mut s = String::new();
         //-- find one good vertice to replace the deleted one
-        let mut onegoodpt = vec![1.0, 1.0, 1.0];
+        let mut onegoodpt = (1.0, 1.0, T::default());
         for i in 1..self.stars.len() {
             if self.stars[i].is_deleted() == false {
-                onegoodpt[0] = self.stars[i].pt[0];
-                onegoodpt[1] = self.stars[i].pt[1];
-                onegoodpt[2] = self.stars[i].pt[2];
+                onegoodpt.0 = self.stars[i].pt[0];
+                onegoodpt.1 = self.stars[i].pt[1];
+                onegoodpt.2 = self.stars[i].attr.clone();
                 break;
             }
         }
@@ -1369,13 +1404,17 @@ impl Triangulation {
             if self.stars[i].is_deleted() == true {
                 s.push_str(&format!(
                     "v {} {} {}\n",
-                    onegoodpt[0], onegoodpt[1], onegoodpt[2]
+                    onegoodpt.0,
+                    onegoodpt.1,
+                    onegoodpt.2.z()
                 ));
                 continue;
             }
             s.push_str(&format!(
                 "v {} {} {}\n",
-                self.stars[i].pt[0], self.stars[i].pt[1], self.stars[i].pt[2]
+                self.stars[i].pt[0],
+                self.stars[i].pt[1],
+                self.stars[i].attr.z()
             ));
         }
         write!(f, "{}", s).unwrap();
@@ -1404,12 +1443,12 @@ impl Triangulation {
         write!(f, "property list uchar int vertex_indices\n").unwrap();
         write!(f, "end_header\n").unwrap();
         //-- find one good vertice to replace the deleted one
-        let mut onegoodpt = vec![1.0, 1.0, 1.0];
+        let mut onegoodpt = (1.0, 1.0, T::default());
         for i in 1..self.stars.len() {
             if self.stars[i].is_deleted() == false {
-                onegoodpt[0] = self.stars[i].pt[0];
-                onegoodpt[1] = self.stars[i].pt[1];
-                onegoodpt[2] = self.stars[i].pt[2];
+                onegoodpt.0 = self.stars[i].pt[0];
+                onegoodpt.1 = self.stars[i].pt[1];
+                onegoodpt.2 = self.stars[i].attr.clone();
                 break;
             }
         }
@@ -1417,14 +1456,16 @@ impl Triangulation {
         for i in 1..self.stars.len() {
             if self.stars[i].is_deleted() == true {
                 s.push_str(&format!(
-                    "{} {} {}\n",
-                    onegoodpt[0], onegoodpt[1], onegoodpt[2]
+                    "{} {} {:?}\n",
+                    onegoodpt.0, onegoodpt.1, onegoodpt.2
                 ));
                 continue;
             }
             s.push_str(&format!(
-                "{} {} {}\n",
-                self.stars[i].pt[0], self.stars[i].pt[1], self.stars[i].pt[2]
+                "{} {} {:?}\n",
+                self.stars[i].pt[0],
+                self.stars[i].pt[1],
+                self.stars[i].attr.z()
             ));
         }
         write!(f, "{}", s).unwrap();
@@ -1542,16 +1583,16 @@ impl Triangulation {
             if self.stars[i].is_deleted() == true {
                 continue;
             }
-            if self.stars[i].pt[2] < minz {
-                minz = self.stars[i].pt[2];
+            if *self.stars[i].attr.z() < minz {
+                minz = *self.stars[i].attr.z();
             }
         }
         for i in 1..self.stars.len() {
             if self.stars[i].is_deleted() == true {
                 continue;
             }
-            let z2 = ((self.stars[i].pt[2] - minz) * factor) + minz;
-            self.stars[i].pt[2] = z2;
+            let z2 = ((*self.stars[i].attr.z() - minz) * factor) + minz;
+            *self.stars[i].attr.z_mut() = z2;
         }
     }
 
@@ -1585,8 +1626,7 @@ impl Triangulation {
         self.removed_indices.clear();
     }
 }
-
-impl fmt::Display for Triangulation {
+impl<T: Attr> fmt::Display for Triangulation<T> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         fmt.write_str("======== TRIANGULATION ========\n")?;
         fmt.write_str(&format!("# vertices: {:19}\n", self.number_of_vertices()))?;
