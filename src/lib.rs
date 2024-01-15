@@ -130,6 +130,15 @@ pub enum InsertionStrategy {
     // ConBRIO,
 }
 
+/// Handling of xy-duplicates (which z do we keep?)
+pub enum DuplicateHandling {
+    First,
+    Last,
+    Highest,
+    Lowest,
+    // Average not possible I guess,
+}
+
 /// A Triangle is a triplet of indices
 #[derive(Debug, PartialEq, Clone)]
 pub struct Triangle {
@@ -325,6 +334,7 @@ pub struct Triangulation {
     jump_and_walk: bool,
     robust_predicates: bool,
     removed_indices: Vec<usize>,
+    duplicates_handling: DuplicateHandling,
 }
 
 impl Triangulation {
@@ -342,6 +352,7 @@ impl Triangulation {
             jump_and_walk: false,
             robust_predicates: true,
             removed_indices: es,
+            duplicates_handling: DuplicateHandling::First,
         }
     }
 
@@ -349,9 +360,11 @@ impl Triangulation {
         let p: [f64; 3] = [x, y, z];
         for i in 1..self.stars.len() {
             if geom::distance2d_squared(&self.stars[i].pt, &p) <= (self.snaptol * self.snaptol) {
+                self.update_z_value(i, z);
                 return Err(i);
             }
         }
+
         self.collect_garbage();
         //-- add point to Triangulation and create its empty star
         self.stars.push(Star::new(x, y, z));
@@ -445,6 +458,12 @@ impl Triangulation {
         self.robust_predicates = b;
     }
 
+    /// Set the method to used to handle duplicates
+    /// (Last by default)
+    pub fn set_duplicates_handling(&mut self, method: DuplicateHandling) {
+        self.duplicates_handling = method;
+    }
+
     /// Insert a [`Vec`] of [`array`] (`[f64; 3]`) values.
     /// If [`InsertionStrategy::AsIs`] is used, then [`Triangulation::insert_one_pt()`] is called
     /// for each point in the order given.
@@ -504,14 +523,16 @@ impl Triangulation {
         //-- walk
         let p: [f64; 3] = [px, py, pz];
         let tr = self.walk(&p);
-        // println!("STARTING TR: {}", tr);
         if geom::distance2d_squared(&self.stars[tr.v[0]].pt, &p) <= (self.snaptol * self.snaptol) {
+            self.update_z_value(tr.v[0], pz);
             return Err(tr.v[0]);
         }
         if geom::distance2d_squared(&self.stars[tr.v[1]].pt, &p) <= (self.snaptol * self.snaptol) {
+            self.update_z_value(tr.v[1], pz);
             return Err(tr.v[1]);
         }
         if geom::distance2d_squared(&self.stars[tr.v[2]].pt, &p) <= (self.snaptol * self.snaptol) {
+            self.update_z_value(tr.v[1], pz);
             return Err(tr.v[2]);
         }
         //-- ok we now insert the point in the data structure
@@ -530,9 +551,25 @@ impl Triangulation {
         self.flip13(pi, &tr);
         //-- update_dt()
         self.update_dt(pi);
-
         self.cur = pi;
         Ok(pi)
+    }
+
+    fn update_z_value(&mut self, pi: usize, newz: f64) {
+        match self.duplicates_handling {
+            DuplicateHandling::Last => self.stars[pi].pt[2] = newz,
+            DuplicateHandling::Highest => {
+                if newz > self.stars[pi].pt[2] {
+                    self.stars[pi].pt[2] = newz;
+                }
+            }
+            DuplicateHandling::Lowest => {
+                if newz < self.stars[pi].pt[2] {
+                    self.stars[pi].pt[2] = newz;
+                }
+            }
+            DuplicateHandling::First => (),
+        }
     }
 
     fn update_dt(&mut self, pi: usize) {
