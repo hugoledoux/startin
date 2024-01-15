@@ -89,7 +89,7 @@ impl Interpolant for Laplace {
         let mut re: Vec<Result<f64, StartinError>> = Vec::new();
         for p in locs {
             //-- cannot interpolate if no TIN
-            if dt.is_init == false {
+            if !dt.is_init {
                 re.push(Err(StartinError::EmptyTriangulation));
                 continue;
             }
@@ -155,7 +155,7 @@ impl Interpolant for NN {
         let mut re: Vec<Result<f64, StartinError>> = Vec::new();
         for p in locs {
             //-- cannot interpolation if no TIN
-            if dt.is_init == false {
+            if !dt.is_init {
                 re.push(Err(StartinError::EmptyTriangulation));
                 continue;
             }
@@ -180,7 +180,7 @@ impl Interpolant for TIN {
         let mut re: Vec<Result<f64, StartinError>> = Vec::new();
         for p in locs {
             //-- cannot interpolate if no TIN
-            if dt.is_init == false {
+            if !dt.is_init {
                 re.push(Err(StartinError::EmptyTriangulation));
                 continue;
             }
@@ -225,7 +225,7 @@ impl Interpolant for NNI {
             vorareas.reserve_exact(dt.stars.len());
             vorareas.push(0.);
             for vi in 1..dt.stars.len() {
-                if dt.stars[vi].is_deleted() == false {
+                if !dt.stars[vi].is_deleted() {
                     vorareas.push(dt.voronoi_cell_area(vi, true).unwrap());
                 } else {
                     vorareas.push(0.);
@@ -235,7 +235,7 @@ impl Interpolant for NNI {
         let mut re: Vec<Result<f64, StartinError>> = Vec::new();
         for p in locs {
             //-- cannot interpolate if no TIN
-            if dt.is_init == false {
+            if !dt.is_init {
                 re.push(Err(StartinError::EmptyTriangulation));
                 continue;
             }
