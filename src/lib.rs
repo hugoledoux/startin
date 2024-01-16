@@ -440,6 +440,10 @@ impl Triangulation {
         self.jump_and_walk = b;
     }
 
+    pub fn get_jump_and_walk(&self) -> bool {
+        self.jump_and_walk
+    }
+
     /// Is using robut predicates (with [crate robust](https://docs.rs/robust))?
     /// (activated by default)
     pub fn is_using_robust_predicates(&self) -> bool {
