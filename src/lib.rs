@@ -138,6 +138,16 @@ pub enum DuplicateHandling {
     Lowest,
     // Average not possible I guess,
 }
+impl fmt::Display for DuplicateHandling {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match *self {
+            DuplicateHandling::First => write!(f, "First"),
+            DuplicateHandling::Last => write!(f, "Last"),
+            DuplicateHandling::Highest => write!(f, "Highest"),
+            DuplicateHandling::Lowest => write!(f, "Lowest"),
+        }
+    }
+}
 
 /// A Triangle is a triplet of indices
 #[derive(Debug, PartialEq, Clone)]
@@ -1621,8 +1631,12 @@ impl fmt::Display for Triangulation {
             self.number_of_vertices_on_convex_hull()
         ))?;
         fmt.write_str("---\n")?;
-        fmt.write_str(&format!("robust: {}\n", self.robust_predicates))?;
-        fmt.write_str(&format!("tolerance: {}\n", self.snaptol))?;
+        fmt.write_str(&format!("snap tolerance: {}\n", self.snaptol))?;
+        fmt.write_str(&format!("jump_and_walk: {}\n", self.jump_and_walk))?;
+        fmt.write_str(&format!(
+            "duplicates_handling: {}\n",
+            self.duplicates_handling
+        ))?;
         fmt.write_str("===============================\n")?;
         Ok(())
     }
