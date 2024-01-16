@@ -471,6 +471,11 @@ impl Triangulation {
         self.duplicates_handling = method;
     }
 
+    /// Get the method to used to handle duplicates
+    pub fn get_duplicates_handling(&self) -> String {
+        self.duplicates_handling.to_string()
+    }
+
     /// Insert a [`Vec`] of [`array`] (`[f64; 3]`) values.
     /// If [`InsertionStrategy::AsIs`] is used, then [`Triangulation::insert_one_pt()`] is called
     /// for each point in the order given.
