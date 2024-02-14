@@ -106,6 +106,8 @@ mod c_interface;
 
 use rand::prelude::thread_rng;
 use rand::Rng;
+use serde_json::json;
+use serde_json::Value;
 use std::fmt;
 use std::fs::File;
 use std::io::Write;
@@ -120,6 +122,7 @@ pub enum StartinError {
     VertexInfinite,
     VertexRemoved,
     VertexUnknown,
+    NoAttributes,
 }
 
 /// Possibilities for the insertion (with `insert()`)
@@ -326,6 +329,7 @@ impl Star {
 #[repr(C)]
 pub struct Triangulation {
     stars: Vec<Star>,
+    attributes: Option<Vec<Value>>,
     snaptol: f64,
     cur: usize,
     is_init: bool,
@@ -349,6 +353,7 @@ impl Triangulation {
         let es: Vec<usize> = Vec::new();
         Triangulation {
             stars: l,
+            attributes: None,
             snaptol: 0.001,
             cur: 0,
             is_init: false,
@@ -563,7 +568,27 @@ impl Triangulation {
         //-- update_dt()
         self.update_dt(pi);
         self.cur = pi;
+        //-- attributes
+        match &mut self.attributes {
+            Some(x) => x.push(Value::Null),
+            _ => (),
+        }
         Ok(pi)
+    }
+
+    pub fn insert_one_pt_with_attribute(
+        &mut self,
+        px: f64,
+        py: f64,
+        pz: f64,
+        a: Value,
+    ) -> Result<usize, usize> {
+        let re = self.insert_one_pt(px, py, pz);
+        let _ = match re {
+            Ok(vi) => self.set_attribute(vi, a),
+            Err(vi) => self.set_attribute(vi, a),
+        };
+        re
     }
 
     fn update_z_value(&mut self, pi: usize, newz: f64) {
@@ -713,6 +738,42 @@ impl Triangulation {
             Ok(b) => match b {
                 true => Err(StartinError::VertexRemoved),
                 false => Ok(self.stars[vi].pt.to_vec()),
+            },
+        }
+    }
+
+    pub fn add_attributes(&mut self) {
+        match &self.attributes {
+            Some(_) => (),
+            None => self.attributes = vec![Value::Null; self.stars.len()].into(),
+        }
+    }
+
+    pub fn get_attribute(&self, vi: usize) -> Result<Value, StartinError> {
+        match self.is_vertex_removed(vi) {
+            Err(why) => Err(why),
+            Ok(b) => match b {
+                true => Err(StartinError::VertexRemoved),
+                false => match &self.attributes {
+                    Some(x) => Ok(x.get(vi).unwrap().clone()),
+                    None => Err(StartinError::NoAttributes),
+                },
+            },
+        }
+    }
+
+    pub fn set_attribute(&mut self, vi: usize, a: Value) -> Result<bool, StartinError> {
+        match self.is_vertex_removed(vi) {
+            Err(why) => Err(why),
+            Ok(b) => match b {
+                true => Err(StartinError::VertexRemoved),
+                false => match &mut self.attributes {
+                    Some(x) => {
+                        x[vi] = a;
+                        return Ok(true);
+                    }
+                    None => Err(StartinError::NoAttributes),
+                },
             },
         }
     }
