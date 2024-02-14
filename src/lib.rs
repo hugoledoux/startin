@@ -583,6 +583,7 @@ impl Triangulation {
         pz: f64,
         a: Value,
     ) -> Result<usize, usize> {
+        let _ = self.initialise_attributes();
         let re = self.insert_one_pt(px, py, pz);
         let _ = match re {
             Ok(vi) => self.set_attribute(vi, a),
@@ -742,10 +743,16 @@ impl Triangulation {
         }
     }
 
-    pub fn add_attributes(&mut self) {
+    pub fn has_attributes(&self) -> bool {
         match &self.attributes {
-            Some(_) => (),
-            None => self.attributes = vec![Value::Null; self.stars.len()].into(),
+            Some(_) => true,
+            None => false,
+        }
+    }
+
+    pub fn initialise_attributes(&mut self) {
+        if self.has_attributes() == false {
+            self.attributes = vec![Value::Null; self.stars.len()].into();
         }
     }
 
@@ -769,10 +776,14 @@ impl Triangulation {
                 true => Err(StartinError::VertexRemoved),
                 false => match &mut self.attributes {
                     Some(x) => {
-                        x[vi] = a;
+                        *x.get_mut(vi).unwrap() = a;
                         return Ok(true);
                     }
-                    None => Err(StartinError::NoAttributes),
+                    None => {
+                        self.initialise_attributes();
+                        *self.attributes.as_mut().unwrap().get_mut(vi).unwrap() = a;
+                        return Ok(true);
+                    }
                 },
             },
         }
