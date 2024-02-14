@@ -106,7 +106,7 @@ mod c_interface;
 
 use rand::prelude::thread_rng;
 use rand::Rng;
-use serde_json::json;
+
 use serde_json::Value;
 use std::fmt;
 use std::fs::File;
@@ -1714,6 +1714,11 @@ impl fmt::Display for Triangulation {
             "duplicates_handling: {}\n",
             self.duplicates_handling
         ))?;
+        let a: &Vec<Value> = self.attributes.as_ref().unwrap();
+        for (i, _p) in self.stars.iter().enumerate() {
+            // println!("vi:{} -- {:?}", i, a[i]);
+            fmt.write_str(&format!("vi:{} -- {:?}\n", i, a[i]))?;
+        }
         fmt.write_str("===============================\n")?;
         Ok(())
     }
