@@ -107,7 +107,9 @@ mod c_interface;
 use rand::prelude::thread_rng;
 use rand::Rng;
 
+use serde_json::json;
 use serde_json::Value;
+
 use std::fmt;
 use std::fs::File;
 use std::io::Write;
@@ -341,19 +343,22 @@ pub struct Triangulation {
 
 impl Default for Triangulation {
     fn default() -> Self {
-        Self::new()
+        Self::new(false)
     }
 }
 
 impl Triangulation {
-    pub fn new() -> Triangulation {
-        // TODO: allocate a certain number?
+    pub fn new(extra_attributes: bool) -> Triangulation {
         // let mut l: Vec<Star> = Vec::with_capacity(100000);
         let l: Vec<Star> = vec![Star::new(f64::INFINITY, f64::INFINITY, f64::INFINITY)];
         let es: Vec<usize> = Vec::new();
+        let a = match extra_attributes {
+            true => Some(vec![json!(Value::Null)]),
+            false => None,
+        };
         Triangulation {
             stars: l,
-            attributes: None,
+            attributes: a,
             snaptol: 0.001,
             cur: 0,
             is_init: false,
@@ -364,11 +369,17 @@ impl Triangulation {
         }
     }
 
-    fn insert_one_pt_init_phase(&mut self, x: f64, y: f64, z: f64) -> Result<usize, usize> {
+    fn insert_one_pt_init_phase(
+        &mut self,
+        x: f64,
+        y: f64,
+        z: f64,
+        a: Option<Value>,
+    ) -> Result<usize, usize> {
         let p: [f64; 3] = [x, y, z];
         for i in 1..self.stars.len() {
             if geom::distance2d_squared(&self.stars[i].pt, &p) <= (self.snaptol * self.snaptol) {
-                self.update_z_value(i, z);
+                self.update_z_value_attribute(i, z, a);
                 return Err(i);
             }
         }
@@ -430,6 +441,12 @@ impl Triangulation {
                 self.update_dt(j);
             }
         }
+
+        match &mut self.attributes {
+            Some(x) => x.push(a.into()),
+            _ => (),
+        };
+
         Ok(self.cur)
     }
 
@@ -533,22 +550,43 @@ impl Triangulation {
     /// If there was a vertex at that location, an Error is thrown with the already
     /// existing vertex ID.
     pub fn insert_one_pt(&mut self, px: f64, py: f64, pz: f64) -> Result<usize, usize> {
+        self.insert_pt_all_cases(px, py, pz, None)
+    }
+
+    pub fn insert_one_pt_with_attribute(
+        &mut self,
+        px: f64,
+        py: f64,
+        pz: f64,
+        a: Value,
+    ) -> Result<usize, usize> {
+        assert!(self.attributes.is_some());
+        self.insert_pt_all_cases(px, py, pz, Some(a))
+    }
+
+    fn insert_pt_all_cases(
+        &mut self,
+        px: f64,
+        py: f64,
+        pz: f64,
+        a: Option<Value>,
+    ) -> Result<usize, usize> {
         if !self.is_init {
-            return self.insert_one_pt_init_phase(px, py, pz);
+            return self.insert_one_pt_init_phase(px, py, pz, a);
         }
         //-- walk
         let p: [f64; 3] = [px, py, pz];
         let tr = self.walk(&p);
         if geom::distance2d_squared(&self.stars[tr.v[0]].pt, &p) <= (self.snaptol * self.snaptol) {
-            self.update_z_value(tr.v[0], pz);
+            self.update_z_value_attribute(tr.v[0], pz, a);
             return Err(tr.v[0]);
         }
         if geom::distance2d_squared(&self.stars[tr.v[1]].pt, &p) <= (self.snaptol * self.snaptol) {
-            self.update_z_value(tr.v[1], pz);
+            self.update_z_value_attribute(tr.v[1], pz, a);
             return Err(tr.v[1]);
         }
         if geom::distance2d_squared(&self.stars[tr.v[2]].pt, &p) <= (self.snaptol * self.snaptol) {
-            self.update_z_value(tr.v[1], pz);
+            self.update_z_value_attribute(tr.v[1], pz, a);
             return Err(tr.v[2]);
         }
         //-- ok we now insert the point in the data structure
@@ -568,41 +606,46 @@ impl Triangulation {
         //-- update_dt()
         self.update_dt(pi);
         self.cur = pi;
-        //-- attributes
+        //-- extra attributes
         match &mut self.attributes {
-            Some(x) => x.push(Value::Null),
+            Some(x) => x.push(a.into()),
             _ => (),
         }
+
         Ok(pi)
     }
 
-    pub fn insert_one_pt_with_attribute(
-        &mut self,
-        px: f64,
-        py: f64,
-        pz: f64,
-        a: Value,
-    ) -> Result<usize, usize> {
-        let _ = self.initialise_attributes();
-        let re = self.insert_one_pt(px, py, pz);
-        let _ = match re {
-            Ok(vi) => self.set_attribute(vi, a),
-            Err(vi) => self.set_attribute(vi, a),
-        };
-        re
-    }
-
-    fn update_z_value(&mut self, pi: usize, newz: f64) {
+    fn update_z_value_attribute(&mut self, vi: usize, newz: f64, a: Option<Value>) {
         match self.duplicates_handling {
-            DuplicateHandling::Last => self.stars[pi].pt[2] = newz,
+            DuplicateHandling::Last => {
+                self.stars[vi].pt[2] = newz;
+                match a {
+                    Some(x) => {
+                        let _ = self.set_attribute(vi, x);
+                    }
+                    None => (),
+                }
+            }
             DuplicateHandling::Highest => {
-                if newz > self.stars[pi].pt[2] {
-                    self.stars[pi].pt[2] = newz;
+                if newz > self.stars[vi].pt[2] {
+                    self.stars[vi].pt[2] = newz;
+                    match a {
+                        Some(x) => {
+                            let _ = self.set_attribute(vi, x);
+                        }
+                        None => (),
+                    }
                 }
             }
             DuplicateHandling::Lowest => {
-                if newz < self.stars[pi].pt[2] {
-                    self.stars[pi].pt[2] = newz;
+                if newz < self.stars[vi].pt[2] {
+                    self.stars[vi].pt[2] = newz;
+                    match a {
+                        Some(x) => {
+                            let _ = self.set_attribute(vi, x);
+                        }
+                        None => (),
+                    }
                 }
             }
             DuplicateHandling::First => (),
@@ -707,20 +750,23 @@ impl Triangulation {
         // self.stars[pi].link.infinite_first();
     }
 
-    fn flip31(&mut self, v: usize) {
+    fn flip31(&mut self, vi: usize) {
         // println!("FLIP31");
         let mut ns: Vec<usize> = Vec::new();
-        for each in self.stars[v].link.iter() {
+        for each in self.stars[vi].link.iter() {
             ns.push(*each);
         }
         for n in ns.iter() {
-            self.stars[*n].link.delete(v);
+            self.stars[*n].link.delete(vi);
         }
-        self.stars[v].link.clear();
-        self.stars[v].pt[0] = f64::NAN;
-        self.stars[v].pt[1] = f64::NAN;
-        self.stars[v].pt[2] = f64::NAN;
-        self.removed_indices.push(v);
+        self.stars[vi].link.clear();
+        self.stars[vi].pt[0] = f64::NAN;
+        self.stars[vi].pt[1] = f64::NAN;
+        self.stars[vi].pt[2] = f64::NAN;
+        self.removed_indices.push(vi);
+        if self.attributes.is_some() {
+            let _ = self.set_attribute(vi, Value::Null);
+        }
         if ns[0] != 0 {
             self.cur = ns[0];
         } else if ns[1] != 0 {
@@ -743,19 +789,6 @@ impl Triangulation {
         }
     }
 
-    pub fn has_attributes(&self) -> bool {
-        match &self.attributes {
-            Some(_) => true,
-            None => false,
-        }
-    }
-
-    pub fn initialise_attributes(&mut self) {
-        if self.has_attributes() == false {
-            self.attributes = vec![Value::Null; self.stars.len()].into();
-        }
-    }
-
     pub fn get_attribute(&self, vi: usize) -> Result<Value, StartinError> {
         match self.is_vertex_removed(vi) {
             Err(why) => Err(why),
@@ -772,21 +805,24 @@ impl Triangulation {
     pub fn set_attribute(&mut self, vi: usize, a: Value) -> Result<bool, StartinError> {
         match self.is_vertex_removed(vi) {
             Err(why) => Err(why),
-            Ok(b) => match b {
-                true => Err(StartinError::VertexRemoved),
-                false => match &mut self.attributes {
-                    Some(x) => {
-                        *x.get_mut(vi).unwrap() = a;
-                        return Ok(true);
-                    }
-                    None => {
-                        self.initialise_attributes();
-                        *self.attributes.as_mut().unwrap().get_mut(vi).unwrap() = a;
-                        return Ok(true);
-                    }
-                },
+
+            Ok(_b) => match &mut self.attributes {
+                Some(x) => {
+                    *x.get_mut(vi).unwrap() = a;
+                    return Ok(true);
+                }
+                None => {
+                    *self.attributes.as_mut().unwrap().get_mut(vi).unwrap() = a;
+                    return Ok(true);
+                }
             },
         }
+    }
+
+    /// Returns a [`Vec`]<[`Vec`]<[`f64`]>> of all the vertices
+    /// (including the infinite one and the removed ones)
+    pub fn all_attributes(&self) -> Option<Vec<Value>> {
+        self.attributes.clone()
     }
 
     /// Returns the 3 adjacents (finite + infinite) [`Triangle`] to a triangle.
@@ -1396,6 +1432,9 @@ impl Triangulation {
             self.stars[vi].pt[1] = f64::NAN;
             self.stars[vi].pt[2] = f64::NAN;
             self.removed_indices.push(vi);
+            if self.attributes.is_some() {
+                let _ = self.set_attribute(vi, Value::Null);
+            }
         }
         match self.is_vertex_removed(vi) {
             Err(why) => return Err(why),
@@ -1692,6 +1731,12 @@ impl Triangulation {
         let mut offset = 0;
         for each in &self.removed_indices {
             self.stars.remove(each - offset);
+            match &mut self.attributes {
+                Some(x) => {
+                    let _ = x.remove(each - offset);
+                }
+                None => (),
+            };
             offset += 1;
         }
         self.removed_indices.clear();
@@ -1708,16 +1753,23 @@ impl fmt::Display for Triangulation {
             self.number_of_vertices_on_convex_hull()
         ))?;
         fmt.write_str("---\n")?;
-        fmt.write_str(&format!("snap tolerance: {}\n", self.snaptol))?;
+        fmt.write_str(&format!(
+            "extra_attributes: {}\n",
+            self.attributes.is_some()
+        ))?;
+        fmt.write_str(&format!("snap_tolerance: {}\n", self.snaptol))?;
         fmt.write_str(&format!("jump_and_walk: {}\n", self.jump_and_walk))?;
         fmt.write_str(&format!(
             "duplicates_handling: {}\n",
             self.duplicates_handling
         ))?;
-        let a: &Vec<Value> = self.attributes.as_ref().unwrap();
-        for (i, _p) in self.stars.iter().enumerate() {
-            // println!("vi:{} -- {:?}", i, a[i]);
-            fmt.write_str(&format!("vi:{} -- {:?}\n", i, a[i]))?;
+        if self.attributes.is_some() {
+            fmt.write_str("---\n")?;
+            let a: &Vec<Value> = self.attributes.as_ref().unwrap();
+            for (i, _p) in self.stars.iter().enumerate() {
+                // println!("vi:{} -- {:?}", i, a[i]);
+                fmt.write_str(&format!("vi:{} -- {:?}\n", i, a[i]))?;
+            }
         }
         fmt.write_str("===============================\n")?;
         Ok(())
