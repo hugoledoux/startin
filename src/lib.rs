@@ -125,6 +125,7 @@ pub enum StartinError {
     VertexRemoved,
     VertexUnknown,
     NoAttributes,
+    TriangulationAlreadyInitialised,
 }
 
 /// Possibilities for the insertion (with `insert()`)
@@ -343,22 +344,18 @@ pub struct Triangulation {
 
 impl Default for Triangulation {
     fn default() -> Self {
-        Self::new(false)
+        Self::new()
     }
 }
 
 impl Triangulation {
-    pub fn new(extra_attributes: bool) -> Triangulation {
+    pub fn new() -> Triangulation {
         // let mut l: Vec<Star> = Vec::with_capacity(100000);
         let l: Vec<Star> = vec![Star::new(f64::INFINITY, f64::INFINITY, f64::INFINITY)];
         let es: Vec<usize> = Vec::new();
-        let a = match extra_attributes {
-            true => Some(vec![json!(Value::Null)]),
-            false => None,
-        };
         Triangulation {
             stars: l,
-            attributes: a,
+            attributes: None,
             snaptol: 0.001,
             cur: 0,
             is_init: false,
@@ -448,6 +445,15 @@ impl Triangulation {
         };
 
         Ok(self.cur)
+    }
+
+    pub fn use_extra_attributes(&mut self) {
+        if self.stars.len() > 1 {
+            panic!("dt.all_vertices().len() > 0, cannot modify its behaviour.")
+            // return Err(StartinError::TriangulationAlreadyInitialised);
+        }
+        self.attributes = Some(vec![json!(Value::Null)]);
+        // Ok(())
     }
 
     /// Set a snap tolerance when inserting new points: if the newly inserted
@@ -553,6 +559,10 @@ impl Triangulation {
         self.insert_pt_all_cases(px, py, pz, None)
     }
 
+    /// Insert the point (`px`, `py`, `pz`), having the attribute `a`, in the triangulation
+    /// Returns the vertex ID of the point if the vertex didn't exist.
+    /// If there was a vertex at that location, an Error is thrown with the already
+    /// existing vertex ID.
     pub fn insert_one_pt_with_attribute(
         &mut self,
         px: f64,
@@ -560,7 +570,10 @@ impl Triangulation {
         pz: f64,
         a: Value,
     ) -> Result<usize, usize> {
-        assert!(self.attributes.is_some());
+        if self.attributes.is_none() {
+            // panic!("Triangulation has no extra attributes, use dt.use_extra_attributes() first");
+            return self.insert_pt_all_cases(px, py, pz, None);
+        }
         self.insert_pt_all_cases(px, py, pz, Some(a))
     }
 
