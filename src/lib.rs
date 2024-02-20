@@ -107,6 +107,8 @@ mod c_interface;
 use rand::prelude::thread_rng;
 use rand::Rng;
 
+use std::collections::HashSet;
+
 use serde_json::json;
 use serde_json::Value;
 
@@ -834,6 +836,26 @@ impl Triangulation {
     /// (including the infinite one and the removed ones)
     pub fn all_attributes(&self) -> Option<Vec<Value>> {
         self.attributes.clone()
+    }
+
+    pub fn list_all_attributes(&self) -> Vec<String> {
+        let mut attrs: HashSet<String> = HashSet::new();
+        match &self.all_attributes() {
+            Some(values) => {
+                for value in values {
+                    match value.as_object() {
+                        Some(x) => {
+                            for (key, _) in x.iter() {
+                                attrs.insert(key.to_string());
+                            }
+                        }
+                        None => (),
+                    }
+                }
+            }
+            None => (),
+        }
+        attrs.into_iter().collect::<Vec<String>>()
     }
 
     /// Returns the 3 adjacents (finite + infinite) [`Triangle`] to a triangle.
