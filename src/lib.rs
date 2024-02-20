@@ -450,10 +450,8 @@ impl Triangulation {
     pub fn use_extra_attributes(&mut self) {
         if self.stars.len() > 1 {
             panic!("dt.all_vertices().len() > 0, cannot modify its behaviour.")
-            // return Err(StartinError::TriangulationAlreadyInitialised);
         }
         self.attributes = Some(vec![json!(Value::Null)]);
-        // Ok(())
     }
 
     /// Set a snap tolerance when inserting new points: if the newly inserted
@@ -1767,23 +1765,15 @@ impl fmt::Display for Triangulation {
         ))?;
         fmt.write_str("---\n")?;
         fmt.write_str(&format!(
-            "extra_attributes: {}\n",
+            "extra_attributes: {:>13}\n",
             self.attributes.is_some()
         ))?;
-        fmt.write_str(&format!("snap_tolerance: {}\n", self.snaptol))?;
-        fmt.write_str(&format!("jump_and_walk: {}\n", self.jump_and_walk))?;
+        fmt.write_str(&format!("snap_tolerance: {:>15}\n", self.snaptol))?;
+        fmt.write_str(&format!("jump_and_walk: {:>16}\n", self.jump_and_walk))?;
         fmt.write_str(&format!(
-            "duplicates_handling: {}\n",
+            "duplicates_handling: \t{:11}\n",
             self.duplicates_handling
         ))?;
-        if self.attributes.is_some() {
-            fmt.write_str("---\n")?;
-            let a: &Vec<Value> = self.attributes.as_ref().unwrap();
-            for (i, _p) in self.stars.iter().enumerate() {
-                // println!("vi:{} -- {:?}", i, a[i]);
-                fmt.write_str(&format!("vi:{} -- {:?}\n", i, a[i]))?;
-            }
-        }
         fmt.write_str("===============================\n")?;
         Ok(())
     }
