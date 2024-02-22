@@ -1796,6 +1796,14 @@ impl fmt::Display for Triangulation {
             "duplicates_handling: \t{:11}\n",
             self.duplicates_handling
         ))?;
+        // if self.attributes.is_some() {
+        //     fmt.write_str("---\n")?;
+        //     let a: &Vec<Value> = self.attributes.as_ref().unwrap();
+        //     for (i, _p) in self.stars.iter().enumerate() {
+        //         // println!("vi:{} -- {:?}", i, a[i]);
+        //         fmt.write_str(&format!("vi:{} -- {:?}\n", i, a[i]))?;
+        //     }
+        // }
         fmt.write_str("===============================\n")?;
         Ok(())
     }
