@@ -1793,8 +1793,8 @@ impl fmt::Display for Triangulation {
         fmt.write_str(&format!("snap_tolerance: {:>15}\n", self.snaptol))?;
         fmt.write_str(&format!("jump_and_walk: {:>16}\n", self.jump_and_walk))?;
         fmt.write_str(&format!(
-            "duplicates_handling: \t{:11}\n",
-            self.duplicates_handling
+            "duplicates_handling: {:>10}\n",
+            self.duplicates_handling.to_string()
         ))?;
         // if self.attributes.is_some() {
         //     fmt.write_str("---\n")?;

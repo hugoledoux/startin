@@ -14,6 +14,7 @@ struct MyAttribute {
 fn main() {
     let mut dt = startin::Triangulation::new();
     dt.use_extra_attributes(); //-- store extra attributes for each vertex
+    dt.set_duplicates_handling(startin::DuplicateHandling::Highest);
 
     let a = MyAttribute {
         intensity: 44.0,
