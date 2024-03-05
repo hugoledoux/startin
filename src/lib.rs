@@ -1701,21 +1701,28 @@ impl Triangulation {
         let mut miny: f64 = std::f64::MAX;
         let mut maxx: f64 = std::f64::MIN;
         let mut maxy: f64 = std::f64::MIN;
-        for i in 1..self.stars.len() {
-            if self.is_vertex_removed(i).unwrap() {
-                continue;
-            }
-            if self.stars[i].pt[0] < minx {
-                minx = self.stars[i].pt[0];
-            }
-            if self.stars[i].pt[1] < miny {
-                miny = self.stars[i].pt[1];
-            }
-            if self.stars[i].pt[0] > maxx {
-                maxx = self.stars[i].pt[0];
-            }
-            if self.stars[i].pt[1] > maxy {
-                maxy = self.stars[i].pt[1];
+        if self.stars.len() == 1 {
+            minx = std::f64::NEG_INFINITY;
+            miny = std::f64::NEG_INFINITY;
+            maxx = std::f64::INFINITY;
+            maxy = std::f64::INFINITY;
+        } else {
+            for i in 1..self.stars.len() {
+                if self.is_vertex_removed(i).unwrap() {
+                    continue;
+                }
+                if self.stars[i].pt[0] < minx {
+                    minx = self.stars[i].pt[0];
+                }
+                if self.stars[i].pt[1] < miny {
+                    miny = self.stars[i].pt[1];
+                }
+                if self.stars[i].pt[0] > maxx {
+                    maxx = self.stars[i].pt[0];
+                }
+                if self.stars[i].pt[1] > maxy {
+                    maxy = self.stars[i].pt[1];
+                }
             }
         }
         vec![minx, miny, maxx, maxy]
