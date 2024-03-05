@@ -634,7 +634,7 @@ impl Triangulation {
                 self.stars[vi].pt[2] = newz;
                 match a {
                     Some(x) => {
-                        let _ = self.set_attribute(vi, x);
+                        let _ = self.set_vertex_attributes(vi, x);
                     }
                     None => (),
                 }
@@ -644,7 +644,7 @@ impl Triangulation {
                     self.stars[vi].pt[2] = newz;
                     match a {
                         Some(x) => {
-                            let _ = self.set_attribute(vi, x);
+                            let _ = self.set_vertex_attributes(vi, x);
                         }
                         None => (),
                     }
@@ -655,7 +655,7 @@ impl Triangulation {
                     self.stars[vi].pt[2] = newz;
                     match a {
                         Some(x) => {
-                            let _ = self.set_attribute(vi, x);
+                            let _ = self.set_vertex_attributes(vi, x);
                         }
                         None => (),
                     }
@@ -778,7 +778,7 @@ impl Triangulation {
         self.stars[vi].pt[2] = f64::NAN;
         self.removed_indices.push(vi);
         if self.attributes.is_some() {
-            let _ = self.set_attribute(vi, Value::Null);
+            let _ = self.set_vertex_attributes(vi, Value::Null);
         }
         if ns[0] != 0 {
             self.cur = ns[0];
@@ -802,7 +802,7 @@ impl Triangulation {
         }
     }
 
-    pub fn get_attribute(&self, vi: usize) -> Result<Value, StartinError> {
+    pub fn get_vertex_attributes(&self, vi: usize) -> Result<Value, StartinError> {
         match self.is_vertex_removed(vi) {
             Err(why) => Err(why),
             Ok(b) => match b {
@@ -815,7 +815,7 @@ impl Triangulation {
         }
     }
 
-    pub fn set_attribute(&mut self, vi: usize, a: Value) -> Result<bool, StartinError> {
+    pub fn set_vertex_attributes(&mut self, vi: usize, a: Value) -> Result<bool, StartinError> {
         match self.is_vertex_removed(vi) {
             Err(why) => Err(why),
 
@@ -1466,7 +1466,7 @@ impl Triangulation {
             self.stars[vi].pt[2] = f64::NAN;
             self.removed_indices.push(vi);
             if self.attributes.is_some() {
-                let _ = self.set_attribute(vi, Value::Null);
+                let _ = self.set_vertex_attributes(vi, Value::Null);
             }
         }
         match self.is_vertex_removed(vi) {
