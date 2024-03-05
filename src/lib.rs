@@ -126,7 +126,7 @@ pub enum StartinError {
     VertexInfinite,
     VertexRemoved,
     VertexUnknown,
-    NoAttributes,
+    TinHasNoAttributes,
     TriangulationAlreadyInitialised,
 }
 
@@ -809,7 +809,7 @@ impl Triangulation {
                 true => Err(StartinError::VertexRemoved),
                 false => match &self.attributes {
                     Some(x) => Ok(x.get(vi).unwrap().clone()),
-                    None => Err(StartinError::NoAttributes),
+                    None => Err(StartinError::TinHasNoAttributes),
                 },
             },
         }
