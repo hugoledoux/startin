@@ -1588,7 +1588,7 @@ impl Triangulation {
         writeln!(f, "property float x").unwrap();
         writeln!(f, "property float y").unwrap();
         writeln!(f, "property float z").unwrap();
-        writeln!(f, "element face {}\n", trs.len()).unwrap();
+        writeln!(f, "element face {}", trs.len()).unwrap();
         writeln!(f, "property list uchar int vertex_indices").unwrap();
         writeln!(f, "end_header").unwrap();
         //-- find one good vertice to replace the deleted one
