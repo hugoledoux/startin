@@ -1750,6 +1750,20 @@ impl Triangulation {
         }
     }
 
+    /// Set/update the z-value for a given vertex
+    pub fn set_vertex_z_value(&mut self, vi: usize, z: f64) -> Result<bool, StartinError> {
+        if vi == 0 {
+            return Ok(false);
+        }
+        match self.is_vertex_removed(vi) {
+            Err(why) => Err(why),
+            Ok(_b) => {
+                self.stars[vi].pt[2] = z;
+                Ok(true)
+            }
+        }
+    }
+
     pub fn has_garbage(&self) -> bool {
         self.number_of_removed_vertices() > 0
     }
