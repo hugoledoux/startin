@@ -1750,8 +1750,8 @@ impl Triangulation {
         }
     }
 
-    /// Set/update the z-value for a given vertex
-    pub fn set_vertex_z_value(&mut self, vi: usize, z: f64) -> Result<bool, StartinError> {
+    /// Update/set the z-value for a given vertex
+    pub fn update_vertex_z_value(&mut self, vi: usize, z: f64) -> Result<bool, StartinError> {
         if vi == 0 {
             return Ok(false);
         }
