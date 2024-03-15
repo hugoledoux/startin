@@ -1045,7 +1045,7 @@ impl Triangulation {
 
     /// Returns, if it exists, the [`Triangle`] containing `(px, py)`.
     /// If it is direction on a vertex/edge, then one is randomly chosen.
-    pub fn locate(&self, px: f64, py: f64) -> Result<Triangle, StartinError> {
+    pub fn locate(&mut self, px: f64, py: f64) -> Result<Triangle, StartinError> {
         if !self.is_init {
             return Err(StartinError::EmptyTriangulation);
         }
@@ -1053,13 +1053,16 @@ impl Triangulation {
         let re = self.walk(&p);
         match re.is_infinite() {
             true => Err(StartinError::OutsideConvexHull),
-            false => Ok(re),
+            false => {
+                self.cur = re.v[0];
+                return Ok(re);
+            }
         }
     }
 
     /// Returns closest point (in 2D) to a query point `(x, y)`.
     /// if `(px, py)` is outside the convex hull then [`StartinError::OutsideConvexHull`] is raised.
-    pub fn closest_point(&self, px: f64, py: f64) -> Result<usize, StartinError> {
+    pub fn closest_point(&mut self, px: f64, py: f64) -> Result<usize, StartinError> {
         let re = self.locate(px, py);
         if re.is_err() {
             return Err(re.err().unwrap());
