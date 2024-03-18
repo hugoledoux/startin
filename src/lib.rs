@@ -760,7 +760,7 @@ impl Triangulation {
         self.stars[tr.v[1]].link.insert_after_v(pi, tr.v[2]);
         self.stars[tr.v[2]].link.insert_after_v(pi, tr.v[0]);
         //-- put infinite vertex first in list
-        // self.stars[pi].link.infinite_first();
+        self.stars[pi].link.infinite_first();
     }
 
     fn flip31(&mut self, vi: usize) {
