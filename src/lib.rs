@@ -818,21 +818,46 @@ impl Triangulation {
     pub fn set_vertex_attributes(&mut self, vi: usize, a: Value) -> Result<bool, StartinError> {
         match self.is_vertex_removed(vi) {
             Err(why) => Err(why),
-
             Ok(_b) => match &mut self.attributes {
                 Some(x) => {
                     *x.get_mut(vi).unwrap() = a;
                     return Ok(true);
                 }
                 None => {
-                    *self.attributes.as_mut().unwrap().get_mut(vi).unwrap() = a;
-                    return Ok(true);
+                    return Err(StartinError::TinHasNoAttributes);
                 }
             },
         }
     }
 
-    /// Returns a [`Vec`]<[`Vec`]<[`f64`]>> of all the vertices
+    pub fn add_vertex_attribute(&mut self, vi: usize, mut a: Value) -> Result<bool, StartinError> {
+        match self.is_vertex_removed(vi) {
+            Err(why) => Err(why),
+            Ok(_b) => match &mut self.attributes {
+                Some(x) => {
+                    let v = x.get_mut(vi).unwrap();
+                    if v.is_object() == false && v.is_null() == false {
+                        return Ok(false);
+                    }
+                    if v.is_null() {
+                        *v = json!({});
+                    }
+                    let vo = v.as_object_mut().unwrap();
+                    if a.is_object() == false {
+                        return Ok(false);
+                    }
+                    let ao = a.as_object_mut().unwrap();
+                    vo.append(ao);
+                    Ok(true)
+                }
+                None => {
+                    return Err(StartinError::TinHasNoAttributes);
+                }
+            },
+        }
+    }
+
+    /// Returns a [`Vec`]<[`Vec`]<[`Value`]>> of all the vertex attributes
     /// (including the infinite one and the removed ones)
     pub fn all_attributes(&self) -> Option<Vec<Value>> {
         self.attributes.clone()
