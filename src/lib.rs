@@ -902,6 +902,51 @@ impl Triangulation {
         }
     }
 
+    /// Returns the normal of the vertex with ID `vi`.
+    pub fn normal_vertex(&self, vi: usize) -> Result<Vec<f64>, StartinError> {
+        match self.incident_triangles_to_vertex(vi) {
+            Err(why) => Err(why),
+            Ok(trs) => {
+                let mut avgns: Vec<f64> = vec![0.0, 0.0, 0.0];
+                let mut no_finite_tr = 0;
+                for tr in &trs {
+                    // println!("{:?} {:?}", tr, self.is_finite(tr));
+                    if self.is_finite(tr) == false {
+                        continue;
+                    }
+                    no_finite_tr += 1;
+                    let n = geom::normal_triangle(
+                        &self.stars[tr.v[0]].pt,
+                        &self.stars[tr.v[1]].pt,
+                        &self.stars[tr.v[2]].pt,
+                        true,
+                    );
+                    for j in 0..3 {
+                        avgns[j] += n[j];
+                    }
+                }
+                for j in 0..3 {
+                    avgns[j] /= no_finite_tr as f64;
+                }
+                let norm =
+                    ((avgns[0] * avgns[0]) + (avgns[1] * avgns[1]) + (avgns[2] * avgns[2])).sqrt();
+                Ok(vec![avgns[0] / norm, avgns[1] / norm, avgns[2] / norm])
+            }
+        }
+    }
+
+    pub fn normal_triangle(&self, tr: &Triangle) -> Result<Vec<f64>, StartinError> {
+        match self.is_triangle(tr) {
+            false => Err(StartinError::TriangleNotPresent),
+            true => Ok(geom::normal_triangle(
+                &self.stars[tr.v[0]].pt,
+                &self.stars[tr.v[1]].pt,
+                &self.stars[tr.v[2]].pt,
+                true,
+            )),
+        }
+    }
+
     /// Returns the degree of the vertex with ID `vi`.
     pub fn degree(&self, vi: usize) -> Result<usize, StartinError> {
         match self.is_vertex_removed(vi) {

@@ -15,6 +15,20 @@ pub fn area_triangle(a: &[f64], b: &[f64], c: &[f64]) -> f64 {
     det3x3t(a, b, c) / 2.0
 }
 
+pub fn normal_triangle(a: &[f64], b: &[f64], c: &[f64], normalise: bool) -> Vec<f64> {
+    let v0: Vec<f64> = vec![a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+    let v1: Vec<f64> = vec![a[0] - c[0], a[1] - c[1], a[2] - c[2]];
+    let nx = (v0[1] * v1[2]) - (v0[2] * v1[1]);
+    let ny = (v0[2] * v1[0]) - (v0[0] * v1[2]);
+    let nz = (v0[0] * v1[1]) - (v0[1] * v1[0]);
+    if normalise {
+        let norm = ((nx * nx) + (ny * ny) + (nz * nz)).sqrt();
+        vec![nx / norm, ny / norm, nz / norm]
+    } else {
+        vec![nx, ny, nz]
+    }
+}
+
 pub fn circle_centre(a: &[f64], b: &[f64], c: &[f64]) -> Vec<f64> {
     //-- nicked from http://www.ambrsoft.com/trigocalc/circle3d.htm
     let val_a = det3x3t(&[a[0], a[1], 1.0], &[b[0], b[1], 1.0], &[c[0], c[1], 1.0]);
