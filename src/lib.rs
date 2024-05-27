@@ -107,7 +107,7 @@ mod c_interface;
 use rand::prelude::thread_rng;
 use rand::Rng;
 
-use std::collections::HashSet;
+use std::collections::HashMap;
 
 use serde_json::json;
 use serde_json::Value;
@@ -335,6 +335,7 @@ impl Star {
 pub struct Triangulation {
     stars: Vec<Star>,
     attributes: Option<Vec<Value>>,
+    attribute_map: HashMap<String, String>,
     snaptol: f64,
     cur: usize,
     is_init: bool,
@@ -358,6 +359,7 @@ impl Triangulation {
         Triangulation {
             stars: l,
             attributes: None,
+            attribute_map: HashMap::new(),
             snaptol: 0.001,
             cur: 0,
             is_init: false,
@@ -368,21 +370,14 @@ impl Triangulation {
         }
     }
 
-    fn insert_one_pt_init_phase(
-        &mut self,
-        x: f64,
-        y: f64,
-        z: f64,
-        a: Option<Value>,
-    ) -> Result<usize, usize> {
+    fn insert_one_pt_init_phase(&mut self, x: f64, y: f64, z: f64) -> Result<usize, usize> {
         let p: [f64; 3] = [x, y, z];
         for i in 1..self.stars.len() {
             if geom::distance2d_squared(&self.stars[i].pt, &p) <= (self.snaptol * self.snaptol) {
-                self.update_z_value_attribute(i, z, a);
+                self.update_z_value_duplicate(i, z);
                 return Err(i);
             }
         }
-
         self.collect_garbage();
         //-- add point to Triangulation and create its empty star
         self.stars.push(Star::new(x, y, z));
@@ -442,18 +437,11 @@ impl Triangulation {
         }
 
         match &mut self.attributes {
-            Some(x) => x.push(a.into()),
+            Some(x) => x.push(json!({})),
             _ => (),
         };
 
         Ok(self.cur)
-    }
-
-    pub fn use_extra_attributes(&mut self) {
-        if self.stars.len() > 1 {
-            panic!("dt.all_vertices().len() > 0, cannot modify its behaviour.")
-        }
-        self.attributes = Some(vec![json!(Value::Null)]);
     }
 
     /// Set a snap tolerance when inserting new points: if the newly inserted
@@ -556,50 +544,22 @@ impl Triangulation {
     /// If there was a vertex at that location, an Error is thrown with the already
     /// existing vertex ID.
     pub fn insert_one_pt(&mut self, px: f64, py: f64, pz: f64) -> Result<usize, usize> {
-        self.insert_pt_all_cases(px, py, pz, None)
-    }
-
-    /// Insert the point (`px`, `py`, `pz`), having the attribute `a`, in the triangulation
-    /// Returns the vertex ID of the point if the vertex didn't exist.
-    /// If there was a vertex at that location, an Error is thrown with the already
-    /// existing vertex ID.
-    pub fn insert_one_pt_with_attribute(
-        &mut self,
-        px: f64,
-        py: f64,
-        pz: f64,
-        a: Value,
-    ) -> Result<usize, usize> {
-        if self.attributes.is_none() {
-            // panic!("Triangulation has no extra attributes, use dt.use_extra_attributes() first");
-            return self.insert_pt_all_cases(px, py, pz, None);
-        }
-        self.insert_pt_all_cases(px, py, pz, Some(a))
-    }
-
-    fn insert_pt_all_cases(
-        &mut self,
-        px: f64,
-        py: f64,
-        pz: f64,
-        a: Option<Value>,
-    ) -> Result<usize, usize> {
         if !self.is_init {
-            return self.insert_one_pt_init_phase(px, py, pz, a);
+            return self.insert_one_pt_init_phase(px, py, pz);
         }
         //-- walk
         let p: [f64; 3] = [px, py, pz];
         let tr = self.walk(&p);
         if geom::distance2d_squared(&self.stars[tr.v[0]].pt, &p) <= (self.snaptol * self.snaptol) {
-            self.update_z_value_attribute(tr.v[0], pz, a);
+            self.update_z_value_duplicate(tr.v[0], pz);
             return Err(tr.v[0]);
         }
         if geom::distance2d_squared(&self.stars[tr.v[1]].pt, &p) <= (self.snaptol * self.snaptol) {
-            self.update_z_value_attribute(tr.v[1], pz, a);
+            self.update_z_value_duplicate(tr.v[1], pz);
             return Err(tr.v[1]);
         }
         if geom::distance2d_squared(&self.stars[tr.v[2]].pt, &p) <= (self.snaptol * self.snaptol) {
-            self.update_z_value_attribute(tr.v[1], pz, a);
+            self.update_z_value_duplicate(tr.v[1], pz);
             return Err(tr.v[2]);
         }
         //-- ok we now insert the point in the data structure
@@ -621,44 +581,26 @@ impl Triangulation {
         self.cur = pi;
         //-- extra attributes
         match &mut self.attributes {
-            Some(x) => x.push(a.into()),
+            Some(x) => x.push(json!({})),
             _ => (),
         }
 
         Ok(pi)
     }
 
-    fn update_z_value_attribute(&mut self, vi: usize, newz: f64, a: Option<Value>) {
+    fn update_z_value_duplicate(&mut self, vi: usize, newz: f64) {
         match self.duplicates_handling {
             DuplicateHandling::Last => {
                 self.stars[vi].pt[2] = newz;
-                match a {
-                    Some(x) => {
-                        let _ = self.set_vertex_attributes(vi, x);
-                    }
-                    None => (),
-                }
             }
             DuplicateHandling::Highest => {
                 if newz > self.stars[vi].pt[2] {
                     self.stars[vi].pt[2] = newz;
-                    match a {
-                        Some(x) => {
-                            let _ = self.set_vertex_attributes(vi, x);
-                        }
-                        None => (),
-                    }
                 }
             }
             DuplicateHandling::Lowest => {
                 if newz < self.stars[vi].pt[2] {
                     self.stars[vi].pt[2] = newz;
-                    match a {
-                        Some(x) => {
-                            let _ = self.set_vertex_attributes(vi, x);
-                        }
-                        None => (),
-                    }
                 }
             }
             DuplicateHandling::First => (),
@@ -778,7 +720,7 @@ impl Triangulation {
         self.stars[vi].pt[2] = f64::NAN;
         self.removed_indices.push(vi);
         if self.attributes.is_some() {
-            let _ = self.set_vertex_attributes(vi, Value::Null);
+            let _ = self.reset_vertex_attributes(vi);
         }
         if ns[0] != 0 {
             self.cur = ns[0];
@@ -802,6 +744,24 @@ impl Triangulation {
         }
     }
 
+    pub fn add_attribute_map(&mut self, name: String, dtype: String) {
+        let dtypes_allowed: Vec<String> = vec![
+            "f64".to_string(),
+            "i64".to_string(),
+            "u64".to_string(),
+            "bool".to_string(),
+            "String".to_string(),
+        ];
+        if self.attribute_map.contains_key(&name) == false {
+            if dtypes_allowed.iter().any(|e| *e == dtype) {
+                self.attribute_map.insert(name, dtype);
+                if self.attributes.is_none() {
+                    self.attributes = Some(vec![json!({}); self.stars.len()]);
+                }
+            }
+        }
+    }
+
     pub fn get_vertex_attributes(&self, vi: usize) -> Result<Value, StartinError> {
         match self.is_vertex_removed(vi) {
             Err(why) => Err(why),
@@ -815,12 +775,12 @@ impl Triangulation {
         }
     }
 
-    pub fn set_vertex_attributes(&mut self, vi: usize, a: Value) -> Result<bool, StartinError> {
+    fn reset_vertex_attributes(&mut self, vi: usize) -> Result<bool, StartinError> {
         match self.is_vertex_removed(vi) {
             Err(why) => Err(why),
             Ok(_b) => match &mut self.attributes {
                 Some(x) => {
-                    *x.get_mut(vi).unwrap() = a;
+                    *x.get_mut(vi).unwrap() = json!({});
                     return Ok(true);
                 }
                 None => {
@@ -830,24 +790,24 @@ impl Triangulation {
         }
     }
 
-    pub fn add_vertex_attribute(&mut self, vi: usize, mut a: Value) -> Result<bool, StartinError> {
+    pub fn add_vertex_attributes(&mut self, vi: usize, mut a: Value) -> Result<bool, StartinError> {
         match self.is_vertex_removed(vi) {
             Err(why) => Err(why),
             Ok(_b) => match &mut self.attributes {
                 Some(x) => {
                     let v = x.get_mut(vi).unwrap();
-                    if v.is_object() == false && v.is_null() == false {
-                        return Ok(false);
-                    }
-                    if v.is_null() {
-                        *v = json!({});
-                    }
-                    let vo = v.as_object_mut().unwrap();
+                    // if v.is_object() == false && v.is_null() == false {
+                    //     return Ok(false);
+                    // }
+                    // if v.is_null() {
+                    //     *v = json!({});
+                    // }
                     if a.is_object() == false {
                         return Ok(false);
                     }
                     let ao = a.as_object_mut().unwrap();
-                    vo.append(ao);
+                    let vo = v.as_object_mut().unwrap();
+                    vo.append(ao); //-- TODO: verify that only properties allowed are added here
                     Ok(true)
                 }
                 None => {
@@ -863,24 +823,8 @@ impl Triangulation {
         self.attributes.clone()
     }
 
-    pub fn list_all_attributes(&self) -> Vec<String> {
-        let mut attrs: HashSet<String> = HashSet::new();
-        match &self.all_attributes() {
-            Some(values) => {
-                for value in values {
-                    match value.as_object() {
-                        Some(x) => {
-                            for (key, _) in x.iter() {
-                                attrs.insert(key.to_string());
-                            }
-                        }
-                        None => (),
-                    }
-                }
-            }
-            None => (),
-        }
-        attrs.into_iter().collect::<Vec<String>>()
+    pub fn list_all_attributes(&self) -> HashMap<String, String> {
+        self.attribute_map.clone()
     }
 
     /// Returns the 3 adjacents (finite + infinite) [`Triangle`] to a triangle.
@@ -1539,7 +1483,7 @@ impl Triangulation {
             self.stars[vi].pt[2] = f64::NAN;
             self.removed_indices.push(vi);
             if self.attributes.is_some() {
-                let _ = self.set_vertex_attributes(vi, Value::Null);
+                let _ = self.reset_vertex_attributes(vi);
             }
         }
         match self.is_vertex_removed(vi) {
