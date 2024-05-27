@@ -106,6 +106,7 @@ mod c_interface;
 
 use rand::prelude::thread_rng;
 use rand::Rng;
+use serde_json::Map;
 
 use std::collections::HashMap;
 
@@ -127,6 +128,7 @@ pub enum StartinError {
     VertexRemoved,
     VertexUnknown,
     TinHasNoAttributes,
+    WrongAttribute,
     TriangulationAlreadyInitialised,
 }
 
@@ -744,7 +746,10 @@ impl Triangulation {
         }
     }
 
-    pub fn add_attribute_map(&mut self, name: String, dtype: String) {
+    /// Configure the extra attributes that each vertex can store.
+    /// Each entry is a name ("classification") and a data type.
+    /// The allowed types are: "f64", "i64", "u64", "bool", and "String" (given as a String).
+    pub fn add_attribute_map(&mut self, name: String, dtype: String) -> Result<(), StartinError> {
         let dtypes_allowed: Vec<String> = vec![
             "f64".to_string(),
             "i64".to_string(),
@@ -752,14 +757,15 @@ impl Triangulation {
             "bool".to_string(),
             "String".to_string(),
         ];
-        if self.attribute_map.contains_key(&name) == false {
-            if dtypes_allowed.iter().any(|e| *e == dtype) {
-                self.attribute_map.insert(name, dtype);
-                if self.attributes.is_none() {
-                    self.attributes = Some(vec![json!({}); self.stars.len()]);
-                }
+        if dtypes_allowed.iter().any(|e| *e == dtype) {
+            self.attribute_map.insert(name, dtype);
+            if self.attributes.is_none() {
+                self.attributes = Some(vec![json!({}); self.stars.len()]);
             }
+        } else {
+            return Err(StartinError::WrongAttribute);
         }
+        Ok(())
     }
 
     pub fn get_vertex_attributes(&self, vi: usize) -> Result<Value, StartinError> {
