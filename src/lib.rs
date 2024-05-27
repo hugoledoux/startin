@@ -790,24 +790,51 @@ impl Triangulation {
         }
     }
 
-    pub fn add_vertex_attributes(&mut self, vi: usize, mut a: Value) -> Result<bool, StartinError> {
+    pub fn add_vertex_attributes(&mut self, vi: usize, a: Value) -> Result<bool, StartinError> {
         match self.is_vertex_removed(vi) {
             Err(why) => Err(why),
             Ok(_b) => match &mut self.attributes {
                 Some(x) => {
-                    let v = x.get_mut(vi).unwrap();
-                    // if v.is_object() == false && v.is_null() == false {
-                    //     return Ok(false);
-                    // }
-                    // if v.is_null() {
-                    //     *v = json!({});
-                    // }
                     if a.is_object() == false {
                         return Ok(false);
                     }
-                    let ao = a.as_object_mut().unwrap();
+                    let mut a2: Map<String, Value> = Map::new();
+                    let a1 = a.as_object().unwrap();
+                    for (p, v2) in a1 {
+                        if self.attribute_map.contains_key(p) {
+                            match self.attribute_map.get(p).unwrap().as_ref() {
+                                "f64" => {
+                                    if v2.is_number() {
+                                        a2.insert(p.to_string(), v2.clone());
+                                    }
+                                }
+                                "i64" => {
+                                    if v2.is_i64() {
+                                        a2.insert(p.to_string(), v2.clone());
+                                    }
+                                }
+                                "u64" => {
+                                    if v2.is_u64() {
+                                        a2.insert(p.to_string(), v2.clone());
+                                    }
+                                }
+                                "String" => {
+                                    if v2.is_string() {
+                                        a2.insert(p.to_string(), v2.clone());
+                                    }
+                                }
+                                "bool" => {
+                                    if v2.is_boolean() {
+                                        a2.insert(p.to_string(), v2.clone());
+                                    }
+                                }
+                                _ => continue,
+                            }
+                        }
+                    }
+                    let v = x.get_mut(vi).unwrap();
                     let vo = v.as_object_mut().unwrap();
-                    vo.append(ao); //-- TODO: verify that only properties allowed are added here
+                    vo.append(&mut a2);
                     Ok(true)
                 }
                 None => {
