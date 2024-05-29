@@ -108,7 +108,7 @@ use rand::prelude::thread_rng;
 use rand::Rng;
 use serde_json::Map;
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use serde_json::json;
 use serde_json::Value;
@@ -337,7 +337,7 @@ impl Star {
 pub struct Triangulation {
     stars: Vec<Star>,
     attributes: Option<Vec<Value>>,
-    attribute_map: HashMap<String, String>,
+    attributes_schema: BTreeMap<String, String>,
     snaptol: f64,
     cur: usize,
     is_init: bool,
@@ -361,7 +361,7 @@ impl Triangulation {
         Triangulation {
             stars: l,
             attributes: None,
-            attribute_map: HashMap::new(),
+            attributes_schema: BTreeMap::new(),
             snaptol: 0.001,
             cur: 0,
             is_init: false,
@@ -746,10 +746,19 @@ impl Triangulation {
         }
     }
 
+    /// TODO: write the docs
+    pub fn get_attributes_schema(&self) -> BTreeMap<String, String> {
+        self.attributes_schema.clone()
+    }
+
     /// Configure the extra attributes that each vertex can store.
-    /// Each entry is a name ("classification") and a data type.
-    /// The allowed types are: "f64", "i64", "u64", "bool", and "String" (given as a String).
-    pub fn add_attribute_map(&mut self, name: String, dtype: String) -> Result<(), StartinError> {
+    /// Each entry is a name (eg "classification") and a data type
+    /// (the allowed types are: "f64", "i64", "u64", "bool", and "String" (given as a String)).
+    /// This resets all the extra attributes that were potentially stored with a previous schema.
+    pub fn set_attributes_schema(
+        &mut self,
+        att_schema: BTreeMap<String, String>,
+    ) -> Result<(), StartinError> {
         let dtypes_allowed: Vec<String> = vec![
             "f64".to_string(),
             "i64".to_string(),
@@ -757,14 +766,16 @@ impl Triangulation {
             "bool".to_string(),
             "String".to_string(),
         ];
-        if dtypes_allowed.iter().any(|e| *e == dtype) {
-            self.attribute_map.insert(name, dtype);
-            if self.attributes.is_none() {
-                self.attributes = Some(vec![json!({}); self.stars.len()]);
+        for each in &att_schema {
+            if dtypes_allowed.iter().any(|e| *e == *each.1) {
+                self.attributes_schema
+                    .insert(each.0.clone(), each.1.clone());
+            } else {
+                return Err(StartinError::WrongAttribute);
             }
-        } else {
-            return Err(StartinError::WrongAttribute);
         }
+        //-- reset all the extra attributes
+        self.attributes = Some(vec![json!({}); self.stars.len()]);
         Ok(())
     }
 
@@ -807,8 +818,8 @@ impl Triangulation {
                     let mut a2: Map<String, Value> = Map::new();
                     let a1 = a.as_object().unwrap();
                     for (p, v2) in a1 {
-                        if self.attribute_map.contains_key(p) {
-                            match self.attribute_map.get(p).unwrap().as_ref() {
+                        if self.attributes_schema.contains_key(p) {
+                            match self.attributes_schema.get(p).unwrap().as_ref() {
                                 "f64" => {
                                     if v2.is_number() {
                                         a2.insert(p.to_string(), v2.clone());
@@ -854,10 +865,6 @@ impl Triangulation {
     /// (including the infinite one and the removed ones)
     pub fn all_attributes(&self) -> Option<Vec<Value>> {
         self.attributes.clone()
-    }
-
-    pub fn list_all_attributes(&self) -> HashMap<String, String> {
-        self.attribute_map.clone()
     }
 
     /// Returns the 3 adjacents (finite + infinite) [`Triangle`] to a triangle.
