@@ -108,8 +108,6 @@ use rand::prelude::thread_rng;
 use rand::Rng;
 use serde_json::Map;
 
-use std::collections::BTreeMap;
-
 use serde_json::json;
 use serde_json::Value;
 
@@ -337,7 +335,7 @@ impl Star {
 pub struct Triangulation {
     stars: Vec<Star>,
     attributes: Option<Vec<Value>>,
-    attributes_schema: BTreeMap<String, String>,
+    attributes_schema: Vec<(String, String)>,
     snaptol: f64,
     cur: usize,
     is_init: bool,
@@ -361,7 +359,7 @@ impl Triangulation {
         Triangulation {
             stars: l,
             attributes: None,
-            attributes_schema: BTreeMap::new(),
+            attributes_schema: Vec::new(),
             snaptol: 0.001,
             cur: 0,
             is_init: false,
@@ -747,7 +745,7 @@ impl Triangulation {
     }
 
     /// TODO: write the docs
-    pub fn get_attributes_schema(&self) -> BTreeMap<String, String> {
+    pub fn get_attributes_schema(&self) -> Vec<(String, String)> {
         self.attributes_schema.clone()
     }
 
@@ -757,7 +755,7 @@ impl Triangulation {
     /// This resets all the extra attributes that were potentially stored with a previous schema.
     pub fn set_attributes_schema(
         &mut self,
-        att_schema: BTreeMap<String, String>,
+        att_schema: Vec<(String, String)>,
     ) -> Result<(), StartinError> {
         let dtypes_allowed: Vec<String> = vec![
             "f64".to_string(),
@@ -769,7 +767,7 @@ impl Triangulation {
         for each in &att_schema {
             if dtypes_allowed.iter().any(|e| *e == *each.1) {
                 self.attributes_schema
-                    .insert(each.0.clone(), each.1.clone());
+                    .push((each.0.clone(), each.1.clone()));
             } else {
                 return Err(StartinError::WrongAttribute);
             }
@@ -818,8 +816,12 @@ impl Triangulation {
                     let mut a2: Map<String, Value> = Map::new();
                     let a1 = a.as_object().unwrap();
                     for (p, v2) in a1 {
-                        if self.attributes_schema.contains_key(p) {
-                            match self.attributes_schema.get(p).unwrap().as_ref() {
+                        let c = self
+                            .attributes_schema
+                            .iter()
+                            .position(|(first, _)| first == p);
+                        if c.is_some() {
+                            match self.attributes_schema.get(c.unwrap()).unwrap().1.as_ref() {
                                 "f64" => {
                                     if v2.is_number() {
                                         a2.insert(p.to_string(), v2.clone());
