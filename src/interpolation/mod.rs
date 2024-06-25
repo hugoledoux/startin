@@ -134,7 +134,7 @@ impl Interpolant for Laplace {
                                 re.push(Ok(z / sumweights));
                             }
                         }
-                        Err(e) => re.push(Ok(dt.stars[e].pt[2])),
+                        Err(e) => re.push(Ok(dt.stars[e.0].pt[2])),
                     }
                 }
                 Err(_e) => re.push(Err(StartinError::OutsideConvexHull)),
@@ -276,7 +276,7 @@ impl Interpolant for NNI {
                                 re.push(Ok(z / newarea));
                             }
                         }
-                        Err(e) => re.push(Ok(dt.stars[e].pt[2])),
+                        Err(e) => re.push(Ok(dt.stars[e.0].pt[2])),
                     }
                 }
                 Err(_e) => re.push(Err(StartinError::OutsideConvexHull)),
