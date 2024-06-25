@@ -43,7 +43,7 @@ fn duplicates() {
     let _re = dt.insert_one_pt(2.2, 2.3, 4.5);
     let re2 = dt.insert_one_pt(2.2, 2.3, 4.5);
     assert!(re2.is_err());
-    assert_eq!(2, re2.unwrap_err());
+    assert_eq!((2, false), re2.unwrap_err());
     assert_eq!(2, dt.number_of_vertices());
     assert_eq!(0, dt.number_of_triangles());
 }

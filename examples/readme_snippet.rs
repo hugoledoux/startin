@@ -24,7 +24,7 @@ fn main() {
             "Inserted new point, now the DT has {} vertices",
             dt.number_of_vertices()
         ),
-        Err(v) => println!("Duplicate of vertex #{}, not inserted", v),
+        Err((v, _b)) => println!("Duplicate of vertex #{}, not inserted", v),
     }
     //-- remove it
     match dt.remove(6) {

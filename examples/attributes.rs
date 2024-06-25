@@ -14,9 +14,12 @@ struct MyAttribute {
 fn main() {
     let mut dt = startin::Triangulation::new();
     dt.set_duplicates_handling(startin::DuplicateHandling::Highest);
-    let _ = dt.add_attribute_map("intensity".to_string(), "f64".to_string());
-    let _ = dt.add_attribute_map("classification".to_string(), "u64".to_string());
-    let _ = dt.add_attribute_map("visited".to_string(), "bool".to_string());
+    let att_schema: Vec<(String, String)> = vec![
+        ("intensity".to_string(), "f64".to_string()),
+        ("classification".to_string(), "u64".to_string()),
+        ("visited".to_string(), "bool".to_string()),
+    ];
+    let _ = dt.set_attributes_schema(att_schema);
 
     let a = MyAttribute {
         intensity: 44.0,
@@ -36,7 +39,7 @@ fn main() {
     let _ = dt.add_vertex_attributes(vi.unwrap(), json!({"classification": 1, "visited": true}));
 
     println!("{}", dt);
-    println!("{:?}\n", dt.list_all_attributes());
+    println!("{:?}\n", dt.all_attributes());
     println!("{:?}", dt.all_attributes());
 
     println!("{:?}", dt.get_vertex_attributes(4));

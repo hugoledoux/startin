@@ -20,33 +20,33 @@ fn duplicate_alltests() {
 
     dt.set_duplicates_handling(startin::DuplicateHandling::First);
     let re = dt.insert_one_pt(5.0, 5.0, 20.0);
-    assert_eq!(Err(5), re);
+    assert_eq!(Err((5, false)), re);
     match re {
         Ok(_) => (),
-        Err(i) => assert_eq!(dt.get_point(i).unwrap()[2], 10.0),
+        Err((i, _b)) => assert_eq!(dt.get_point(i).unwrap()[2], 10.0),
     }
 
     dt.set_duplicates_handling(startin::DuplicateHandling::Last);
     let re = dt.insert_one_pt(5.0, 5.0, 20.0);
-    assert_eq!(Err(5), re);
+    assert_eq!(Err((5, true)), re);
     match re {
         Ok(_) => (),
-        Err(i) => assert_eq!(dt.get_point(i).unwrap()[2], 20.0),
+        Err((i, _b)) => assert_eq!(dt.get_point(i).unwrap()[2], 20.0),
     }
 
     dt.set_duplicates_handling(startin::DuplicateHandling::Highest);
-    let re = dt.insert_one_pt(5.0, 5.0, 20.0);
-    assert_eq!(Err(5), re);
+    let re = dt.insert_one_pt(5.0, 5.0, 21.0);
+    assert_eq!(Err((5, true)), re);
     match re {
         Ok(_) => (),
-        Err(i) => assert_eq!(dt.get_point(i).unwrap()[2], 20.0),
+        Err((i, _b)) => assert_eq!(dt.get_point(i).unwrap()[2], 21.0),
     }
 
     dt.set_duplicates_handling(startin::DuplicateHandling::Lowest);
     let re = dt.insert_one_pt(5.0, 5.0, 5.0);
-    assert_eq!(Err(5), re);
+    assert_eq!(Err((5, true)), re);
     match re {
         Ok(_) => (),
-        Err(i) => assert_eq!(dt.get_point(i).unwrap()[2], 5.0),
+        Err((i, _b)) => assert_eq!(dt.get_point(i).unwrap()[2], 5.0),
     }
 }

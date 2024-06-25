@@ -28,7 +28,7 @@ fn main() {
     let re = dt.insert_one_pt(22.2, 33.3, 4.4);
     match re {
         Ok(_v) => println!("Inserted new point"),
-        Err(v) => println!("Duplicate of vertex #{}, not inserted", v),
+        Err((v, _b)) => println!("Duplicate of vertex #{}, not inserted", v),
     }
     //-- remove it
     let re = dt.remove(6);

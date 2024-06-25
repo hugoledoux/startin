@@ -67,7 +67,7 @@
 //!             "Inserted new point, now the DT has {} vertices",
 //!             dt.number_of_vertices()
 //!         ),
-//!         Err(v) => println!("Duplicate of vertex #{}, not inserted", v),
+//!         Err((v, _b)) => println!("Duplicate of vertex #{}, not inserted", v),
 //!     }
 //!     //-- remove it
 //!     match dt.remove(6) {
@@ -540,8 +540,9 @@ impl Triangulation {
 
     /// Insert the point (`px`, `py`, `pz`) in the triangulation.
     /// Returns the vertex ID of the point if the vertex didn't exist.
-    /// If there was a vertex at that location, an Error is thrown with the already
-    /// existing vertex ID.
+    /// If there was a vertex at that location, an Error is thrown with a tuple
+    /// indicating 1) the vertex ID of the existing vertex; 2) true/false whether the
+    /// z-value and attributes were updated.
     pub fn insert_one_pt(&mut self, px: f64, py: f64, pz: f64) -> Result<usize, (usize, bool)> {
         if !self.is_init {
             return self.insert_one_pt_init_phase(px, py, pz);
