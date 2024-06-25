@@ -370,12 +370,11 @@ impl Triangulation {
         }
     }
 
-    fn insert_one_pt_init_phase(&mut self, x: f64, y: f64, z: f64) -> Result<usize, usize> {
+    fn insert_one_pt_init_phase(&mut self, x: f64, y: f64, z: f64) -> Result<usize, (usize, bool)> {
         let p: [f64; 3] = [x, y, z];
         for i in 1..self.stars.len() {
             if geom::distance2d_squared(&self.stars[i].pt, &p) <= (self.snaptol * self.snaptol) {
-                self.update_z_value_duplicate(i, z);
-                return Err(i);
+                return Err((i, self.update_z_value_duplicate(i, z)));
             }
         }
         self.collect_garbage();
@@ -543,7 +542,7 @@ impl Triangulation {
     /// Returns the vertex ID of the point if the vertex didn't exist.
     /// If there was a vertex at that location, an Error is thrown with the already
     /// existing vertex ID.
-    pub fn insert_one_pt(&mut self, px: f64, py: f64, pz: f64) -> Result<usize, usize> {
+    pub fn insert_one_pt(&mut self, px: f64, py: f64, pz: f64) -> Result<usize, (usize, bool)> {
         if !self.is_init {
             return self.insert_one_pt_init_phase(px, py, pz);
         }
@@ -551,16 +550,13 @@ impl Triangulation {
         let p: [f64; 3] = [px, py, pz];
         let tr = self.walk(&p);
         if geom::distance2d_squared(&self.stars[tr.v[0]].pt, &p) <= (self.snaptol * self.snaptol) {
-            self.update_z_value_duplicate(tr.v[0], pz);
-            return Err(tr.v[0]);
+            return Err((tr.v[0], self.update_z_value_duplicate(tr.v[0], pz)));
         }
         if geom::distance2d_squared(&self.stars[tr.v[1]].pt, &p) <= (self.snaptol * self.snaptol) {
-            self.update_z_value_duplicate(tr.v[1], pz);
-            return Err(tr.v[1]);
+            return Err((tr.v[1], self.update_z_value_duplicate(tr.v[1], pz)));
         }
         if geom::distance2d_squared(&self.stars[tr.v[2]].pt, &p) <= (self.snaptol * self.snaptol) {
-            self.update_z_value_duplicate(tr.v[1], pz);
-            return Err(tr.v[2]);
+            return Err((tr.v[2], self.update_z_value_duplicate(tr.v[2], pz)));
         }
         //-- ok we now insert the point in the data structure
         let pi: usize;
@@ -584,27 +580,31 @@ impl Triangulation {
             Some(x) => x.push(json!({})),
             _ => (),
         }
-
         Ok(pi)
     }
 
-    fn update_z_value_duplicate(&mut self, vi: usize, newz: f64) {
+    fn update_z_value_duplicate(&mut self, vi: usize, newz: f64) -> bool {
+        let mut re = false;
         match self.duplicates_handling {
             DuplicateHandling::Last => {
                 self.stars[vi].pt[2] = newz;
+                re = true;
             }
             DuplicateHandling::Highest => {
                 if newz > self.stars[vi].pt[2] {
                     self.stars[vi].pt[2] = newz;
+                    re = true;
                 }
             }
             DuplicateHandling::Lowest => {
                 if newz < self.stars[vi].pt[2] {
                     self.stars[vi].pt[2] = newz;
+                    re = true;
                 }
             }
             DuplicateHandling::First => (),
         }
+        re
     }
 
     fn update_dt(&mut self, pi: usize) {
