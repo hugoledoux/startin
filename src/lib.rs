@@ -1645,9 +1645,27 @@ impl Triangulation {
         writeln!(f, "format ascii 1.0").unwrap();
         writeln!(f, "comment made by startin").unwrap();
         writeln!(f, "element vertex {}", self.stars.len() - 1).unwrap();
-        writeln!(f, "property float x").unwrap();
-        writeln!(f, "property float y").unwrap();
-        writeln!(f, "property float z").unwrap();
+        writeln!(f, "property double x").unwrap();
+        writeln!(f, "property double y").unwrap();
+        writeln!(f, "property double z").unwrap();
+        for each in &self.attributes_schema {
+            // println!("{:?}", each);
+            match each.1.as_ref() {
+                "f64" => {
+                    writeln!(f, "property double {}", each.0).unwrap();
+                }
+                "i64" => {
+                    writeln!(f, "property int {}", each.0).unwrap();
+                }
+                "u64" => {
+                    writeln!(f, "property uint {}", each.0).unwrap();
+                }
+                "bool" => {
+                    writeln!(f, "property uint {}", each.0).unwrap();
+                }
+                _ => (),
+            }
+        }
         writeln!(f, "element face {}", trs.len()).unwrap();
         writeln!(f, "property list uchar int vertex_indices").unwrap();
         writeln!(f, "end_header").unwrap();
@@ -1661,19 +1679,43 @@ impl Triangulation {
                 break;
             }
         }
+
         let mut s = String::new();
         for i in 1..self.stars.len() {
             if self.stars[i].is_deleted() {
                 s.push_str(&format!(
-                    "{} {} {}\n",
+                    "{} {} {}",
                     onegoodpt[0], onegoodpt[1], onegoodpt[2]
                 ));
-                continue;
+            } else {
+                s.push_str(&format!(
+                    "{} {} {}",
+                    self.stars[i].pt[0], self.stars[i].pt[1], self.stars[i].pt[2]
+                ));
             }
-            s.push_str(&format!(
-                "{} {} {}\n",
-                self.stars[i].pt[0], self.stars[i].pt[1], self.stars[i].pt[2]
-            ));
+            //-- extra attributes
+            for each in &self.attributes_schema {
+                match each.1.as_ref() {
+                    "f64" | "i64" | "u64" => {
+                        let a = self.attributes.as_ref().unwrap();
+                        let b = &a[i];
+                        let c = &b[&each.0];
+                        s.push_str(&format!(" {}", c));
+                    }
+                    "bool" => {
+                        let a = self.attributes.as_ref().unwrap();
+                        let b = &a[i];
+                        let c = &b[&each.0];
+                        if c == true {
+                            s.push_str(" 1");
+                        } else {
+                            s.push_str(" 0");
+                        }
+                    }
+                    _ => (),
+                }
+            }
+            s.push_str("\n");
         }
         write!(f, "{}", s).unwrap();
         let mut s = String::new();
