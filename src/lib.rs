@@ -127,7 +127,6 @@ pub enum StartinError {
     VertexUnknown,
     TinHasNoAttributes,
     WrongAttribute,
-    TriangulationAlreadyInitialised,
 }
 
 /// Possibilities for the insertion (with `insert()`)
@@ -434,7 +433,6 @@ impl Triangulation {
                 self.update_dt(j);
             }
         }
-
         match &mut self.attributes {
             Some(x) => x.push(json!({})),
             _ => (),
@@ -1463,6 +1461,18 @@ impl Triangulation {
         //-- flip31 to remove the vertex
         if adjs.len() == 3 {
             self.flip31(v);
+            if self.number_of_vertices() < 3 {
+                //-- going back to a line, no triangles
+                //-- wipe it all and start the insert_init_phase again
+                for i in 0..self.stars.len() {
+                    self.stars[i].link.clear();
+                }
+                self.stars[v].pt[0] = f64::NAN;
+                self.stars[v].pt[1] = f64::NAN;
+                self.stars[v].pt[2] = f64::NAN;
+                // self.removed_indices.push(v);
+                self.is_init = false;
+            }
             Ok(self.stars.len() - 1)
         } else {
             //-- convex part is filled, and we need to apply a special "flip"
@@ -1498,7 +1508,6 @@ impl Triangulation {
             self.stars[v].pt[1] = f64::NAN;
             self.stars[v].pt[2] = f64::NAN;
             self.removed_indices.push(v);
-
             for i in 0..1000 {
                 if adjs[i] != 0 {
                     self.cur = adjs[i];
