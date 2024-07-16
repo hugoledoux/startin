@@ -11,6 +11,13 @@ pub fn det3x3t(a: &[f64], b: &[f64], c: &[f64]) -> f64 {
     ((a[0] - c[0]) * (b[1] - c[1])) - ((a[1] - c[1]) * (b[0] - c[0]))
 }
 
+pub fn crossproduct(a: &[f64], b: &[f64]) -> Vec<f64> {
+    let i = (a[1] * b[2]) - (a[2] * b[1]);
+    let j = (a[0] * b[2]) - (a[2] * b[0]);
+    let k = (a[0] * b[1]) - (a[1] * b[0]);
+    return vec![i, -j, k];
+}
+
 pub fn area2d_triangle(a: &[f64], b: &[f64], c: &[f64]) -> f64 {
     det3x3t(a, b, c) / 2.0
 }
@@ -22,6 +29,33 @@ pub fn area3d_triangle(a: &[f64], b: &[f64], c: &[f64]) -> f64 {
     let j = (v1[0] * v2[2]) - (v1[2] * v2[0]);
     let k = (v1[0] * v2[1]) - (v1[1] * v2[0]);
     return 0.5 * (i * i + j * j + k * k).sqrt();
+}
+
+pub fn volume_triangle_from_base(a: &[f64], b: &[f64], c: &[f64], basez: f64) -> f64 {
+    //-- volume of the prism from the basez to minz
+    let minz = a[2].min(b[2]).min(c[2]);
+    let vol0 = area2d_triangle(&a, &b, &c) * (minz - basez);
+    //-- construct a polyhedron, 1+ of the vertices will be at minz
+    let a_ = vec![a[0], a[1], minz];
+    let b_ = vec![b[0], b[1], minz];
+    let c_ = vec![c[0], c[1], minz];
+    //-- split this polyhedron into 8 faces and sum their signed volume
+    let mut vol = 0.0;
+    vol += signed_volume(&a, &b, &c);
+    vol += signed_volume(&a_, &c_, &b_);
+    vol += signed_volume(&a, &a_, &b);
+    vol += signed_volume(&a_, &b_, &b);
+    vol += signed_volume(&b, &b_, &c);
+    vol += signed_volume(&b_, &c_, &c);
+    vol += signed_volume(&c, &c_, &a);
+    vol += signed_volume(&c_, &a_, &a);
+    return vol0 + vol.abs();
+}
+
+pub fn signed_volume(a: &[f64], b: &[f64], c: &[f64]) -> f64 {
+    let xp = crossproduct(&b, &c);
+    let dp = (a[0] * xp[0]) + (a[1] * xp[1]) + (a[2] * xp[2]);
+    return dp / 6.0;
 }
 
 pub fn normal_triangle(a: &[f64], b: &[f64], c: &[f64], normalise: bool) -> Vec<f64> {
