@@ -11,7 +11,7 @@ pub fn det3x3t(a: &[f64], b: &[f64], c: &[f64]) -> f64 {
     ((a[0] - c[0]) * (b[1] - c[1])) - ((a[1] - c[1]) * (b[0] - c[0]))
 }
 
-pub fn area_triangle(a: &[f64], b: &[f64], c: &[f64]) -> f64 {
+pub fn area2d_triangle(a: &[f64], b: &[f64], c: &[f64]) -> f64 {
     det3x3t(a, b, c) / 2.0
 }
 

@@ -1793,7 +1793,7 @@ impl Triangulation {
         centres.push(vec![centres[0][0], centres[0][1]]);
         let mut totalarea = 0.0_f64;
         for c in centres.windows(2) {
-            totalarea += geom::area_triangle(&self.stars[vi].pt, &c[0], &c[1]);
+            totalarea += geom::area2d_triangle(&self.stars[vi].pt, &c[0], &c[1]);
         }
         Some(totalarea)
     }

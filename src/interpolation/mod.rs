@@ -190,11 +190,11 @@ impl Interpolant for TIN {
                 Ok(tr) => {
                     let q: [f64; 3] = [p[0], p[1], 0.0];
                     let a0: f64 =
-                        geom::area_triangle(&q, &dt.stars[tr.v[1]].pt, &dt.stars[tr.v[2]].pt);
+                        geom::area2d_triangle(&q, &dt.stars[tr.v[1]].pt, &dt.stars[tr.v[2]].pt);
                     let a1: f64 =
-                        geom::area_triangle(&q, &dt.stars[tr.v[2]].pt, &dt.stars[tr.v[0]].pt);
+                        geom::area2d_triangle(&q, &dt.stars[tr.v[2]].pt, &dt.stars[tr.v[0]].pt);
                     let a2: f64 =
-                        geom::area_triangle(&q, &dt.stars[tr.v[0]].pt, &dt.stars[tr.v[1]].pt);
+                        geom::area2d_triangle(&q, &dt.stars[tr.v[0]].pt, &dt.stars[tr.v[1]].pt);
                     let mut total = 0.;
                     total += dt.stars[tr.v[0]].pt[2] * a0;
                     total += dt.stars[tr.v[1]].pt[2] * a1;
