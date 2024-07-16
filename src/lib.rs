@@ -957,6 +957,28 @@ impl Triangulation {
         }
     }
 
+    pub fn area2d_triangle(&self, tr: &Triangle) -> Result<f64, StartinError> {
+        match self.is_triangle(tr) {
+            false => Err(StartinError::TriangleNotPresent),
+            true => Ok(geom::area2d_triangle(
+                &self.stars[tr.v[0]].pt,
+                &self.stars[tr.v[1]].pt,
+                &self.stars[tr.v[2]].pt,
+            )),
+        }
+    }
+
+    pub fn area3d_triangle(&self, tr: &Triangle) -> Result<f64, StartinError> {
+        match self.is_triangle(tr) {
+            false => Err(StartinError::TriangleNotPresent),
+            true => Ok(geom::area3d_triangle(
+                &self.stars[tr.v[0]].pt,
+                &self.stars[tr.v[1]].pt,
+                &self.stars[tr.v[2]].pt,
+            )),
+        }
+    }
+
     /// Returns the degree of the vertex with ID `vi`.
     pub fn degree(&self, vi: usize) -> Result<usize, StartinError> {
         match self.is_vertex_removed(vi) {
