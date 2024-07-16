@@ -25,7 +25,7 @@ There are a few interpolation functions implemented: (1) nearest-neighbour, (2) 
 
 I also made Python bindings, called "startinpy": [https://github.com/hugoledoux/startinpy/](https://github.com/hugoledoux/startinpy/).
 
-There are a few more functions (eg reading GeoTIFF, LAZ), the docs is better, and it all input/output are NumPy arrays.
+There are a few more functions (eg reading GeoTIFF, LAZ can be read easily), the docs is better, and it all input/output are NumPy arrays.
 
 
 # Web-demo with WebAssembly
