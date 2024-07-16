@@ -7,6 +7,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2024-07-16
+## Added
+- vertices of the DT can now have attributes attached to them, just a JSON dict (a serde Value is used). You need to define a schema first. It's probably easier to use in Python, integrated with NumPy to some extent
+- xy-duplicates are now handled and the behaviour can be configured. In previous versions, it was first-come-first-served, but now these 4 options are possible: First/Last/Highest/Lowest (First==default). This means that if a new vertex is an xy-duplicate (based on `dt.snap_tolerance`), the z value kept is depending on the configuration (the same is done if extra attributes are stored for the vertex).
+- added functions calculate area2d/3d and volume of triangles, due to popular demand
+## Changed
+- many bugs were fixed, eg PLY output is now valid and outputs all extra attributes, the CityJSON output now correctly omits the infinity vertex, if removed() created a non-initialised DT then it doesn't panic anymore
 
 ## [0.7.1] - 2023-12-14
 ## Changed
