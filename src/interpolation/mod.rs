@@ -97,7 +97,7 @@ impl Interpolant for Laplace {
             let loc = dt.locate(p[0], p[1]);
             match loc {
                 Ok(_tr) => {
-                    match dt.insert_one_pt(p[0], p[1], 0.) {
+                    match dt.insert_one_pt_interpol(p[0], p[1]) {
                         Ok(pi) => {
                             //-- no extrapolation
                             if dt.is_vertex_convex_hull(pi) {
@@ -134,7 +134,9 @@ impl Interpolant for Laplace {
                                 re.push(Ok(z / sumweights));
                             }
                         }
-                        Err(e) => re.push(Ok(dt.stars[e.0].pt[2])),
+                        Err((pi, _updated)) => {
+                            re.push(Ok(dt.stars[pi].pt[2]));
+                        }
                     }
                 }
                 Err(_e) => re.push(Err(StartinError::OutsideConvexHull)),
@@ -243,7 +245,7 @@ impl Interpolant for NNI {
             let loc = dt.locate(p[0], p[1]);
             match loc {
                 Ok(_tr) => {
-                    match dt.insert_one_pt(p[0], p[1], 0.) {
+                    match dt.insert_one_pt_interpol(p[0], p[1]) {
                         Ok(pi) => {
                             //-- no extrapolation
                             if dt.is_vertex_convex_hull(pi) {

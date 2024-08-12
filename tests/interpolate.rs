@@ -129,6 +129,22 @@ fn existing_point() {
 }
 
 #[test]
+fn existing_point_highest() {
+    let mut pts: Vec<[f64; 3]> = Vec::new();
+    pts.push([0.0, 0.0, 1.0]);
+    pts.push([10.0, 0.0, 2.0]);
+    pts.push([10.0, 10.0, 3.0]);
+    pts.push([0.0, 10.0, 4.0]);
+    let mut dt = startin::Triangulation::new();
+    dt.set_duplicates_handling(startin::DuplicateHandling::Lowest);
+    dt.insert(&pts, startin::InsertionStrategy::AsIs);
+    let _re = dt.insert_one_pt(5.0, 5.0, 11.1);
+
+    let i_lap = startin::interpolation::Laplace {};
+    assert_eq!(Ok(11.1), interpolate(&i_lap, &mut dt, &vec![[5.0, 5.0]])[0]);
+}
+
+#[test]
 fn middle() {
     let mut dt = four_points();
     let i_lap = startin::interpolation::Laplace {};

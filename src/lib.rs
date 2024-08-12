@@ -582,6 +582,48 @@ impl Triangulation {
         Ok(pi)
     }
 
+    pub fn insert_one_pt_interpol(&mut self, px: f64, py: f64) -> Result<usize, (usize, bool)> {
+        let pz = 0.0;
+        if !self.is_init {
+            return self.insert_one_pt_init_phase(px, py, pz);
+        }
+        //-- walk
+        let p: [f64; 3] = [px, py, pz];
+        let tr = self.walk(&p);
+        if geom::distance2d_squared(&self.stars[tr.v[0]].pt, &p) <= (self.snaptol * self.snaptol) {
+            return Err((tr.v[0], false));
+        }
+        if geom::distance2d_squared(&self.stars[tr.v[1]].pt, &p) <= (self.snaptol * self.snaptol) {
+            return Err((tr.v[1], false));
+        }
+        if geom::distance2d_squared(&self.stars[tr.v[2]].pt, &p) <= (self.snaptol * self.snaptol) {
+            return Err((tr.v[2], false));
+        }
+        //-- ok we now insert the point in the data structure
+        let pi: usize;
+        if self.removed_indices.is_empty() {
+            self.stars.push(Star::new(px, py, pz));
+            pi = self.stars.len() - 1;
+        } else {
+            // self.stars.push(Star::new(px, py, pz));
+            pi = self.removed_indices.pop().unwrap();
+            self.stars[pi].pt[0] = px;
+            self.stars[pi].pt[1] = py;
+            self.stars[pi].pt[2] = pz;
+        }
+        //-- flip13()
+        self.flip13(pi, &tr);
+        //-- update_dt()
+        self.update_dt(pi);
+        self.cur = pi;
+        //-- extra attributes
+        match &mut self.attributes {
+            Some(x) => x.push(json!({})),
+            _ => (),
+        }
+        Ok(pi)
+    }
+
     fn update_z_value_duplicate(&mut self, vi: usize, newz: f64) -> bool {
         let mut re = false;
         match self.duplicates_handling {
