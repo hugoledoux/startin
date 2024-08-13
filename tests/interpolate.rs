@@ -129,7 +129,7 @@ fn existing_point() {
 }
 
 #[test]
-fn existing_point_highest() {
+fn existing_point_lowest() {
     let mut pts: Vec<[f64; 3]> = Vec::new();
     pts.push([0.0, 0.0, 1.0]);
     pts.push([10.0, 0.0, 2.0]);
@@ -142,6 +142,9 @@ fn existing_point_highest() {
 
     let i_lap = startin::interpolation::Laplace {};
     assert_eq!(Ok(11.1), interpolate(&i_lap, &mut dt, &vec![[5.0, 5.0]])[0]);
+
+    let i_nni = startin::interpolation::NNI { precompute: false };
+    assert_eq!(Ok(11.1), interpolate(&i_nni, &mut dt, &vec![[5.0, 5.0]])[0]);
 }
 
 #[test]
