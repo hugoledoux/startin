@@ -308,7 +308,7 @@ impl fmt::Display for Link {
     }
 }
 
-/// A triangulation is a collection of Stars, each Star has its (x,y,z)
+/// A triangulation is a collection of Stars, each Star has its (x,y,z) coordinates
 /// and a Link (an array of adjacent vertices, ordered CCW)
 #[repr(C)]
 struct Star {
@@ -452,6 +452,8 @@ impl Triangulation {
         self.snaptol
     }
 
+    /// Get the snap tolerance for the insertion of new points.
+    /// Default is 0.001unit (thus 1mm for most datasets).
     pub fn get_snap_tolerance(&self) -> f64 {
         self.snaptol
     }
