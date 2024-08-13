@@ -544,48 +544,20 @@ impl Triangulation {
     /// indicating 1) the vertex ID of the existing vertex; 2) true/false whether the
     /// z-value and attributes were updated.
     pub fn insert_one_pt(&mut self, px: f64, py: f64, pz: f64) -> Result<usize, (usize, bool)> {
-        if !self.is_init {
-            return self.insert_one_pt_init_phase(px, py, pz);
-        }
-        //-- walk
-        let p: [f64; 3] = [px, py, pz];
-        let tr = self.walk(&p);
-        if geom::distance2d_squared(&self.stars[tr.v[0]].pt, &p) <= (self.snaptol * self.snaptol) {
-            return Err((tr.v[0], self.update_z_value_duplicate(tr.v[0], pz)));
-        }
-        if geom::distance2d_squared(&self.stars[tr.v[1]].pt, &p) <= (self.snaptol * self.snaptol) {
-            return Err((tr.v[1], self.update_z_value_duplicate(tr.v[1], pz)));
-        }
-        if geom::distance2d_squared(&self.stars[tr.v[2]].pt, &p) <= (self.snaptol * self.snaptol) {
-            return Err((tr.v[2], self.update_z_value_duplicate(tr.v[2], pz)));
-        }
-        //-- ok we now insert the point in the data structure
-        let pi: usize;
-        if self.removed_indices.is_empty() {
-            self.stars.push(Star::new(px, py, pz));
-            pi = self.stars.len() - 1;
-        } else {
-            // self.stars.push(Star::new(px, py, pz));
-            pi = self.removed_indices.pop().unwrap();
-            self.stars[pi].pt[0] = px;
-            self.stars[pi].pt[1] = py;
-            self.stars[pi].pt[2] = pz;
-        }
-        //-- flip13()
-        self.flip13(pi, &tr);
-        //-- update_dt()
-        self.update_dt(pi);
-        self.cur = pi;
-        //-- extra attributes
-        match &mut self.attributes {
-            Some(x) => x.push(json!({})),
-            _ => (),
-        }
-        Ok(pi)
+        self.insert_one_pt_z_handling(px, py, pz, true)
     }
 
-    pub fn insert_one_pt_interpol(&mut self, px: f64, py: f64) -> Result<usize, (usize, bool)> {
-        let pz = 0.0;
+    fn insert_one_pt_interpol(&mut self, px: f64, py: f64) -> Result<usize, (usize, bool)> {
+        self.insert_one_pt_z_handling(px, py, 0.0, false)
+    }
+
+    fn insert_one_pt_z_handling(
+        &mut self,
+        px: f64,
+        py: f64,
+        pz: f64,
+        zupdate: bool,
+    ) -> Result<usize, (usize, bool)> {
         if !self.is_init {
             return self.insert_one_pt_init_phase(px, py, pz);
         }
@@ -593,13 +565,25 @@ impl Triangulation {
         let p: [f64; 3] = [px, py, pz];
         let tr = self.walk(&p);
         if geom::distance2d_squared(&self.stars[tr.v[0]].pt, &p) <= (self.snaptol * self.snaptol) {
-            return Err((tr.v[0], false));
+            if zupdate {
+                return Err((tr.v[0], self.update_z_value_duplicate(tr.v[0], pz)));
+            } else {
+                return Err((tr.v[0], false));
+            }
         }
         if geom::distance2d_squared(&self.stars[tr.v[1]].pt, &p) <= (self.snaptol * self.snaptol) {
-            return Err((tr.v[1], false));
+            if zupdate {
+                return Err((tr.v[1], self.update_z_value_duplicate(tr.v[1], pz)));
+            } else {
+                return Err((tr.v[1], false));
+            }
         }
         if geom::distance2d_squared(&self.stars[tr.v[2]].pt, &p) <= (self.snaptol * self.snaptol) {
-            return Err((tr.v[2], false));
+            if zupdate {
+                return Err((tr.v[2], self.update_z_value_duplicate(tr.v[2], pz)));
+            } else {
+                return Err((tr.v[2], false));
+            }
         }
         //-- ok we now insert the point in the data structure
         let pi: usize;
@@ -1690,7 +1674,7 @@ impl Triangulation {
         let trs = self.all_finite_triangles();
         let mut f = File::create(path)?;
         let mut s = String::new();
-        //-- find one good vertice to replace the deleted one
+        //-- find one good vertice to replace the '[nan, nan, nan]' of the deleted ones
         let mut onegoodpt = [1.0, 1.0, 1.0];
         for i in 1..self.stars.len() {
             if !self.stars[i].is_deleted() {
@@ -1756,7 +1740,7 @@ impl Triangulation {
         writeln!(f, "element face {}", trs.len()).unwrap();
         writeln!(f, "property list uchar int vertex_indices").unwrap();
         writeln!(f, "end_header").unwrap();
-        //-- find one good vertice to replace the deleted one
+        //-- find one good vertice to replace the '[nan, nan, nan]' of the deleted ones
         let mut onegoodpt = [1.0, 1.0, 1.0];
         for i in 1..self.stars.len() {
             if !self.stars[i].is_deleted() {
@@ -1766,7 +1750,6 @@ impl Triangulation {
                 break;
             }
         }
-
         let mut s = String::new();
         for i in 1..self.stars.len() {
             if self.stars[i].is_deleted() {
