@@ -7,6 +7,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [0.8.1] - 2024-09-30
+### Changed
+- fix bug with Laplace/NNI interpolation when interpolate same location
+
 ## [0.8.0] - 2024-07-16
 ## Added
 - vertices of the DT can now have attributes attached to them, just a JSON dict (a serde Value is used). You need to define a schema first. It's probably easier to use in Python, integrated with NumPy to some extent
@@ -139,7 +144,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - first release and upload to crates.io
 
-[0.7.1]: https://github.com/hugoledoux/startin/compare/0.7.0...0.7.1
+[0.8.1]: https://github.com/hugoledoux/startin/compare/0.8.0...0.8.1
+[0.8.0]: https://github.com/hugoledoux/startin/compare/0.7.1...0.8.0
 [0.7.0]: https://github.com/hugoledoux/startin/compare/0.6.1...0.7.0
 [0.6.2]: https://github.com/hugoledoux/startin/compare/0.6.1...0.6.2
 [0.6.1]: https://github.com/hugoledoux/startin/compare/0.6.0...0.6.1
