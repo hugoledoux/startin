@@ -25,7 +25,7 @@ fn main() {
     let mut dt = startin::Triangulation::new();
 
     let mut rng = thread_rng();
-    let thin_factor = 1;
+    let thin_factor = 10;
     for laspt in reader.points() {
         if rng.gen_ratio(1, thin_factor) == true {
             let p = laspt.unwrap();
