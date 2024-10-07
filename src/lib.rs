@@ -1966,6 +1966,7 @@ impl Triangulation {
             offset += 1;
         }
         self.removed_indices.clear();
+        self.cur = 1;
     }
 }
 
