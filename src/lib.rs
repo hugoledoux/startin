@@ -500,16 +500,30 @@ impl Triangulation {
     /// * `pts` - a [`Vec`] of `[f64; 3]`
     /// * `strategy` - the [`InsertionStrategy`] to use for the insertion
     pub fn insert(&mut self, pts: &Vec<[f64; 3]>, strategy: InsertionStrategy) {
-        match strategy {
+        let mut mystrategy = strategy;
+        if pts.is_empty() {
+            mystrategy = InsertionStrategy::AsIs;
+        }
+        match mystrategy {
             InsertionStrategy::BBox => {
                 //-- find the bbox
                 let mut bbox = geom::bbox2d(&pts);
-                //-- "padding" of the bbox to avoid conflicts
-                bbox[0] -= 10.0;
-                bbox[1] -= 10.0;
-                bbox[2] += 10.0;
-                bbox[3] += 10.0;
-                self.insert_with_bbox(&pts, &bbox);
+                if (bbox[0] == std::f64::MAX)
+                    || (bbox[1] == std::f64::MAX)
+                    || (bbox[2] == std::f64::MIN)
+                    || (bbox[3] == std::f64::MIN)
+                {
+                    for each in pts {
+                        let _re = self.insert_one_pt(each[0], each[1], each[2]);
+                    }
+                } else {
+                    //-- "padding" of the bbox to avoid conflicts
+                    bbox[0] -= 10.0;
+                    bbox[1] -= 10.0;
+                    bbox[2] += 10.0;
+                    bbox[3] += 10.0;
+                    self.insert_with_bbox(&pts, &bbox);
+                }
             }
             InsertionStrategy::AsIs => {
                 for each in pts {
