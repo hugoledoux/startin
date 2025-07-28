@@ -7,6 +7,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.3] - 2025-07-28
+### Changed
+- fix bug where a panic occured if trying to insert with strategy BBox and the Vec of points was empty
+
 ## [0.8.2] - 2024-10-07
 ### Changed
 - fix bug where `collect_garbage()` could make further insertion panic
@@ -147,6 +151,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - first release and upload to crates.io
 
+[0.8.3]: https://github.com/hugoledoux/startin/compare/0.8.2...0.8.3
 [0.8.2]: https://github.com/hugoledoux/startin/compare/0.8.1...0.8.2
 [0.8.1]: https://github.com/hugoledoux/startin/compare/0.8.0...0.8.1
 [0.8.0]: https://github.com/hugoledoux/startin/compare/0.7.1...0.8.0
